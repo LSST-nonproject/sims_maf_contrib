@@ -1,7 +1,8 @@
-sims_maf_contrib
-================
+# sims_maf_contrib
 
-Contributed code for MAF (sims_maf)
+Contributed code for MAF (sims_maf).
+
+## Guidelines for contributors
 
 When contributing new metrics, please do the following:
 * Put your name and email in a comment at the top of the file.
@@ -14,3 +15,17 @@ When contributing new metrics, please do the following:
 * Feel free to include a config file that exercises the code.  You can use the displayDict to add a caption.
 
 Please submit your code along with a configuration file that runs it so we can easily reproduce your outputs.
+
+## Using the contributed metrics
+
+First make sure your environment is set up correctly. For example:
+
+    setenv SIMS_MAF_CONTRIB_DIR /Users/pjm/work/stronglensing/LSST/DESC/Cadence/sims_maf_contrib
+    setenv PYTHONPATH ${PYTHONPATH}:${SIMS_MAF_CONTRIB_DIR}
+
+Now you can run one of the drivers from your workspace - which must contain the required sqlite opsim database file. For example:
+
+    cd work
+    runDriver.py $SIMS_MAF_CONTRIB_DIR/drivers/LensedQuasarTimeDelays.py
+
+You'll want to browse the code that has already been checked in to avoid reinventing the wheel.
