@@ -22,10 +22,18 @@ Please submit your code along with a configuration file that runs it so we can e
 
 ## Using the contributed metrics
 
-First make sure your environment is set up correctly. For example:
+First, move to where you would like to install the contributed metrics and clone the repo:
 
-    setenv SIMS_MAF_CONTRIB_DIR /Users/pjm/work/stronglensing/LSST/DESC/Cadence/sims_maf_contrib
-    setenv PYTHONPATH ${PYTHONPATH}:${SIMS_MAF_CONTRIB_DIR}
+    git clone  git@github.com:LSST-nonproject/sims_maf_contrib.git
+
+Make sure you have setup the lsst environment, and declare the package with eups (only need to do this once):
+
+    cd sims_maf_contrib
+    eups declare -r . -c 
+
+Setup the package.  
+
+    setup sims_maf_contrib
 
 Now you can run one of the drivers from the examples directory in your workspace - which must contain the required sqlite opsim database file. For example:
 
