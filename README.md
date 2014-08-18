@@ -27,9 +27,10 @@ First make sure your environment is set up correctly. For example:
     setenv SIMS_MAF_CONTRIB_DIR /Users/pjm/work/stronglensing/LSST/DESC/Cadence/sims_maf_contrib
     setenv PYTHONPATH ${PYTHONPATH}:${SIMS_MAF_CONTRIB_DIR}
 
-Now you can run one of the drivers from your workspace - which must contain the required sqlite opsim database file. For example:
+Now you can run one of the drivers from the examples directory in your workspace - which must contain the required sqlite opsim database file. For example:
 
     cd work
-    runDriver.py $SIMS_MAF_CONTRIB_DIR/drivers/LensedQuasarTimeDelays.py
+    ln -s $SIMS_MAF_DATA_DIR/ops1_1140_sqlite.db .
+    runDriver.py $SIMS_MAF_CONTRIB_DIR/examples/LensedQuasarTimeDelays.py
 
-You'll want to browse the code that has already been checked in to avoid reinventing the wheel.
+In this example, you would set the environment variable `$SIMS_MAF_DATA_DIR` to point at the directory where you keep your opsim database files (your cadence workshop USB stick, for example). You'll want to browse the code that has already been checked in to avoid reinventing the wheel. 
