@@ -24,7 +24,7 @@ To do:
 
 from lsst.sims.maf.driver.mafConfig import configureMetric, configureStacker, configureSlicer, makeDict
 
-root.outputDir = 'LensedQuasarTimeDelays'
+root.outputDir = 'LensedQuasarTimeDelays-dithered'
 root.dbAddress = {'dbAddress':'sqlite:///ops1_1140_sqlite.db'}
 root.opsimName = 'ops1_1140_sqlite'
 
@@ -34,33 +34,24 @@ root.modules = ['mafContrib.seasonLengthMetric','mafContrib.seasonStacker','mafC
 
 sliceList = []
 
-for expt in [1,2]:
+for expt in ['u','g','r','i','z','y','multi']:
 
-    if expt == 1:
+    seasonstyle   = {'title':'ops1_1140, dithered, '+expt+'-band: Mean Season Length', 
+                     'xlabel':'Season Length (months)','bins':49,'xMin':0.0, 'xMax':12.0,
+                     'colorMin':0.0, 'colorMax':12.0}
+    campaignstyle = {'title':'ops1_1140, dithered, '+expt+'-band: Campaign Length', 
+                     'xlabel':'Campaign Length (seasons)','bins':11,'xMin':0.0, 'xMax':11.0,
+                     'colorMin':0.0, 'colorMax':11.0}
+    cadencestyle  = {'title':'ops1_1140, dithered, '+expt+'-band: Mean Separation between Nights', 
+                     'xlabel':'Night Separation (days)','bins':41,'xMin':0.0, 'xMax':40.0,
+                     'colorMin':0.0, 'colorMax':40.0}
 
-        # First look at i band alone:
-
-        constraints = ['filter="i"']
-
-        seasonstyle   = {'title':'ops1_1140, i-band: Mean Season Length', 
-                         'xlabel':'Season Length (months)'}
-        campaignstyle = {'title':'ops1_1140, i-band: Campaign Length', 
-                         'xlabel':'Campaign Length (seasons)'}
-        cadencestyle  = {'title':'ops1_1140, i-band: Mean Separation between Nights', 
-                         'xlabel':'Night Separation (days)'}
-
-    elif expt == 2:
-
+    if expt != 'multi':
+        # First look at individual filters, one at a time:
+        constraints = ['filter="'+expt+'"']
+    else:
         # Now look at all bands together:
-
         constraints = ['']
-
-        seasonstyle   = {'title':'ops1_1140, all bands: Mean Season Length', 
-                         'xlabel':'Season Length (months)'}
-        campaignstyle = {'title':'ops1_1140, all bands: Campaign Length', 
-                         'xlabel':'Campaign Length (seasons)'}
-        cadencestyle  = {'title':'ops1_1140, all bands: Mean Separation between Nights', 
-                         'xlabel':'Night Separation (days)'}
 
     # Configure metrics:
 
@@ -74,15 +65,18 @@ for expt in [1,2]:
     # cadencemetric = configureMetric('mafContrib.meanNightSeparationMetric', kwargs={'seasonCol':'season','nightCol':'night'}, plotDict=cadencestyle)
 
     # Add a column labelling the seasons:
-
     stacker = configureStacker('mafContrib.seasonStacker.SeasonStacker', kwargs={})
 
     # In new version of MAF we will be able to just do: 
     # stacker = configureStacker('mafContrib.SeasonStacker', kwargs={})
 
-    # Make sky maps, at default resolution for now:
+    # Make sky maps, at default resolution for now, and including opsim 
+    # hexagonal dither stacker, called implicitly by specifying the 
+    # spatialkeys:
 
-    slicer = configureSlicer('HealpixSlicer', kwargs={'nside':128},
+    slicer = configureSlicer('HealpixSlicer', kwargs={'nside':128,
+                                                      'spatialkey1':'ditheredRA',
+                                                      'spatialkey2':'ditheredDec'},
                                 metricDict = makeDict(seasonmetric,campaignmetric,cadencemetric), 
                                 constraints=constraints,
                                 stackerDict=makeDict(stacker))
