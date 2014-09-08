@@ -6,7 +6,7 @@ from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 
 
-class meanNightSeparationMetric(BaseMetric):
+class MeanNightSeparationMetric(BaseMetric):
     """
     The mean separation between nights within a season, and then 
     the mean over the campaign. Intranight cadence is not so important
@@ -27,7 +27,7 @@ class meanNightSeparationMetric(BaseMetric):
         """
         self.seasonCol = seasonCol
         self.nightCol = nightCol
-        super(meanNightSeparationMetric, self).__init__(col=[self.seasonCol, self.nightCol], **kwargs)
+        super(MeanNightSeparationMetric, self).__init__(col=[self.seasonCol, self.nightCol], **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Small loop over the seasons:

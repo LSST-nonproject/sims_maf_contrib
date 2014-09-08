@@ -8,3 +8,4 @@ from seasonStacker import *
 from seasonLengthMetric import *
 from campaignLengthMetric import *
 from meanNightSeparationMetric import *
+from TripletMetric import *
