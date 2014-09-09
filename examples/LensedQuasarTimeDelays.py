@@ -55,14 +55,15 @@ for expt in ['u','g','r','i','z','y','multi']:
 
     # Configure metrics:
 
-    seasonmetric = configureMetric('mafContrib.SeasonLengthMetric', kwargs={'seasonCol':'season','expMJDCol':'expMJD'}, plotDict=seasonstyle)
-    campaignmetric = configureMetric('mafContrib.CampaignLengthMetric', kwargs={'seasonCol':'season'}, plotDict=campaignstyle)
-    cadencemetric = configureMetric('mafContrib.MeanNightSeparationMetric', kwargs={'seasonCol':'season','nightCol':'night'}, plotDict=cadencestyle)
+    seasonmetric = configureMetric('mafContrib.SeasonLengthMetric', 
+                                   kwargs={'seasonCol':'season','expMJDCol':'expMJD'}, 
+                                   plotDict=seasonstyle)
+    campaignmetric = configureMetric('mafContrib.CampaignLengthMetric', 
+                                     kwargs={'seasonCol':'season'}, plotDict=campaignstyle)
+    cadencemetric = configureMetric('mafContrib.MeanNightSeparationMetric', 
+                                    kwargs={'seasonCol':'season','nightCol':'night'}, 
+                                    plotDict=cadencestyle)
 
-    # In new version of MAF we will be able to just do: 
-    # seasonmetric = configureMetric('mafContrib.SeasonLengthMetric', kwargs={'seasonCol':'season','expMJDCol':'expMJD'}, plotDict=seasonstyle)
-    # campaignmetric = configureMetric('mafContrib.CampaignLengthMetric', kwargs={'seasonCol':'season'}, plotDict=campaignstyle)
-    # cadencemetric = configureMetric('mafContrib.meanNightSeparationMetric', kwargs={'seasonCol':'season','nightCol':'night'}, plotDict=cadencestyle)
 
     # Add a column labelling the seasons:
     stacker = configureStacker('mafContrib.SeasonStacker', kwargs={})
