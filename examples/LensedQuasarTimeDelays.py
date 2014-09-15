@@ -22,72 +22,78 @@ To do:
 """
 # ======================================================================
 
+import os
 from lsst.sims.maf.driver.mafConfig import configureMetric, configureStacker, configureSlicer, makeDict
 
-root.outputDir = 'LensedQuasarTimeDelays-dithered'
-root.dbAddress = {'dbAddress':'sqlite:///ops1_1140_sqlite.db'}
-root.opsimName = 'ops1_1140_sqlite'
+def mConfig(config, runName, dbDir='.', outputDir='LensedQuasarTimeDelays-dithered', **kwargs):
 
-root.modules = ['mafContrib']
-# In new version of MAF we will be able to just do: 
-# root.modules = ['mafContrib']
+    config.outputDir = outputDir
+    if runName.endswith('_sqlite.db'):
+        runName = runName.replace('_sqlite.db', '')
+    config.opsimName = runName
+    sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
+    config.dbAddress = {'dbAddress':'sqlite:///' + sqlitefile}
+    config.figformat = 'pdf'
 
-sliceList = []
+    config.modules = ['mafContrib']
+    
+    sliceList = []
+    
+    for expt in ['u','g','r','i','z','y','multi']:
+    
+        seasonstyle   = {'title':'%s, dithered, %s-band: Mean Season Length' %(runName, expt), 
+                        'xlabel':'Season Length (months)','bins':49,'xMin':0.0, 'xMax':12.0,
+                        'colorMin':0.0, 'colorMax':12.0}
+        campaignstyle = {'title':'%s, dithered, %s-band: Campaign Length' %(runName, expt),
+                        'xlabel':'Campaign Length (seasons)','bins':11,'xMin':0.0, 'xMax':11.0,
+                        'colorMin':0.0, 'colorMax':11.0}
+        cadencestyle  = {'title':'%s dithered, %s-band: Mean Separation between Nights' %(runName, expt),
+                        'xlabel':'Night Separation (days)','bins':41,'xMin':0.0, 'xMax':40.0,
+                        'colorMin':0.0, 'colorMax':40.0}
 
-for expt in ['u','g','r','i','z','y','multi']:
+        if expt != 'multi':
+            # First look at individual filters, one at a time:
+            constraints = ['filter="'+expt+'"']
+        else:
+            # Now look at all bands together:
+            constraints = ['']
 
-    seasonstyle   = {'title':'ops1_1140, dithered, '+expt+'-band: Mean Season Length', 
-                     'xlabel':'Season Length (months)','bins':49,'xMin':0.0, 'xMax':12.0,
-                     'colorMin':0.0, 'colorMax':12.0}
-    campaignstyle = {'title':'ops1_1140, dithered, '+expt+'-band: Campaign Length', 
-                     'xlabel':'Campaign Length (seasons)','bins':11,'xMin':0.0, 'xMax':11.0,
-                     'colorMin':0.0, 'colorMax':11.0}
-    cadencestyle  = {'title':'ops1_1140, dithered, '+expt+'-band: Mean Separation between Nights', 
-                     'xlabel':'Night Separation (days)','bins':41,'xMin':0.0, 'xMax':40.0,
-                     'colorMin':0.0, 'colorMax':40.0}
+        # Configure metrics:
+    
+        seasonmetric = configureMetric('mafContrib.SeasonLengthMetric', 
+                                    kwargs={'seasonCol':'season','expMJDCol':'expMJD'}, 
+                                    plotDict=seasonstyle)
+        campaignmetric = configureMetric('mafContrib.CampaignLengthMetric', 
+                                        kwargs={'seasonCol':'season'}, plotDict=campaignstyle)
+        cadencemetric = configureMetric('mafContrib.MeanNightSeparationMetric', 
+                                        kwargs={'seasonCol':'season','nightCol':'night'}, 
+                                        plotDict=cadencestyle)
+        accuracymetric = configureMetric('mafContrib.TdcAccuracyMetric',
+                                        kwargs = {'seasonCol':'season', 'nightCol':'night',
+                                                'expMJDCol':'expMJD'})
+                                        
+    
+        # Add a column labelling the seasons:
+        stacker = configureStacker('mafContrib.SeasonStacker', kwargs={})
 
-    if expt != 'multi':
-        # First look at individual filters, one at a time:
-        constraints = ['filter="'+expt+'"']
-    else:
-        # Now look at all bands together:
-        constraints = ['']
+        # Make sky maps, at default resolution for now, and including opsim 
+        # hexagonal dither stacker, called implicitly by specifying the 
+        # spatialkeys:
+    
+        slicer = configureSlicer('HealpixSlicer', kwargs={'nside':128,
+                                                        'spatialkey1':'ditheredRA',
+                                                        'spatialkey2':'ditheredDec'},
+                                    #metricDict = makeDict(seasonmetric, campaignmetric, cadencemetric, accuracymetric),
+                                    metricDict = makeDict(accuracymetric), 
+                                    constraints=constraints,
+                                    stackerDict=makeDict(stacker))
+    
+        sliceList.append(slicer)
+    
+    # End of expt loop.
 
-    # Configure metrics:
-
-    seasonmetric = configureMetric('mafContrib.SeasonLengthMetric', 
-                                   kwargs={'seasonCol':'season','expMJDCol':'expMJD'}, 
-                                   plotDict=seasonstyle)
-    campaignmetric = configureMetric('mafContrib.CampaignLengthMetric', 
-                                     kwargs={'seasonCol':'season'}, plotDict=campaignstyle)
-    cadencemetric = configureMetric('mafContrib.MeanNightSeparationMetric', 
-                                    kwargs={'seasonCol':'season','nightCol':'night'}, 
-                                    plotDict=cadencestyle)
-
-
-    # Add a column labelling the seasons:
-    stacker = configureStacker('mafContrib.SeasonStacker', kwargs={})
-
-    # In new version of MAF we will be able to just do: 
-    # stacker = configureStacker('mafContrib.SeasonStacker', kwargs={})
-
-    # Make sky maps, at default resolution for now, and including opsim 
-    # hexagonal dither stacker, called implicitly by specifying the 
-    # spatialkeys:
-
-    slicer = configureSlicer('HealpixSlicer', kwargs={'nside':128,
-                                                      'spatialkey1':'ditheredRA',
-                                                      'spatialkey2':'ditheredDec'},
-                                metricDict = makeDict(seasonmetric,campaignmetric,cadencemetric), 
-                                constraints=constraints,
-                                stackerDict=makeDict(stacker))
-
-    sliceList.append(slicer)
-
-# End of expt loop.
-
-# Send it all off to root:
-
-root.slicers = makeDict(*sliceList)
-
+    # Send it all off to root (aka 'config').
+    
+    config.slicers = makeDict(*sliceList)
+    return config
 # ======================================================================
