@@ -39,7 +39,7 @@ def mConfig(config, runName, dbDir='.', outputDir='LensedQuasarTimeDelays-dither
     
     sliceList = []
     
-    for expt in ['u','g','r','i','z','y','multi']:
+    for i, expt in enumerate(['u','g','r','i','z','y','multi']):
     
         seasonstyle   = {'title':'%s, dithered, %s-band: Mean Season Length' %(runName, expt), 
                         'xlabel':'Season Length (months)','bins':49,'xMin':0.0, 'xMax':12.0,
@@ -62,15 +62,20 @@ def mConfig(config, runName, dbDir='.', outputDir='LensedQuasarTimeDelays-dither
     
         seasonmetric = configureMetric('mafContrib.SeasonLengthMetric', 
                                     kwargs={'seasonCol':'season','expMJDCol':'expMJD'}, 
-                                    plotDict=seasonstyle)
+                                    plotDict=seasonstyle,
+                                    displayDict={'group':'Time Delay', 'order':i})
         campaignmetric = configureMetric('mafContrib.CampaignLengthMetric', 
-                                        kwargs={'seasonCol':'season'}, plotDict=campaignstyle)
+                                        kwargs={'seasonCol':'season'}, plotDict=campaignstyle,
+                                        displayDict={'group':'Time Delay', 'order':i})
         cadencemetric = configureMetric('mafContrib.MeanNightSeparationMetric', 
                                         kwargs={'seasonCol':'season','nightCol':'night'}, 
-                                        plotDict=cadencestyle)
+                                        plotDict=cadencestyle,
+                                        displayDict={'group':'Time Delay', 'order':i})
         accuracymetric = configureMetric('mafContrib.TdcAccuracyMetric',
                                         kwargs = {'seasonCol':'season', 'nightCol':'night',
-                                                'expMJDCol':'expMJD'})
+                                                'expMJDCol':'expMJD'},
+                                        plotDict={'xMin':0, 'xMax':5},
+                                        displayDict={'group':'Time Delay', 'order':i})
                                         
     
         # Add a column labelling the seasons:
@@ -83,8 +88,7 @@ def mConfig(config, runName, dbDir='.', outputDir='LensedQuasarTimeDelays-dither
         slicer = configureSlicer('HealpixSlicer', kwargs={'nside':128,
                                                         'spatialkey1':'ditheredRA',
                                                         'spatialkey2':'ditheredDec'},
-                                    #metricDict = makeDict(seasonmetric, campaignmetric, cadencemetric, accuracymetric),
-                                    metricDict = makeDict(accuracymetric), 
+                                    metricDict = makeDict(seasonmetric, campaignmetric, cadencemetric, accuracymetric),
                                     constraints=constraints,
                                     stackerDict=makeDict(stacker))
     

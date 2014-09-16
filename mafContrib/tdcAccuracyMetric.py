@@ -11,6 +11,7 @@ from .meanNightSeparationMetric import MeanNightSeparationMetric
 class TdcAccuracyMetric(BaseMetric):
     
     def __init__(self, seasonCol='season', expMJDCol='expMJD', nightCol='night',
+                 metricName = 'TDC Accuracy',
                  cadNorm=3., seaNorm=4., campNorm=5., badval=99, **kwargs):
         # Save the normalization values.
         self.cadNorm = cadNorm
@@ -22,7 +23,8 @@ class TdcAccuracyMetric(BaseMetric):
         self.meanNightSeparation = MeanNightSeparationMetric(seasonCol=seasonCol, nightCol=nightCol)
         # Pass cols needed from database to super, but we don't have to save them here (will not use in 'run').
         super(TdcAccuracyMetric, self).__init__(col=[seasonCol, expMJDCol, nightCol], badval=badval,
-                                                units = '%s' %('%'), **kwargs)
+                                                metricName = metricName, units = '%s' %('%'),
+                                                **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         # Calculate accuracy from combined individual metrics. 
