@@ -71,12 +71,6 @@ def mConfig(config, runName, dbDir='.', outputDir='LensedQuasarTimeDelays-dither
                                         kwargs={'seasonCol':'season','nightCol':'night'}, 
                                         plotDict=cadencestyle,
                                         displayDict={'group':'Time Delay', 'order':i})
-        accuracymetric = configureMetric('mafContrib.TdcAccuracyMetric',
-                                        kwargs = {'seasonCol':'season', 'nightCol':'night',
-                                                'expMJDCol':'expMJD'},
-                                        plotDict={'xMin':0, 'xMax':5},
-                                        displayDict={'group':'Time Delay', 'order':i})
-                                        
     
         # Add a column labelling the seasons:
         stacker = configureStacker('mafContrib.SeasonStacker', kwargs={})

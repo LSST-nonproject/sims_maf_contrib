@@ -8,6 +8,6 @@ from seasonStacker import *
 from seasonLengthMetric import *
 from campaignLengthMetric import *
 from meanNightSeparationMetric import *
-from tdcAccuracyMetric import *
+from tdcMetric import *
 # Mike Lund
 from TripletMetric import *
