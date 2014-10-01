@@ -2,7 +2,7 @@
 # krughoff@uw.edu
 
 from lsst.sims.maf.metrics import BaseMetric
-import numpy
+import numpy as np
 from scipy.signal import lombscargle
 
 def find_period(times, mags, minperiod=2., maxperiod=35., nbins=1000):
@@ -19,14 +19,14 @@ def find_period(times, mags, minperiod=2., maxperiod=35., nbins=1000):
               the max value in the Lomb-Scargle periodogram
     """
     # Recenter the magnitude measurements about zero
-    dmags = mags - numpy.median(mags)
+    dmags = mags - np.median(mags)
 
     # Create frequency bins
-    f = numpy.linspace(1./maxperiod, 1./minperiod, nbins)
+    f = np.linspace(1./maxperiod, 1./minperiod, nbins)
 
     # Calculate periodogram
     pgram = lombscargle(times, dmags, f)
-    idx = numpy.argmax(pgram)
+    idx = np.argmax(pgram)
 
     # Return period of the bin with the max value in the periodogram
     return 1./f[idx]
@@ -62,14 +62,14 @@ class SinPeriodMetric(BaseMetric):
         """
 
         # Make sure the observation times are sorted
-        data = numpy.sort(dataSlice[self.colname])
+        data = np.sort(dataSlice[self.colname])
 
         # Make up a period.  Make this a funciton of RA so it's easy to see.
-        period = self.periodMin + numpy.degrees(slicePoint['ra'])*(self.periodMax - self.periodMin)/360.
+        period = self.periodMin + np.degrees(slicePoint['ra'])*(self.periodMax - self.periodMin)/360.
         omega = 1./period
 
         # Make up the amplitude.
-        lc = self.meanMag + self.amplitude*numpy.sin(omega*data)
+        lc = self.meanMag + self.amplitude*np.sin(omega*data)
 
         # Guess at the period given a window in period buffered by a day on either side
         if len(lc) < 3:

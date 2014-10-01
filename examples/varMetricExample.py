@@ -17,7 +17,7 @@ root.dbAddress = {'dbAddress':'sqlite:///ops1_1140_sqlite.db'}
 root.opsimName = 'ops1_1140'
 
 # Configure a metric to run. Compute the recovered period for each HEALPIX.
-# Once the mean seeing has been computed everywhere on the sky, compute the RMS as a summary statistic.
+# Once the period has been computed everywhere on the sky, compute the RMS as a summary statistic.
 kwargs = {'col':'expMJD', 'periodMin':10., 'periodMax':40., 'metricName':'SinPeriodMetric', 'units':'days'}
 metric = configureMetric('mafContrib.SinPeriodMetric', kwargs=kwargs,
                          summaryStats={'RmsMetric':{}})
