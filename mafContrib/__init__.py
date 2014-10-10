@@ -11,3 +11,6 @@ from meanNightSeparationMetric import *
 from tdcMetric import *
 # Mike Lund
 from TripletMetric import *
+
+# Simon Krughoff, SimonKrughoff
+from varMetrics import *
