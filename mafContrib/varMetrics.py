@@ -31,9 +31,9 @@ def find_period(times, mags, minperiod=2., maxperiod=35., nbins=1000):
     # Return period of the bin with the max value in the periodogram
     return 1./f[idx]
 
-class PeriodDeviationMetric(SinPeriodMetric):
+class PeriodDeviationMetric(BaseMetric):
     """
-    Measure the percentage deviation of recovered periods for 
+    Measure the percentage deviation of recovered periods for
 	pure sine wave variability (in magnitude).
     """
 
