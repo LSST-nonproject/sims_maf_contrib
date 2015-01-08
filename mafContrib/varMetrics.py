@@ -31,15 +31,15 @@ def find_period(times, mags, minperiod=2., maxperiod=35., nbins=1000):
     # Return period of the bin with the max value in the periodogram
     return 1./f[idx]
 
-class SinPeriodMetric(BaseMetric):
+class PeriodDeviationMetric(SinPeriodMetric):
     """
-    Use pure sine wave variabiility (in magnitude) to probe the ability to recover
-    variability of various periods.
+    Measure the percentage deviation of recovered periods for 
+	pure sine wave variability (in magnitude).
     """
 
     def __init__(self, col, periodMin=3., periodMax=35., meanMag=21., amplitude=1., **kwargs):
         """
-        Consltruct an instance of a SinPeriodMetric class
+        Construct an instance of a PeriodDeviationMetric class
 
         :param col: Name of the column to use for the observation times, commonly 'expMJD'
         :param periodMin: Minimum period to test (days)
@@ -51,11 +51,11 @@ class SinPeriodMetric(BaseMetric):
         self.periodMax = periodMax
         self.meanMag = meanMag
         self.amplitude = amplitude
-        super(SinPeriodMetric, self).__init__(col, **kwargs)
+        super(PeriodDeviationMetric, self).__init__(col, **kwargs)
 
     def run(self, dataSlice, slicePoint):
         """
-        Run the SinPeriodMetric
+        Run the PeriodDeviationMetric
         :param dataSlice: Data for this slice.
         :param slicePoint: Metadata for the slice.
         :return: The period estimated from a Lomb-Scargle periodogram
@@ -64,8 +64,8 @@ class SinPeriodMetric(BaseMetric):
         # Make sure the observation times are sorted
         data = np.sort(dataSlice[self.colname])
 
-        # Make up a period.  Make this a funciton of RA so it's easy to see.
-        period = self.periodMin + np.degrees(slicePoint['ra'])*(self.periodMax - self.periodMin)/360.
+        # Make up a period.  Make this random 
+        period = self.periodMin + np.random.random_sample()*(self.periodMax - self.periodMin)
         omega = 1./period
 
         # Make up the amplitude.
@@ -76,4 +76,4 @@ class SinPeriodMetric(BaseMetric):
             # Too few points to find a period
             return self.badval
         pguess = find_period(data, lc, minperiod=self.periodMin-1., maxperiod=self.periodMax+1.)
-        return pguess
+        return (pguess - period) / period
