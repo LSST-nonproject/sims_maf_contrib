@@ -31,10 +31,10 @@ def find_period(times, mags, minperiod=2., maxperiod=35., nbins=1000):
     # Return period of the bin with the max value in the periodogram
     return 1./f[idx]
 
-class PeriodDeviationMetric(SinPeriodMetric):
+class PeriodDeviationMetric(BaseMetric):
     """
     Measure the percentage deviation of recovered periods for 
-	pure sine wave variability (in magnitude).
+    pure sine wave variability (in magnitude).
     """
 
     def __init__(self, col, periodMin=3., periodMax=35., meanMag=21., amplitude=1., **kwargs):
@@ -58,13 +58,13 @@ class PeriodDeviationMetric(SinPeriodMetric):
         Run the PeriodDeviationMetric
         :param dataSlice: Data for this slice.
         :param slicePoint: Metadata for the slice.
-        :return: The period estimated from a Lomb-Scargle periodogram
+        :return: The error in the period estimated from a Lomb-Scargle periodogram
         """
 
         # Make sure the observation times are sorted
         data = np.sort(dataSlice[self.colname])
 
-        # Make up a period.  Make this random 
+        # Make up a period.  Make this random for each ra/dec point
         period = self.periodMin + np.random.random_sample()*(self.periodMax - self.periodMin)
         omega = 1./period
 
@@ -77,3 +77,44 @@ class PeriodDeviationMetric(SinPeriodMetric):
             return self.badval
         pguess = find_period(data, lc, minperiod=self.periodMin-1., maxperiod=self.periodMax+1.)
         return (pguess - period) / period
+
+class PhaseUniformityMetric(BaseMetric):
+    """
+    Measure the uniformity of phase coverage for observations of periodic 
+    variables.
+    """
+
+    def __init__(self, col, periodMin=3., periodMax=35., **kwargs):
+        """
+        Construct an instance of a PhaseUniformityMetric class
+
+        :param col: Name of the column to use for the observation times, commonly 'expMJD'
+        :param periodMin: Minimum period to test (days)
+        :param periodMax: Maximimum period to test (days)
+        """
+        self.periodMin = periodMin
+        self.periodMax = periodMax
+        super(PhaseUniformityMetric, self).__init__(col, **kwargs)
+
+    def run(self, dataSlice, slicePoint):
+        """
+        Run the PhaseUniformityMetric
+        :param dataSlice: Data for this slice.
+        :param slicePoint: Metadata for the slice.
+        :return: The coverage uniformity (0-1)
+        """
+
+        # Make sure the observation times are sorted
+        data = np.sort(dataSlice[self.colname])
+
+        # Make up a period.  Make this random for each ra/dec point
+        period = self.periodMin + np.random.random_sample()*(self.periodMax - self.periodMin)
+
+        # find the phases
+        phases = np.sort((data % period)/period)
+
+        # adapted from cadenceMetrics.UniformityMetric
+        n_cum = np.arange(1,phases.size+1)/float(phases.size) # cdf of phases
+        D_max = np.max(np.abs(n_cum - phases - phases[1])) 
+
+        return D_max
