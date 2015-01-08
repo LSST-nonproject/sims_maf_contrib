@@ -1,44 +1,55 @@
-# Here is an example of a very very simple MAF configuration driver script
-# to run:
-# runDriver.py varMetricExample.py
+# runFlexibleDriver.py varMetricExample.py --runName runName [--dbDir  dirname]  [--outDir outputdir]
 
 # Import MAF helper functions
-from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 import os
+from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
+import lsst.sims.maf.utils as utils
 
-# Tell the driver where to get contributed modules
-root.modules = ['mafContrib']
-root.figformat = 'png'
+def mConfig(config, runName, dbDir='.', outputDir='VarOut', nside=4, **kwargs):
 
-# Set the output directory
-root.outputDir = './VarMetric'
-# This should be changed to point to an OpSim output on disk
-#root.dbAddress = {'dbAddress':'sqlite:///ops1_1140_sqlite.db'}
-# Name of this run (filename base)
-#root.opsimName = 'ops1_1140'
-# TMP testing
-dbDir = '.'
-runName = 'opsimblitz2_1060'
-sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
-root.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
-root.opsimName = runName
-# Set parameter for healpix slicer resolution.
-nside = 4
+    # Tell the driver where to get contributed modules
+    config.modules = ['mafContrib']
+    # Set the output figure format.
+    config.figformat = 'pdf'
 
-root.verbose = True
+    # Set the output directory
+    config.outputDir = outputDir
 
-# Configure a metric to run. Compute the recovered period for each HEALPIX.
-# Once the period has been computed everywhere on the sky, compute the RMS as a summary statistic.
-kwargs = {'col':'expMJD', 'periodMin':10., 'periodMax':40., 'metricName':'PeriodDeviationMetric', 'units':'Proportional Deviation'}
-#metric = configureMetric('mafContrib.varMetrics.SinPeriodMetric', kwargs=kwargs,
-metric = configureMetric('mafContrib.varMetrics.PeriodDeviationMetric', kwargs=kwargs,
-                         summaryStats={'RmsMetric':{}})
+    # Setup Database access
+    if runName.endswith('_sqlite.db'):
+        runName = runName.replace('_sqlite.db', '')
+    sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
+    config.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
+    config.opsimName = runName
+    config.figformat = 'pdf'
 
-# Configure a slicer.  Use the Healpixslicer to compute the metric at points in the sky.
-# Set the constraint as an empty string if all data are to be returned.
-slicer = configureSlicer('HealpixSlicer', 
-                          kwargs={'nside':nside},
-                          metricDict=makeDict(metric),
-                          constraints=['filter=\'r\''])
+    config.verbose = True
 
-root.slicers = makeDict(slicer)
+    # Filter list, and map of colors (for plots) to filters.
+    filters = ['u','g','r','i','z','y']
+    colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
+    filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
+
+    nside = nside
+
+    for f in ['r']:
+        sqlconstraint = 'filter=\'%s\'' %(f)
+        # Set parameter for healpix slicer resolution.
+
+        # Configure the period deviation metric to run. Compute the recovered period for each HEALPIX.
+        # Once the period has been computed everywhere on the sky, compute the RMS as a summary statistic.
+        mkwargs = {'col':'expMJD', 'periodMin':10., 'periodMax':40.,
+                    'metricName':'PeriodDeviationMetric', 'units':'Proportional Deviation'}
+        metric = configureMetric('mafContrib.PeriodDeviationMetric', kwargs=mkwargs,
+                                 summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
+
+        # Configure a slicer.  Use the Healpixslicer to compute the metric at points in the sky.
+        # Set the constraint as an empty string if all data are to be returned.
+        slicer = configureSlicer('HealpixSlicer',
+                                kwargs={'nside':nside},
+                                metricDict=makeDict(metric),
+                                constraints=[sqlconstraint])
+
+    config.slicers = makeDict(slicer)
+
+    return config
