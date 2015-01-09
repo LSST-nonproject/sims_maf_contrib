@@ -1,11 +1,11 @@
 # Example of a *very* simple variabiilty metric
-# krughoff@uw.edu
+# krughoff@uw.edu, ebellm, ljones
 
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 from scipy.signal import lombscargle
 
-def find_period(times, mags, minperiod=2., maxperiod=35., nbins=1000):
+def find_period(times, mags, minperiod=2., maxperiod=35., nbinmax=10**6):
     """
     Find the period of a lightcurve.  The parameters used here imply magnitudes
     but there is no reason this would not work if fluxes are passed.
@@ -18,6 +18,12 @@ def find_period(times, mags, minperiod=2., maxperiod=35., nbins=1000):
     :returns: Period in the same units as used in times.  This is simply
               the max value in the Lomb-Scargle periodogram
     """
+    if minperiod < 0:
+        minperiod = 0.01
+    nbins = int((times.max() - times.min())/minperiod * 1000)
+    if nbins > nbinmax:
+        print 'lowered nbins'
+        nbins = nbinmax
     # Recenter the magnitude measurements about zero
     dmags = mags - np.median(mags)
 
@@ -37,7 +43,9 @@ class PeriodDeviationMetric(BaseMetric):
 	pure sine wave variability (in magnitude).
     """
 
-    def __init__(self, col, periodMin=3., periodMax=35., meanMag=21., amplitude=1., **kwargs):
+    def __init__(self, col='expMJD', periodMin=3., periodMax=35., nPeriods=5,
+                 meanMag=21., amplitude=1.,
+                 **kwargs):
         """
         Construct an instance of a PeriodDeviationMetric class
 
@@ -49,6 +57,7 @@ class PeriodDeviationMetric(BaseMetric):
         """
         self.periodMin = periodMin
         self.periodMax = periodMax
+        self.nPeriods = nPeriods
         self.meanMag = meanMag
         self.amplitude = amplitude
         super(PeriodDeviationMetric, self).__init__(col, **kwargs)
@@ -64,16 +73,37 @@ class PeriodDeviationMetric(BaseMetric):
         # Make sure the observation times are sorted
         data = np.sort(dataSlice[self.colname])
 
-        # Make up a period.  Make this random 
-        period = self.periodMin + np.random.random_sample()*(self.periodMax - self.periodMin)
-        omega = 1./period
+        # Make up a 'nPeriods' random periods within range of min to max.
+        periods = self.periodMin + np.random.random(self.nPeriods)*(self.periodMax - self.periodMin)
+        periodsdev = np.zeros(len(periods), dtype='float')
+        for i, period in enumerate(periods):
+            omega = 1./period
+            # Make up the amplitude.
+            lc = self.meanMag + self.amplitude*np.sin(omega*data)
 
-        # Make up the amplitude.
-        lc = self.meanMag + self.amplitude*np.sin(omega*data)
+            # Guess at the period given a window in period buffered by a day on either side
+            if len(lc) < 3:
+                # Too few points to find a period
+                return self.badval
+            pguess = find_period(data, lc, minperiod=self.periodMin-1., maxperiod=self.periodMax+1.)
+            periodsdev[i] = (pguess - period) / period
 
-        # Guess at the period given a window in period buffered by a day on either side
-        if len(lc) < 3:
-            # Too few points to find a period
-            return self.badval
-        pguess = find_period(data, lc, minperiod=self.periodMin-1., maxperiod=self.periodMax+1.)
-        return (pguess - period) / period
+        return {'periods': periods, 'periodsdev': periodsdev}
+
+    def reducePDev(self, metricVal, period=None):
+        """
+        At a particular slicepoint, return the period deviation for the minimum period
+        at 'period'.
+        If Period is None, chooses a random period deviation.
+        """
+        if period is None:
+            return np.random.choice(metricVal['periodsdev'])
+        else:
+            return metricVal['periodsdev'][np.where(metricVal['periods'] == period)][0]
+
+    def reduceWorstPeriod(self, metricVal):
+        """
+        At each slicepoint, return the period with the worst period deviation.
+        """
+        worstP = metricVal['periods'][np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())]
+        return worstP

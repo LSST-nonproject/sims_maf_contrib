@@ -5,7 +5,7 @@ import os
 from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
 import lsst.sims.maf.utils as utils
 
-def mConfig(config, runName, dbDir='.', outputDir='VarOut', nside=4, **kwargs):
+def mConfig(config, runName, dbDir='.', outputDir='VarOut', nside=16, **kwargs):
 
     # Tell the driver where to get contributed modules
     config.modules = ['mafContrib']
@@ -38,7 +38,7 @@ def mConfig(config, runName, dbDir='.', outputDir='VarOut', nside=4, **kwargs):
 
         # Configure the period deviation metric to run. Compute the recovered period for each HEALPIX.
         # Once the period has been computed everywhere on the sky, compute the RMS as a summary statistic.
-        mkwargs = {'col':'expMJD', 'periodMin':10., 'periodMax':40.,
+        mkwargs = {'col':'expMJD', 'periodMin':2, 'periodMax':10., 'nPeriods':5,
                     'metricName':'PeriodDeviationMetric', 'units':'Proportional Deviation'}
         metric = configureMetric('mafContrib.PeriodDeviationMetric', kwargs=mkwargs,
                                  summaryStats={'MeanMetric':{}, 'RmsMetric':{}})
