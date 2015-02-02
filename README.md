@@ -3,6 +3,8 @@
 
 Contributed code for MAF (sims_maf).
 
+To browse some example MAF analyses, check out the **[sims_maf_contrib Wiki!](https://github.com/LSST-nonproject/sims_maf_contrib/wiki)**
+
 ## Guidelines for contributors
 
 New metric and stacker classes go in 'mafContrib'.
