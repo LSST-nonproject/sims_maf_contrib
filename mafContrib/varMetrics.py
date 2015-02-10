@@ -5,16 +5,16 @@ from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 from scipy.signal import lombscargle
 
-def find_period(times, mags, minperiod=2., maxperiod=35., nbinmax=10**6):
+def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**6):
     """
-    Find the period of a lightcurve.  The parameters used here imply magnitudes
-    but there is no reason this would not work if fluxes are passed.
+    Find the period of a lightcurve using scipy's lombscargle method.
+    The parameters used here imply magnitudes but there is no reason this would not work if fluxes are passed.
 
     :param times: A list of times for the given observations
     :param mags: A list of magnitudes for the object at the given times
     :param minperiod: Minimum period to search
     :param maxperiod: Maximum period to search
-    :param nbins: Number of frequency bins to use in the search
+    :param nbinmax: Maximum number of frequency bins to use in the search
     :returns: Period in the same units as used in times.  This is simply
               the max value in the Lomb-Scargle periodogram
     """
@@ -39,10 +39,9 @@ def find_period(times, mags, minperiod=2., maxperiod=35., nbinmax=10**6):
 
 class PeriodDeviationMetric(BaseMetric):
     """
-    Measure the percentage deviation of recovered periods for 
+    Measure the percentage deviation of recovered periods for
     pure sine wave variability (in magnitude).
     """
-
     def __init__(self, col='expMJD', periodMin=3., periodMax=35., nPeriods=5,
                  meanMag=21., amplitude=1.,
                  **kwargs):
@@ -62,38 +61,39 @@ class PeriodDeviationMetric(BaseMetric):
         self.amplitude = amplitude
         super(PeriodDeviationMetric, self).__init__(col, **kwargs)
 
-    def run(self, dataSlice, slicePoint):
+    def run(self, dataSlice, slicePoint=None):
         """
         Run the PeriodDeviationMetric
         :param dataSlice: Data for this slice.
-        :param slicePoint: Metadata for the slice.
+        :param slicePoint: Metadata for the slice. (optional)
         :return: The error in the period estimated from a Lomb-Scargle periodogram
         """
 
         # Make sure the observation times are sorted
         data = np.sort(dataSlice[self.colname])
 
-        # Make up a 'nPeriods' random periods within range of min to max.
+        # Create 'nPeriods' random periods within range of min to max.
         periods = self.periodMin + np.random.random(self.nPeriods)*(self.periodMax - self.periodMin)
-        periodsdev = np.zeros(len(periods), dtype='float')
+        periodsdev = np.zeros(self.nPeriods, dtype='float')
         for i, period in enumerate(periods):
             omega = 1./period
-            # Make up the amplitude.
+            # Calculate up the amplitude.
             lc = self.meanMag + self.amplitude*np.sin(omega*data)
-
-            # Guess at the period given a window in period buffered by a day on either side
+            # Try to recover the period given a window buffered by min of a day or 20% of period value.
             if len(lc) < 3:
                 # Too few points to find a period
                 return self.badval
-            pguess = find_period(data, lc, minperiod=self.periodMin-1., maxperiod=self.periodMax+1.)
+            minperiod = np.min([self.periodMin - self.periodMin*0.20, self.periodMin - 1.*24.*60.*60.])
+            maxperiod = np.max([self.periodMax + self.periodMax*0.20, self.periodMax + 1.*24.*60.*60])
+
+            pguess = find_period_LS(data, lc, minperiod=minperiod, maxperiod=maxperiod)
             periodsdev[i] = (pguess - period) / period
 
         return {'periods': periods, 'periodsdev': periodsdev}
 
     def reducePDev(self, metricVal, period=None):
         """
-        At a particular slicepoint, return the period deviation for the minimum period
-        at 'period'.
+        At a particular slicepoint, return the period deviation for 'period'.
         If Period is None, chooses a random period deviation.
         """
         if period is None:
@@ -107,20 +107,20 @@ class PeriodDeviationMetric(BaseMetric):
         """
         worstP = metricVal['periods'][np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())]
         return worstP
-        # Guess at the period given a window in period buffered by a day on either side
-        if len(lc) < 3:
-            # Too few points to find a period
-            return self.badval
-        pguess = find_period(data, lc, minperiod=self.periodMin-1., maxperiod=self.periodMax+1.)
-        return (pguess - period) / period
+
+    def reduceWorstPDev(self, metricVal):
+        """
+        At each slicepoint, return the largest period deviation.
+        """
+        worstPDev = metricVal['periodsdev'][np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())]
+        return worstPDev
 
 class PhaseUniformityMetric(BaseMetric):
     """
-    Measure the uniformity of phase coverage for observations of periodic 
+    Measure the uniformity of phase coverage for observations of periodic
     variables.
     """
-
-    def __init__(self, col, periodMin=3., periodMax=35., **kwargs):
+    def __init__(self, col='expMJD', nPeriods=5, periodMin=3., periodMax=35., **kwargs):
         """
         Construct an instance of a PhaseUniformityMetric class
 
@@ -130,13 +130,14 @@ class PhaseUniformityMetric(BaseMetric):
         """
         self.periodMin = periodMin
         self.periodMax = periodMax
+        self.nPeriods = nPeriods
         super(PhaseUniformityMetric, self).__init__(col, **kwargs)
 
-    def run(self, dataSlice, slicePoint):
+    def run(self, dataSlice, slicePoint=None):
         """
         Run the PhaseUniformityMetric
         :param dataSlice: Data for this slice.
-        :param slicePoint: Metadata for the slice.
+        :param slicePoint: Metadata for the slice (Optional as not used here).
         :return: The coverage uniformity (0-1)
         """
 
@@ -144,13 +145,40 @@ class PhaseUniformityMetric(BaseMetric):
         data = np.sort(dataSlice[self.colname])
 
         # Make up a period.  Make this random for each ra/dec point
-        period = self.periodMin + np.random.random_sample()*(self.periodMax - self.periodMin)
+        # Create 'nPeriods' random periods within range of min to max.
+        periods = self.periodMin + np.random.random(self.nPeriods)*(self.periodMax - self.periodMin)
+        D_max = np.zeros(self.nPeriods, float)
+        for i, period in enumerate(periods):
+            # For each period, calculate the phase coverage.
+            # find the phases
+            phases = np.sort((data % period)/period)
+            # Calculate deviation from uniform coverage of the phase -
+            # adapted from cadenceMetrics.UniformityMetric
+            n_cum = np.arange(1,phases.size+1)/float(phases.size) # cdf of phases
+            D_max[i] = np.max(np.abs(n_cum - phases - phases[1]))
 
-        # find the phases
-        phases = np.sort((data % period)/period)
+        return {'periods':periods, 'D_max':D_max}
 
-        # adapted from cadenceMetrics.UniformityMetric
-        n_cum = np.arange(1,phases.size+1)/float(phases.size) # cdf of phases
-        D_max = np.max(np.abs(n_cum - phases - phases[1])) 
+    def reduceDMax(self, metricVal, period=None):
+        """
+        At each slicepoint, return the D_max value for 'period'.
+        If Period is None, chooses a random period deviation.
+        """
+        if period is None:
+            return np.random.choice(metricVal['D_max'])
+        else:
+            return metricVal['D_max'][np.where(metricVal['periods'] == period)][0]
 
-        return D_max
+    def reduceWorstPeriod(self, metricVal):
+        """
+        At each slicepoint, return the period with the worst phase coverage.
+        """
+        worstP = metricVal['periods'][np.where(metricVal['D_max'] == metricVal['D_max'].max())]
+        return worstP
+
+    def reduceWorstDMax(self, metricVal):
+        """
+        At each slicepoint, return the largest (worst) d_max value.
+        """
+        worstDmax = metricVal['D_max'][np.where(metricVal['D_max'] == metricVal['D_max'].max())]
+        return worstDmax
