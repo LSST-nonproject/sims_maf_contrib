@@ -1,4 +1,4 @@
-# Test for mafConfig setup. 
+# Test for mafConfig setup.
 
 from lsst.sims.maf.driver.mafConfig import configureMetric, configureSlicer, makeDict
 

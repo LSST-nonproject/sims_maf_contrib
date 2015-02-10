@@ -1,30 +1,82 @@
-# Here is an example of a very very simple MAF configuration driver script
-# to run:
-# runDriver.py varMetricExample.py
+# runFlexibleDriver.py varMetricExample.py --runName runName [--dbDir  dirname]  [--outDir outputdir]
 
 # Import MAF helper functions
+import os
 from lsst.sims.maf.driver.mafConfig import configureSlicer, configureMetric, makeDict
+import lsst.sims.maf.utils as utils
 
-# Tell the driver where to get contributed modules
-root.modules = ['mafContrib']
-root.figformat = 'png'
+def mConfig(config, runName, dbDir='.', outputDir='VarOut', nside=16, **kwargs):
 
-# Set the output directory
-root.outputDir = './VarMetric'
-# This should be changed to point to an OpSim output on disk
-root.dbAddress = {'dbAddress':'sqlite:///ops1_1140_sqlite.db'}
-# Name of this run (filename base)
-root.opsimName = 'ops1_1140'
+    # Tell the driver where to get contributed modules
+    config.modules = ['mafContrib']
+    # Set the output figure format.
+    config.figformat = 'pdf'
 
-# Configure a metric to run. Compute the recovered period for each HEALPIX.
-# Once the period has been computed everywhere on the sky, compute the RMS as a summary statistic.
-kwargs = {'col':'expMJD', 'periodMin':10., 'periodMax':40., 'metricName':'SinPeriodMetric', 'units':'days'}
-metric = configureMetric('mafContrib.SinPeriodMetric', kwargs=kwargs,
-                         summaryStats={'RmsMetric':{}})
+    # Set the output directory
+    config.outputDir = outputDir
 
-# Configure a slicer.  Use the Healpixslicer to compute the metric at points in the sky.
-# Set the constraint as an empty string if all data are to be returned.
-slicer = configureSlicer('HealpixSlicer', metricDict=makeDict(metric),
-                          constraints=['filter=\'r\''])
+    # Setup Database access
+    if runName.endswith('_sqlite.db'):
+        runName = runName.replace('_sqlite.db', '')
+    sqlitefile = os.path.join(dbDir, runName + '_sqlite.db')
+    config.dbAddress ={'dbAddress':'sqlite:///'+sqlitefile}
+    config.opsimName = runName
+    config.figformat = 'pdf'
 
-root.slicers = makeDict(slicer)
+    config.verbose = True
+
+    # Filter list, and map of colors (for plots) to filters.
+    filters = ['u','g','r','i','z','y']
+    colors={'u':'m','g':'b','r':'g','i':'y','z':'r','y':'k'}
+    filtorder = {'u':1,'g':2,'r':3,'i':4,'z':5,'y':6}
+
+    # Set parameter for healpix resolution.
+    nside = nside
+    # Set filters to use.
+    filterlist = ['r']
+    # Set the number of years to use.
+    nyears = 3
+    nnights = int(nyears * 365)
+
+    for f in filterlist:
+        # Set up the sqlconstraint.
+        sqlconstraint = 'filter=\'%s\' and night<%d' %(f, nnights)
+        metriclist = []
+
+        # Configure the period deviation metric to run. Compute the recovered period for each HEALPIX.
+        # Once the period has been computed everywhere on the sky, compute the mean and RMS as a summary statistic.
+        mkwargs = {'col':'expMJD', 'periodMin':2, 'periodMax':10., 'nPeriods':5,
+                    'metricName':'ShortPeriodDeviations'}
+        metriclist.append(configureMetric('mafContrib.PeriodDeviationMetric', kwargs=mkwargs,
+                                    summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
+                                    displayDict={'group':'Cadence', 'subgroup':'Period Recovery', 'order':filtorder[f]}))
+        # Configure an additional version for long period variables.
+        mkwargs = {'col':'expMJD', 'periodMin':100, 'periodMax':300., 'nPeriods':5,
+                    'metricName':'LongPeriodDeviations'}
+        metriclist.append(configureMetric('mafContrib.PeriodDeviationMetric', kwargs=mkwargs,
+                                    summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
+                                    displayDict={'group':'Cadence', 'subgroup':'Period Recovery', 'order':filtorder[f]}))
+
+        # Configure the phase coverage metric.
+        mkwargs = {'col':'expMJD', 'periodMin':2, 'periodMax':10., 'nPeriods':5,
+                    'metricName':'ShortPeriod Phase Uniformity'}
+        metriclist.append(configureMetric('mafContrib.PhaseUniformityMetric', kwargs=mkwargs,
+                                    summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
+                                    displayDict={'group':'Cadence', 'subgroup':'Phase Uniformity', 'order':filtorder[f]}))
+        # Configure an additional version for long period variables.
+        mkwargs = {'col':'expMJD', 'periodMin':100, 'periodMax':300., 'nPeriods':5,
+                    'metricName':'LongPeriod Phase Uniformity'}
+        metriclist.append(configureMetric('mafContrib.PhaseUniformityMetric', kwargs=mkwargs,
+                                    summaryStats={'MeanMetric':{}, 'RmsMetric':{}},
+                                    displayDict={'group':'Cadence', 'subgroup':'Phase Uniformity', 'order':filtorder[f]}))
+
+        # Configure a slicer.  Use the Healpixslicer to compute the metric at points in the sky.
+        # Set the constraint as an empty string if all data are to be returned.
+        slicer = configureSlicer('HealpixSlicer',
+                                kwargs={'nside':nside},
+                                metricDict=makeDict(**metriclist),
+                                constraints=[sqlconstraint])
+
+    config.slicers = makeDict(slicer)
+
+    return config
