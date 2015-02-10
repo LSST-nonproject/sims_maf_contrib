@@ -3,7 +3,7 @@
 
 import numpy as np
 from lsst.sims.maf.stackers import BaseStacker
-from lsst.sims.maf.stackers import wrapRA, wrapDec
+from lsst.sims.maf.stackers import wrapRADec
 
 class YearlyDitherStacker(BaseStacker):
     """
@@ -22,23 +22,22 @@ class YearlyDitherStacker(BaseStacker):
         self.expMJDCol = expMJDCol
         self.raCol = raCol
         self.decCol = decCol
-                
+
     def run(self, simData):
         # Add new columns to simData.
         simData = self._addStackers(simData)
         # What 'year' is each visit in?
         year = np.floor((simData[self.expMJDCol] - simData[self.expMJDCol][0]) / 365.25)
-        # Define dither based on year. 
+        # Define dither based on year.
         ditherRA = np.zeros(len(simData[self.raCol]))
         ditherDec = np.zeros(len(simData[self.decCol]))
         # In y1, y3, y5, y6, y8 & y10 ra dither = 0.
         # In y2 & y7, ra dither = +ditherOffset
-        # In y4 & y9, ra dither = -ditherOffset    
+        # In y4 & y9, ra dither = -ditherOffset
         condition = ((year == 2) | (year == 7))
         ditherRA[condition] = self.ditherOffset
         condition = ((year == 4) | (year == 9))
         ditherRA[condition] = -1.*self.ditherOffset
-        simData['yearlyDitherRA'] = wrapRA(simData[self.raCol] + ditherRA)
         # In y1, y2, y4, y6, y7 & y9, dec dither = 0
         # In y3 & y8, dec dither = -ditherOffset
         # In y5 & y10, dec dither = ditherOffset
@@ -46,7 +45,9 @@ class YearlyDitherStacker(BaseStacker):
         ditherDec[condition] = -1.*self.ditherOffset
         condition = ((year == 5) | (year == 10))
         ditherDec[condition] = self.ditherOffset
-        simData['yearlyDitherDec'] = wrapDec(simData[self.decCol] + ditherDec)
+        # Calculate actual RA/Dec and wrap into appropriate range.
+        simData['yearlyDitherRA'], simData['yearlyDitherDec'] = wrapRADec(simData[self.raCol] + ditherRA,
+                                                                          simData[self.decCol] + ditherDec)
         return simData
-                                            
+
 
