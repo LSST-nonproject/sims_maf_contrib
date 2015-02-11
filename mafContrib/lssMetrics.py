@@ -2,7 +2,7 @@ import numpy as np
 import healpy as hp
 import scipy
 
-from lsst.sims.maf.metrics import BaseMetric
+from lsst.sims.maf.metrics import BaseMetric, Coaddm5Metric
 
 
 class GalaxyCountsMetric(BaseMetric):
@@ -13,7 +13,6 @@ class GalaxyCountsMetric(BaseMetric):
         self.m5Col = m5Col
         super(GalaxyCountsMetric, self).__init__(col=self.m5Col, **kwargs)
         # Use the coadded depth metric to calculate the coadded depth at each point.
-        from .simpleMetrics import Coaddm5Metric
         self.coaddmetric = Coaddm5Metric(m5Col=self.m5Col)
         # Total of 41253.0 galaxies across the sky (at what magnitude?).
         # This didn't seem to work quite right for me..
