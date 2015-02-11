@@ -9,9 +9,9 @@ class GalaxyCountsMetric(BaseMetric):
     """
     Estimate the number of galaxies expected at a particular coadded depth.
     """
-    def __init__(self, m5Col = 'fiveSigmaDepth', nside=128, **kwargs):
+    def __init__(self, m5Col = 'fiveSigmaDepth', nside=128, metricName='GalaxyCounts', **kwargs):
         self.m5Col = m5Col
-        super(GalaxyCountsMetric, self).__init__(col=self.m5Col, **kwargs)
+        super(GalaxyCountsMetric, self).__init__(col=self.m5Col, metricName=metricName, **kwargs)
         # Use the coadded depth metric to calculate the coadded depth at each point.
         self.coaddmetric = Coaddm5Metric(m5Col=self.m5Col)
         # Total of 41253.0 galaxies across the sky (at what magnitude?).
