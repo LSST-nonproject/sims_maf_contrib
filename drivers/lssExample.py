@@ -13,6 +13,8 @@ def mConfig(config, runName, dbDir='.', outputDir='Dithers', nside=128, **kwargs
     dbDir is the directory containing the sqlite database
     outputDir is the output directory
     """
+    config.modules = ['mafContrib']
+
     # Setup Database access
     config.outputDir = outputDir
     if runName.endswith('_sqlite.db'):
@@ -42,6 +44,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Dithers', nside=128, **kwargs
     racol = 'ditheredRA'
     deccol = 'ditheredDec'
     filterlist = ['r', 'i']
+    slicerList = []
     for f in filterlist:
         sqlconstraint = "filter = '%s'" %(f)
         sqlconstraint += 'and %s' %(wfdWhere)
@@ -52,7 +55,7 @@ def mConfig(config, runName, dbDir='.', outputDir='Dithers', nside=128, **kwargs
                                             'order':filtorder[f]}))
         slicer = configureSlicer('HealpixSlicer', kwargs={'nside':nside, 'spatialkey1':racol, 'spatialkey2':deccol},
                                  constraints=[sqlconstraint], metricDict=makeDict(*metricList),
-                                 metadata=dithername)
+                                 metadata='Default Dither')
         slicerList.append(slicer)
 
     config.slicers = makeDict(*slicerList)
