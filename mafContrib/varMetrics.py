@@ -1,9 +1,10 @@
 # Example of a *very* simple variabiilty metric
 # krughoff@uw.edu, ebellm, ljones
 
-from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 from scipy.signal import lombscargle
+
+from lsst.sims.maf.metrics import BaseMetric
 
 def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**6):
     """
