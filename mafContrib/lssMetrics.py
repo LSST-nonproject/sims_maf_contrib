@@ -17,6 +17,8 @@ class GalaxyCountsMetric(BaseMetric):
         # Total of 41253.0 galaxies across the sky (at what magnitude?).
         # This didn't seem to work quite right for me..
         self.scale = 41253.0 / hp.nside2npix(nside) / 5000.
+        # Reset units (otherwise uses magnitudes).
+        self.units = 'Galaxy Counts'
 
     def _galCount(self, coaddm5, apparent_mag):
         dn_gal = np.power(10., -3.52) * np.power(10., 0.34*apparent_mag)
