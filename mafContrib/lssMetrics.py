@@ -30,10 +30,8 @@ class GalaxyCountsMetric(BaseMetric):
         coaddm5 = self.coaddmetric.run(dataSlice)
         # Calculate the number of galaxies.
         # From Carroll et al, 2014 SPIE (http://arxiv.org/abs/1501.04733)
-        # Instead of a number of galaxies accurate on an absolute scale,
-        #  this may give the number of galaxies on a relative scale as I haven't
-        #  included the effects of a rollover in efficiency around the m5 value,
-        #  or the size of the healpix, or account for the overall number of galaxies around the sky.
+        # I'm not entirely certain this gives a properly calibrated number of galaxy counts,
+        # however it is proportional to the expected number at least (and should be within an order of magnitude)
         num_gal, intErr = scipy.integrate.quad(self._galCount, -np.inf, 32, args=coaddm5)
         num_gal *= self.scale
         return num_gal
