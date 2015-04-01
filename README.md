@@ -44,6 +44,6 @@ Now you can run one of the drivers from the examples directory in your workspace
 
     cd work
     ln -s $SIMS_MAF_DATA_DIR/ops1_1140_sqlite.db .
-    runDriver.py $SIMS_MAF_CONTRIB_DIR/examples/LensedQuasarTimeDelays.py
+    runFlexibleDriver.py $SIMS_MAF_CONTRIB_DIR/examples/LensedQuasarTimeDelays.py --runName ops1_1140
 
 In this example, you would set the environment variable `$SIMS_MAF_DATA_DIR` to point at the directory where you keep your opsim database files (your cadence workshop USB stick, for example). You'll want to browse the code that has already been checked in to avoid reinventing the wheel. 
