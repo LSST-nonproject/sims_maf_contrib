@@ -6,7 +6,7 @@ from scipy.signal import lombscargle
 
 from lsst.sims.maf.metrics import BaseMetric
 
-def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**6):
+def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**6, verbose=False):
     """
     Find the period of a lightcurve using scipy's lombscargle method.
     The parameters used here imply magnitudes but there is no reason this would not work if fluxes are passed.
@@ -23,7 +23,8 @@ def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**6):
         minperiod = 0.01
     nbins = int((times.max() - times.min())/minperiod * 1000)
     if nbins > nbinmax:
-        print 'lowered nbins'
+        if verbose:
+            print 'lowered nbins'
         nbins = nbinmax
     # Recenter the magnitude measurements about zero
     dmags = mags - np.median(mags)
@@ -116,70 +117,66 @@ class PeriodDeviationMetric(BaseMetric):
         worstPDev = metricVal['periodsdev'][np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())]
         return worstPDev
 
-class PhaseUniformityMetric(BaseMetric):
+class PhaseGapMetric(BaseMetric):
     """
-    Measure the uniformity of phase coverage for observations of periodic
-    variables.
+    Measure the maximum gap in phase coverage for observations of periodic variables.
     """
-    def __init__(self, col='expMJD', nPeriods=5, periodMin=3., periodMax=35., **kwargs):
+    def __init__(self, col='expMJD', nPeriods=5, periodMin=3., periodMax=35., nVisitsMin=3, **kwargs):
         """
-        Construct an instance of a PhaseUniformityMetric class
+        Construct an instance of a PhaseGapMetric class
 
         :param col: Name of the column to use for the observation times, commonly 'expMJD'
+        :param nPeriods: Number of periods to test
         :param periodMin: Minimum period to test (days)
         :param periodMax: Maximimum period to test (days)
+        :param nVistisMin: minimum number of visits necessary before looking for the phase gap
         """
         self.periodMin = periodMin
         self.periodMax = periodMax
         self.nPeriods = nPeriods
-        super(PhaseUniformityMetric, self).__init__(col, **kwargs)
+        self.nVisitsMin = nVisitsMin
+        super(PhaseGapMetric, self).__init__(col, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         """
-        Run the PhaseUniformityMetric
+        Run the PhaseGapMetric.
         :param dataSlice: Data for this slice.
         :param slicePoint: Metadata for the slice (Optional as not used here).
-        :return: The coverage uniformity (0-1)
+        :return: a dictionary of the periods used here and the corresponding largest gaps.
         """
-
-        # Make sure the observation times are sorted
-        data = np.sort(dataSlice[self.colname])
-
-        # Make up a period.  Make this random for each ra/dec point
+        if len(dataSlice) < self.nVisitsMin:
+            return self.badval
         # Create 'nPeriods' random periods within range of min to max.
         periods = self.periodMin + np.random.random(self.nPeriods)*(self.periodMax - self.periodMin)
-        D_max = np.zeros(self.nPeriods, float)
+        maxGap = np.zeros(self.nPeriods, float)
+
         for i, period in enumerate(periods):
-            # For each period, calculate the phase coverage.
-            # find the phases
-            phases = np.sort((data % period)/period)
-            # Calculate deviation from uniform coverage of the phase -
-            # adapted from cadenceMetrics.UniformityMetric
-            n_cum = np.arange(1,phases.size+1)/float(phases.size) # cdf of phases
-            D_max[i] = np.max(np.abs(n_cum - phases - phases[1]))
+            # For each period, calculate the phases.
+            phases = (dataSlice[self.colname] % period)/period
+            phases = np.sort(phases)
+            # Find the largest gap in coverage.
+            gaps = np.diff(phases)
+            start_to_end = np.array([1.0 - phases[-1] + phases[0]], float)
+            gaps = np.concatenate([gaps, start_to_end])
+            maxGap[i] = np.max(gaps)
 
-        return {'periods':periods, 'D_max':D_max}
+        return {'periods':periods, 'maxGap':maxGap}
 
-    def reduceDMax(self, metricVal, period=None):
+    def reduceMeanGap(self, metricVal):
         """
-        At each slicepoint, return the D_max value for 'period'.
-        If Period is None, chooses a random period deviation.
+        At each slicepoint, return the mean gap value.
         """
-        if period is None:
-            return np.random.choice(metricVal['D_max'])
-        else:
-            return metricVal['D_max'][np.where(metricVal['periods'] == period)][0]
+        return np.mean(metricVal['maxGap'])
 
     def reduceWorstPeriod(self, metricVal):
         """
-        At each slicepoint, return the period with the worst phase coverage.
+        At each slicepoint, return the period with the largest phase gap.
         """
-        worstP = metricVal['periods'][np.where(metricVal['D_max'] == metricVal['D_max'].max())]
+        worstP = metricVal['periods'][np.where(metricVal['gapMax'] == metricVal['gapMax'].max())]
         return worstP
 
-    def reduceWorstDMax(self, metricVal):
+    def reduceLargestGap(self, metricVal):
         """
-        At each slicepoint, return the largest (worst) d_max value.
+        At each slicepoint, return the largest phase gap value.
         """
-        worstDmax = metricVal['D_max'][np.where(metricVal['D_max'] == metricVal['D_max'].max())]
-        return worstDmax
+        return np.max(metricVal['maxGap'])
