@@ -6,7 +6,7 @@ from scipy.signal import lombscargle
 
 from lsst.sims.maf.metrics import BaseMetric
 
-def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**6, verbose=False):
+def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**5, verbose=False):
     """
     Find the period of a lightcurve using scipy's lombscargle method.
     The parameters used here imply magnitudes but there is no reason this would not work if fluxes are passed.
@@ -26,16 +26,16 @@ def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**6, verb
         if verbose:
             print 'lowered nbins'
         nbins = nbinmax
+
     # Recenter the magnitude measurements about zero
     dmags = mags - np.median(mags)
-
     # Create frequency bins
     f = np.linspace(1./maxperiod, 1./minperiod, nbins)
 
     # Calculate periodogram
     pgram = lombscargle(times, dmags, f)
-    idx = np.argmax(pgram)
 
+    idx = np.argmax(pgram)
     # Return period of the bin with the max value in the periodogram
     return 1./f[idx]
 
@@ -45,7 +45,7 @@ class PeriodDeviationMetric(BaseMetric):
     pure sine wave variability (in magnitude).
     """
     def __init__(self, col='expMJD', periodMin=3., periodMax=35., nPeriods=5,
-                 meanMag=21., amplitude=1.,
+                 meanMag=21., amplitude=1., metricName='Period Deviation',
                  **kwargs):
         """
         Construct an instance of a PeriodDeviationMetric class
@@ -58,10 +58,12 @@ class PeriodDeviationMetric(BaseMetric):
         """
         self.periodMin = periodMin
         self.periodMax = periodMax
+        self.guessPMin = np.min([self.periodMin*0.8, self.periodMin-1])
+        self.guessPMax = np.max([self.periodMax*1.20, self.periodMax+1])
         self.nPeriods = nPeriods
         self.meanMag = meanMag
         self.amplitude = amplitude
-        super(PeriodDeviationMetric, self).__init__(col, **kwargs)
+        super(PeriodDeviationMetric, self).__init__(col, metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         """
@@ -85,10 +87,8 @@ class PeriodDeviationMetric(BaseMetric):
             if len(lc) < 3:
                 # Too few points to find a period
                 return self.badval
-            minperiod = np.min([self.periodMin - self.periodMin*0.20, self.periodMin - 1.*24.*60.*60.])
-            maxperiod = np.max([self.periodMax + self.periodMax*0.20, self.periodMax + 1.*24.*60.*60])
 
-            pguess = find_period_LS(data, lc, minperiod=minperiod, maxperiod=maxperiod)
+            pguess = find_period_LS(data, lc, minperiod=self.guessPMin, maxperiod=self.guessPMax)
             periodsdev[i] = (pguess - period) / period
 
         return {'periods': periods, 'periodsdev': periodsdev}
@@ -121,7 +121,8 @@ class PhaseGapMetric(BaseMetric):
     """
     Measure the maximum gap in phase coverage for observations of periodic variables.
     """
-    def __init__(self, col='expMJD', nPeriods=5, periodMin=3., periodMax=35., nVisitsMin=3, **kwargs):
+    def __init__(self, col='expMJD', nPeriods=5, periodMin=3., periodMax=35., nVisitsMin=3,
+                 metricName='Phase Gap', **kwargs):
         """
         Construct an instance of a PhaseGapMetric class
 
@@ -135,7 +136,7 @@ class PhaseGapMetric(BaseMetric):
         self.periodMax = periodMax
         self.nPeriods = nPeriods
         self.nVisitsMin = nVisitsMin
-        super(PhaseGapMetric, self).__init__(col, **kwargs)
+        super(PhaseGapMetric, self).__init__(col, metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         """
@@ -160,23 +161,23 @@ class PhaseGapMetric(BaseMetric):
             gaps = np.concatenate([gaps, start_to_end])
             maxGap[i] = np.max(gaps)
 
-        return {'periods':periods, 'maxGap':maxGap}
+        return {'periods':periods, 'maxGaps':maxGap}
 
     def reduceMeanGap(self, metricVal):
         """
         At each slicepoint, return the mean gap value.
         """
-        return np.mean(metricVal['maxGap'])
+        return np.mean(metricVal['maxGaps'])
 
     def reduceWorstPeriod(self, metricVal):
         """
         At each slicepoint, return the period with the largest phase gap.
         """
-        worstP = metricVal['periods'][np.where(metricVal['gapMax'] == metricVal['gapMax'].max())]
+        worstP = metricVal['periods'][np.where(metricVal['maxGaps'] == metricVal['maxGaps'].max())]
         return worstP
 
     def reduceLargestGap(self, metricVal):
         """
         At each slicepoint, return the largest phase gap value.
         """
-        return np.max(metricVal['maxGap'])
+        return np.max(metricVal['maxGaps'])
