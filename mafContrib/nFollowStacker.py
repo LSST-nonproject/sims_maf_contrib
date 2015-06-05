@@ -29,6 +29,11 @@ class NFollowStacker(BaseStacker):
         simData = self._addStackers(simData)
         simData['nObservatories'] = 0
 
+        # XXX -- future feature.  Could add an exposure length, so we could say
+        # we only want observatories above a certain size, that can take an exposure
+        # above a certain length.  Then, just advance the simData[self.raCol] by the
+        # correct amount.
+
         for obs in self.telescopes:
             alt,az,pa = raDecToAltAzPa(simData[self.raCol], simData[self.decCol],
                                        np.radians(obs['lon']), np.radians(obs['lat']),
