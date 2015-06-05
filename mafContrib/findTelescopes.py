@@ -49,29 +49,29 @@ def findTelescopes(minSize=3.):
         ['apperture','name','lat','lon'],[float, '|S38', float, float]))
 
 
-    # name, lat (S negative), lon (E negative)
+    # name, lat (S negative), lon (W negative)
     observatories = [
-        ['Cerro Paranal', -24, 38, 70, 24],
-        ['Nizhny Arkhyz', 43, 39, -41, 26],
-        ['Cerro La Silla', -29, 15, 70, 44],
-        ['Lowell Observatory', 35, 12, 111, 40],
-        ['Apache Point', 32, 47, 105, 49],
-        ['Mount Hamilton', 37, 21, 121, 38],
-        ['South African Astronomical Observatory', -32, 23, -20 ,49],
-        ['Cerro Pachon',  -30, 20, 70, 59],
-        ['Coonabarabran',-31, 17, -149, 04],
-        ['Mt. Fowlkes', 30,40,104,1],
-        ['La Palma', 28, 46, 17, 53],
-        ['Mt. Graham',32, 42, 109, 53],
-        ['Calar Alto', 37,13,2,33],
-        ['British Columbia',49,17, 122,34],
-        ['Kitt Peak',31,57,111,37],
-        ['La Serena',-29,0,4,43],
-        ['Palomar Mountain',33,21,116,52],
-        ['Xinglong Station',40,23,-105,50],
-        ['Mt. Hopkins', 31,41, 110,53],
-        ['Cerro Tololo',-30,10,70,49],
-        ['Mauna Kea', 19,50,155,28]
+        ['Cerro Paranal', -24, 38, -70, 24],
+        ['Nizhny Arkhyz', 43, 39, 41, 26],
+        ['Cerro La Silla', -29, 15, -70, 44],
+        ['Lowell Observatory', 35, 12, -111, 40],
+        ['Apache Point', 32, 47, -105, 49],
+        ['Mount Hamilton', 37, 21, -121, 38],
+        ['South African Astronomical Observatory', -32, 23, 20 ,49],
+        ['Cerro Pachon',  -30, 20, -70, 59],
+        ['Coonabarabran',-31, 17, 149, 04],
+        ['Mt. Fowlkes', 30,40,-104,1],
+        ['La Palma', 28, 46, -17, 53],
+        ['Mt. Graham',32, 42, -109, 53],
+        ['Calar Alto', 37,13,-2,33],
+        ['British Columbia',49,17, -122,34],
+        ['Kitt Peak',31,57,-111,37],
+        ['La Serena',-30,10,-70,48],
+        ['Palomar Mountain',33,21,-116,52],
+        ['Xinglong Station',40,23,105,50],
+        ['Mt. Hopkins', 31,41, -110,53],
+        ['Cerro Tololo',-30,10,-70,49],
+        ['Mauna Kea', 19,50,-155,28]
     ]
 
     # Make a nice little dict to look up the observatory positions
