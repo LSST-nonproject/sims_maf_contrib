@@ -10,7 +10,15 @@ class NFollowStacker(BaseStacker):
     Add the number of telescopes that could follow up any visit.
     """
     def __init__(self, minSize=3.0, expMJDCol='expMJD',
-                 raCol='fieldRA', decCol='fieldDec', airmassLimit=2.5):
+                 raCol='fieldRA', decCol='fieldDec', airmassLimit=2.5,
+                 timeSteps=[0.,1.]):
+        """
+        minSize: The minimum telescope apperture to use
+        airmassLimit: The maximum airmass a target can be at and stil be counted
+        timeSteps: timeStep to use (hours).  The time steps to use. Default=[0,1], which means the object
+        must be above the airmass limit at the time of the LSST visit, or one hour after, to be counted as
+        followed up.
+        """
         self.expMJDCol = expMJDCol
         self.raCol = raCol
         self.decCol = decCol
@@ -20,6 +28,7 @@ class NFollowStacker(BaseStacker):
         self.colsReq = [expMJDCol, raCol, decCol]
         self.units = ['#']
         self.airmassLimit = airmassLimit
+        self.timeSteps = timeSteps
 
         self.telescopes = findTelescopes(minSize = minSize)
 
@@ -29,17 +38,17 @@ class NFollowStacker(BaseStacker):
         simData = self._addStackers(simData)
         simData['nObservatories'] = 0
 
-        # XXX -- future feature.  Could add an exposure length, so we could say
-        # we only want observatories above a certain size, that can take an exposure
-        # above a certain length.  Then, just advance the simData[self.raCol] by the
-        # correct amount.
-
         for obs in self.telescopes:
-            alt,az,pa = raDecToAltAzPa(simData[self.raCol], simData[self.decCol],
-                                       np.radians(obs['lon']), np.radians(obs['lat']),
-                                       simData[self.expMJDCol])
-            airmass = 1./(np.cos(np.pi/2.-alt))
-            good = np.where((airmass <= self.airmassLimit) & (airmass >= 1.) )
-            simData['nObservatories'][good] += 1
+            obsCount = simData['nObservatories']*0
+            for step in self.timeSteps:
+                alt,az,pa = raDecToAltAzPa(simData[self.raCol], simData[self.decCol],
+                                           np.radians(obs['lon']), np.radians(obs['lat']),
+                                           simData[self.expMJDCol]+step/24.)
+                airmass = 1./(np.cos(np.pi/2.-alt))
+                good = np.where((airmass <= self.airmassLimit) & (airmass >= 1.) )
+                obsCount[good] = 1
+
+            simData['nObservatories'] += obsCount
+
 
         return simData
