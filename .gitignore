@@ -5,3 +5,4 @@ tmp.sqlite
 *.npz
 *.png
 *.pdf
+.ipynb_checkpoints
