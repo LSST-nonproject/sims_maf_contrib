@@ -5,25 +5,19 @@ Contributed code for MAF (sims_maf).
 
 To browse some example MAF analyses, check out the **[sims_maf_contrib Wiki!](https://github.com/LSST-nonproject/sims_maf_contrib/wiki)**
 
-If you get stuck, [write us an issue](https://github.com/LSST-nonproject/sims_maf_contrib/issues) and we'll improve this documentation.
+If you get stuck, [write us an issue](https://github.com/LSST-nonproject/sims_maf_contrib/issues) and we'll improve this documentation. 
 
 ## Guidelines for contributors
 
-New metric and stacker classes go in 'mafContrib'.
-Driver configuration scripts to use those new metric and stacker classes go in 'examples'.
+New metric and stacker classes go in 'mafContrib', and an ipython notebook demonstrating and documentating the new code goes into the relevant directory under 'science'.
 
 When contributing new metrics, please do the following:
 * Put your name and email in a comment at the top of the file.
-* Document your code. This includes a desscription of what your metric does -- if you place this information
+* Document your code. This includes a short description of what your metric does -- if you place this information
   in triple-quotes directly after the class description, it will be available if someone types 
   'help(YourMetricName)' in a python shell. 
-* Make sure someone else can tell what is being computed and why.
-* Make it clear what the units of the output are.
-* Make it clear what values are better or worse.
-* Feel free to include a config file that exercises the code (in examples).
-    You can use the displayDict to add a caption.
+* An ipython notebook using your code allows you to include much more documentation, enough so that someone else can  tell what is being computed and why. You can include units, what the returned values are, whether larger or smaller  values are 'better'. 
 
-Please submit your code along with a configuration file that runs it so we can easily reproduce your outputs.
 
 ## Using the contributed metrics
 
@@ -40,10 +34,9 @@ Setup the package.
 
     setup sims_maf_contrib
 
-Now you can run one of the drivers from the examples directory in your workspace - which must contain the required sqlite opsim database file. For example:
+Now you can run one of the ipython notebooks from the examples in your workspace - which must contain the required sqlite opsim database file. For example:
 
-    cd work
-    ln -s $SIMS_MAF_DATA_DIR/ops1_1140_sqlite.db .
-    runFlexibleDriver.py $SIMS_MAF_CONTRIB_DIR/examples/LensedQuasarTimeDelays.py --runName ops1_1140
-
-In this example, you would set the environment variable `$SIMS_MAF_DATA_DIR` to point at the directory where you keep your opsim database files (your cadence workshop USB stick, for example). You'll want to browse the code that has already been checked in to avoid reinventing the wheel. 
+    cd tutorials
+    ln -s [your data directory]/enigma_1189_sqlite.db .
+    ipython notebook
+(and then run the relevant notebooks).
