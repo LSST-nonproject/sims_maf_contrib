@@ -1,17 +1,15 @@
-from exampleNewMetrics import *
-from exampleNewStacker import *
-# Add similar lines (from filename import *) when you add new metrics,
+# Add similar lines (from .filename import *) when you add new metrics,
 # stackers or slicers.
 #
-from seasonStacker import *
-from seasonLengthMetric import *
-from campaignLengthMetric import *
-from meanNightSeparationMetric import *
-from tdcMetric import *
+from .seasonStacker import *
+from .seasonLengthMetric import *
+from .campaignLengthMetric import *
+from .meanNightSeparationMetric import *
+from .tdcMetric import *
 
-from TripletMetric import *
+from .TripletMetric import *
 
-from varMetrics import *
+from .varMetrics import *
 
-from lssMetrics import *
-from nFollowStacker import *
+from .lssMetrics import *
+from .nFollowStacker import *
