@@ -1,13 +1,13 @@
 import numpy as np
 from lsst.sims.maf.stackers import BaseStacker
-from .findTelescopes import findTelescopes
-import ephem
-from lsst.sims.utils import raDecToAltAzPa
+from lsst.sims.utils import altAzPaFromRaDec
 
+from .findTelescopes import findTelescopes
 
 class NFollowStacker(BaseStacker):
     """
-    Add the number of telescopes that could follow up any visit.
+    Add the number of telescopes that could follow up any visit,
+    specifying the minimum telescope size (in meters), airmass limit and timestep for followup.
     """
     def __init__(self, minSize=3.0, expMJDCol='expMJD',
                  raCol='fieldRA', decCol='fieldDec', airmassLimit=2.5,
@@ -41,9 +41,9 @@ class NFollowStacker(BaseStacker):
         for obs in self.telescopes:
             obsCount = simData['nObservatories']*0
             for step in self.timeSteps:
-                alt,az,pa = raDecToAltAzPa(simData[self.raCol], simData[self.decCol],
-                                           np.radians(obs['lon']), np.radians(obs['lat']),
-                                           simData[self.expMJDCol]+step/24.)
+                alt,az,pa = altAzPaFromRaDec(simData[self.raCol], simData[self.decCol],
+                                             np.radians(obs['lon']), np.radians(obs['lat']),
+                                             simData[self.expMJDCol]+step/24.)
                 airmass = 1./(np.cos(np.pi/2.-alt))
                 good = np.where((airmass <= self.airmassLimit) & (airmass >= 1.) )
                 obsCount[good] = 1
