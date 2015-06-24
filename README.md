@@ -24,8 +24,9 @@ When contributing new metrics, please do the following:
 First, move to where you would like to install the contributed metrics and clone the repo:
 
     git clone  git@github.com:LSST-nonproject/sims_maf_contrib.git
-OR (to clone via https instead of ssh, if you do not have a github account)
-    git clone https://github.com/LSST-nonproject/sims_maf_contrib.git
+OR (to clone via https instead of ssh, if you do not have a github account
+
+    git clone  https://github.com/LSST-nonproject/sims_maf_contrib.git
 
 Make sure you have setup the lsst environment, and declare the package with eups (only need to do this once):
 
