@@ -20,7 +20,8 @@ class GalaxyCountsMetric(BaseMetric):
         # Reset units (otherwise uses magnitudes).
         self.units = 'Galaxy Counts'
 
-    def _galCount(self, coaddm5, apparent_mag):
+    def _galCount(self, apparent_mag, coaddm5):
+        # Order for galCount must be apparent mag, then coaddm5, for scipy.integrate method.
         dn_gal = np.power(10., -3.52) * np.power(10., 0.34*apparent_mag)
         completeness = 0.5*scipy.special.erfc(apparent_mag-coaddm5)
         return dn_gal*completeness
