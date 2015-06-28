@@ -31,11 +31,11 @@ OR (to clone via https instead of ssh, if you do not have a github account
 Make sure you have setup the lsst environment, and declare the package with eups (only need to do this once):
 
     cd sims_maf_contrib
-    eups declare -r . -c 
+    eups declare -r . -t $USER
 
 Setup the package.  
 
-    setup sims_maf_contrib
+    setup sims_maf_contrib -t $USER -t sims
 
 Now you can run one of the ipython notebooks from the examples in your workspace - which must contain the required sqlite opsim database file. For example:
 
