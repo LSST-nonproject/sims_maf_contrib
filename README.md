@@ -12,14 +12,9 @@ If you get stuck, [write us an issue](https://github.com/LSST-nonproject/sims_ma
 
 ## Guidelines for contributors
 
-New metric and stacker classes go in 'mafContrib', and an ipython notebook demonstrating and documentating the new code goes into the relevant directory under 'science'.
+New metric and stacker python classes go in 'mafContrib', and an ipython notebook demonstrating and documentating the new code goes into the relevant directory under 'science'.
 
-When contributing new metrics, please do the following:
-* Put your name and email in a comment at the top of the file.
-* Document your code. This includes a short description of what your metric does -- if you place this information
-  in triple-quotes directly after the class description, it will be available if someone types 
-  'help(YourMetricName)' in a python shell. 
-* An ipython notebook using your code allows you to include much more documentation, enough so that someone else can  tell what is being computed and why. You can include units, what the returned values are, whether larger or smaller  values are 'better'. 
+When contributing new metrics, please be sure to include an ipython notebook documenting and explaining (in words) what your metric was intended to do. Feel free to use the existing notebooks as examples. Put your name and email in your ipython notebook  and a comment near your python class. 
 
 
 ## Using the contributed metrics
