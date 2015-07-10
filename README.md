@@ -5,7 +5,7 @@ This repository contains user contributed code for MAF (sims_maf), as well as tu
 
 MAF ipython notebook tutorials can be found in the 'tutorials' directory. Start with the [Index](https://github.com/LSST-nonproject/sims_maf_contrib/blob/master/tutorials/Index.ipynb). 
 
-MAF ipython notebooks demonstrating science applications can be found in the 'science' directory. The [Index](https://github.com/LSST-nonproject/sims_maf_contrib/blob/master/science/Index.ipynb) provides an overview.
+MAF ipython notebooks demonstrating science applications can be found in the 'science' directory. 
       To browse some example MAF analyses, check out the **[sims_maf_contrib    Wiki!](https://github.com/LSST-nonproject/sims_maf_contrib/wiki)**
 
 If you get stuck, [write us an issue](https://github.com/LSST-nonproject/sims_maf_contrib/issues) and we'll improve this documentation. 
@@ -22,16 +22,16 @@ When contributing new metrics, please be sure to include an ipython notebook doc
 First, move to where you would like to install the contributed metrics and clone the repo:
 
     git clone  git@github.com:LSST-nonproject/sims_maf_contrib.git
-OR (to clone via https instead of ssh, if you do not have a github account
+OR (to clone via https instead of ssh, if you do not have a github account)
 
     git clone  https://github.com/LSST-nonproject/sims_maf_contrib.git
 
-Make sure you have setup the lsst environment, and declare the package with eups (only need to do this once):
+Make sure you have setup the lsst environment, and declare the package with eups (you only need to do this once):
 
     cd sims_maf_contrib
     eups declare -r . -t $USER
 
-Setup the package.  
+Setup the package (you have to do this every time you log into a new shell):
 
     setup sims_maf_contrib -t $USER -t sims
 
