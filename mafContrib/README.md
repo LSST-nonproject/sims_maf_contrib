@@ -11,6 +11,7 @@ able to access your new metrics/stackers as
 'mafContrib.MyNewMetric' (MyNewMetric being the name of your new metric). 
    (please update your version of MAF if this does not work). 
 
+Please make an ipython notebook in the examples/ directory that demonstrates how your metric works and explains the output.
 
 SOME CODING STANDARDS 
 ---------------------
