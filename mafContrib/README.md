@@ -20,10 +20,6 @@ It just makes things easier if we have some general guidelines.
    example: seasonStacker
 - You class names should start with upper case
    example: SeasonStacker
-- After adding your metric to the __init__.py file, you should tell the MAF driver to import it using
-  root.module('mafContrib')
-  and refer to your metric as 'mafContrib.MyNewMetric' in configureMetric (MyNewMetric being the name 
-   of your new metric). 
 
 - Don't import modules you don't use. 
 - Delete code your don't use rather than just commenting it out. 
