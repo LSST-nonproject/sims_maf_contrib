@@ -1,22 +1,20 @@
 # sims_maf_contrib
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/LSST-nonproject/sims_maf_contrib?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Contributed code for MAF (sims_maf).
+This repository contains user contributed code for MAF (sims_maf), as well as tutorials on the use of MAF.
 
-To browse some example MAF analyses, check out the **[sims_maf_contrib Wiki!](https://github.com/LSST-nonproject/sims_maf_contrib/wiki)**
+MAF ipython notebook tutorials can be found in the 'tutorials' directory. Start with the [Index](https://github.com/LSST-nonproject/sims_maf_contrib/blob/master/tutorials/Index.ipynb). 
+
+MAF ipython notebooks demonstrating science applications can be found in the 'science' directory. 
+      To browse some example MAF analyses, check out the **[sims_maf_contrib    Wiki!](https://github.com/LSST-nonproject/sims_maf_contrib/wiki)**
 
 If you get stuck, [write us an issue](https://github.com/LSST-nonproject/sims_maf_contrib/issues) and we'll improve this documentation. 
 
 ## Guidelines for contributors
 
-New metric and stacker classes go in 'mafContrib', and an ipython notebook demonstrating and documentating the new code goes into the relevant directory under 'science'.
+New metric and stacker python classes go in 'mafContrib', and an ipython notebook demonstrating and documentating the new code goes into the relevant directory under 'science'.
 
-When contributing new metrics, please do the following:
-* Put your name and email in a comment at the top of the file.
-* Document your code. This includes a short description of what your metric does -- if you place this information
-  in triple-quotes directly after the class description, it will be available if someone types 
-  'help(YourMetricName)' in a python shell. 
-* An ipython notebook using your code allows you to include much more documentation, enough so that someone else can  tell what is being computed and why. You can include units, what the returned values are, whether larger or smaller  values are 'better'. 
+When contributing new metrics, please be sure to include an ipython notebook documenting and explaining (in words) what your metric was intended to do. Feel free to use the existing notebooks as examples. Put your name and email in your ipython notebook  and a comment near your python class. 
 
 
 ## Using the contributed metrics
@@ -24,18 +22,18 @@ When contributing new metrics, please do the following:
 First, move to where you would like to install the contributed metrics and clone the repo:
 
     git clone  git@github.com:LSST-nonproject/sims_maf_contrib.git
-OR (to clone via https instead of ssh, if you do not have a github account
+OR (to clone via https instead of ssh, if you do not have a github account)
 
     git clone  https://github.com/LSST-nonproject/sims_maf_contrib.git
 
-Make sure you have setup the lsst environment, and declare the package with eups (only need to do this once):
+Make sure you have setup the lsst environment, and declare the package with eups (you only need to do this once):
 
     cd sims_maf_contrib
-    eups declare -r . -c 
+    eups declare -r . -t $USER
 
-Setup the package.  
+Setup the package (you have to do this every time you log into a new shell):
 
-    setup sims_maf_contrib
+    setup sims_maf_contrib -t $USER -t sims
 
 Now you can run one of the ipython notebooks from the examples in your workspace - which must contain the required sqlite opsim database file. For example:
 
