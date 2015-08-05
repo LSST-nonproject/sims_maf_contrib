@@ -13,3 +13,5 @@ from .varMetrics import *
 
 from .lssMetrics import *
 from .nFollowStacker import *
+
+from photPrecMetrics import *
