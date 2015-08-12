@@ -140,7 +140,7 @@ class PhaseGapMetric(BaseMetric):
         self.periodMax = periodMax
         self.nPeriods = nPeriods
         self.nVisitsMin = nVisitsMin
-        super(PhaseGapMetric, self).__init__(col, metricName=metricName, **kwargs)
+        super(PhaseGapMetric, self).__init__(col, metricName=metricName, units='Fraction, 0-1', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         """
