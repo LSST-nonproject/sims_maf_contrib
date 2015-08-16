@@ -1,0 +1,2 @@
+setupRequired(sims_maf)
+envPrepend(PYTHONPATH, ${PRODUCT_DIR})

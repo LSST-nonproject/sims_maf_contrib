@@ -1,0 +1,8 @@
+*.pyc
+*~
+*sqlite.db
+tmp.sqlite
+*.npz
+*.png
+*.pdf
+.ipynb_checkpoints
