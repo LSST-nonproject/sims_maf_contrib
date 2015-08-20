@@ -45,7 +45,7 @@ class PeriodDeviationMetric(BaseMetric):
     pure sine wave variability (in magnitude).
     """
     def __init__(self, col='expMJD', periodMin=3., periodMax=35., nPeriods=5,
-                 meanMag=21., amplitude=1., metricName='Period Deviation',
+                 meanMag=21., amplitude=1., metricName='Period Deviation', periodCheck=None,
                  **kwargs):
         """
         Construct an instance of a PeriodDeviationMetric class
@@ -53,11 +53,13 @@ class PeriodDeviationMetric(BaseMetric):
         :param col: Name of the column to use for the observation times, commonly 'expMJD'
         :param periodMin: Minimum period to test (days)
         :param periodMax: Maximimum period to test (days)
+        :param periodCheck: Period to use in the reduce function (days)
         :param meanMag: Mean value of the lightcurve
         :param amplitude: Amplitude of the variation (mags)
         """
         self.periodMin = periodMin
         self.periodMax = periodMax
+        self.periodCheck = periodCheck
         self.guessPMin = np.min([self.periodMin*0.8, self.periodMin-1])
         self.guessPMax = np.max([self.periodMax*1.20, self.periodMax+1])
         self.nPeriods = nPeriods
@@ -77,8 +79,12 @@ class PeriodDeviationMetric(BaseMetric):
         data = np.sort(dataSlice[self.colname])
 
         # Create 'nPeriods' random periods within range of min to max.
-        periods = self.periodMin + np.random.random(self.nPeriods)*(self.periodMax - self.periodMin)
-        periodsdev = np.zeros(self.nPeriods, dtype='float')
+        if self.periodCheck is not None:
+            periods = [self.periodCheck]
+        else:
+            periods = self.periodMin + np.random.random(self.nPeriods)*(self.periodMax - self.periodMin)
+        # Make sure the period we want to check is in there
+        periodsdev = np.zeros(np.size(periods), dtype='float')
         for i, period in enumerate(periods):
             omega = 1./period
             # Calculate up the amplitude.
@@ -93,28 +99,26 @@ class PeriodDeviationMetric(BaseMetric):
 
         return {'periods': periods, 'periodsdev': periodsdev}
 
-    def reducePDev(self, metricVal, period=None):
+    def reducePDev(self, metricVal):
         """
-        At a particular slicepoint, return the period deviation for 'period'.
-        If Period is None, chooses a random period deviation.
+        At a particular slicepoint, return the period deviation for self.periodCheck.
+        If self.periodCheck is None, just return a random period in the range.
         """
-        if period is None:
-            return np.random.choice(metricVal['periodsdev'])
-        else:
-            return metricVal['periodsdev'][np.where(metricVal['periods'] == period)][0]
+        result = metricVal['periodsdev'][0]
+        return result
 
     def reduceWorstPeriod(self, metricVal):
         """
         At each slicepoint, return the period with the worst period deviation.
         """
-        worstP = metricVal['periods'][np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())]
+        worstP = metricVal['periods'][np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())[0]]
         return worstP
 
     def reduceWorstPDev(self, metricVal):
         """
         At each slicepoint, return the largest period deviation.
         """
-        worstPDev = metricVal['periodsdev'][np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())]
+        worstPDev = metricVal['periodsdev'][np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())[0]]
         return worstPDev
 
 class PhaseGapMetric(BaseMetric):
@@ -136,7 +140,7 @@ class PhaseGapMetric(BaseMetric):
         self.periodMax = periodMax
         self.nPeriods = nPeriods
         self.nVisitsMin = nVisitsMin
-        super(PhaseGapMetric, self).__init__(col, metricName=metricName, **kwargs)
+        super(PhaseGapMetric, self).__init__(col, metricName=metricName, units='Fraction, 0-1', **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         """
