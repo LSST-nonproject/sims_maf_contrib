@@ -1,0 +1,17 @@
+language: python
+python:
+- 2.7
+install:
+- echo $TRAVIS_PULL_REQUEST
+- NOTEBOOKS=""
+- d=`TZ=":US/Pacific" date +%y-%m-%d----%H:%M:%S`
+script:
+- df -kh .
+- wget https://raw.githubusercontent.com/marcusbooyah/IPy-CI/master/scripts/dl.sh -P ./scripts
+- source ./scripts/dl.sh
+- source ./scripts/prepare.sh
+- export PATH="$PWD/miniconda/bin:$PATH"
+- source ./scripts/getfiles.sh
+- source ./scripts/runipy.sh
+after_deploy:
+- exit $ERROR
