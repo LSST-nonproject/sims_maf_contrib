@@ -3,7 +3,7 @@ python:
 - 2.7
 install:
 - echo $TRAVIS_PULL_REQUEST
-- NOTEBOOKS=""
+- NOTEBOOKS="science/Transients/"
 - d=`TZ=":US/Pacific" date +%y-%m-%d----%H:%M:%S`
 script:
 - df -kh .
@@ -15,3 +15,8 @@ script:
 - source ./scripts/runipy.sh
 after_deploy:
 - exit $ERROR
+deploy:
+    on:
+        repo: rbiswas4/sims_maf_contrib
+        all_branches: true
+

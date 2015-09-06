@@ -1,4 +1,5 @@
 # sims_maf_contrib
+Added ci
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/LSST-nonproject/sims_maf_contrib?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This repository contains user contributed code for MAF (sims_maf), as well as tutorials on the use of MAF.
