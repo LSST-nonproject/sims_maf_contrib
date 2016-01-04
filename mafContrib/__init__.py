@@ -1,7 +1,7 @@
 # Add similar lines (from .filename import *) when you add new metrics,
 # stackers or slicers.
 #
-from .seasonStacker import *
+#from .seasonStacker import *
 from .seasonLengthMetric import *
 from .campaignLengthMetric import *
 from .meanNightSeparationMetric import *
@@ -20,6 +20,7 @@ from .CountMetric import *
 from .PeriodicMetric import *
 from .angularSpread import *
 
-from .newDitherStackers import *
+#from .newDitherStackers import *
 from .maskingAlgorithmGeneralized import *
-from .periodicStarMetric import *
+#from .periodicStarMetric import *
+from .GRBTransientMetric import *
