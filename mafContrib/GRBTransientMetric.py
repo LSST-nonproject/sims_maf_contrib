@@ -20,7 +20,8 @@ class GRBTransientMetric(metrics.TransientMetric):
     apparent_mag_1min_mean: mean magnitude at 1 minute after burst [default = 15.35].
     apparent_mag_1min_sigma: std of magnitudes at 1 minute after burst [default = 1.59]"""
     def __init__(self, alpha=1, apparent_mag_1min_mean=15.35, apparent_mag_1min_sigma=1.59, **kwargs):
-        super( GRBTransientMetric, self ).__init__(**kwargs)
+        super( GRBTransientMetric, self).__init__(
+                metricName='GRBTransientMetric',**kwargs)
         self.alpha = alpha
         self.apparent_mag_1min_mean = apparent_mag_1min_mean
         self.apparent_mag_1min_sigma = apparent_mag_1min_sigma
