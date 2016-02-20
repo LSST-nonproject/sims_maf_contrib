@@ -19,7 +19,7 @@ from .CountMetric import *
 from .PeriodicMetric import *
 from .angularSpread import *
 
-#from .newDitherStackers import *
+from .newDitherStackers import *
 from .maskingAlgorithmGeneralized import *
-#from .periodicStarMetric import *
+from .periodicStarMetric import *
 from .GRBTransientMetric import *
