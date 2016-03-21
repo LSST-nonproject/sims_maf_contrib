@@ -39,5 +39,5 @@ Now you can run one of the ipython notebooks from the examples in your workspace
 
     cd tutorials
     ln -s [your data directory]/enigma_1189_sqlite.db .
-    ipython notebook
+    jupyter notebook
 (and then run the relevant notebooks).
