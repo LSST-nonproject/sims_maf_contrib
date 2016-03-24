@@ -9,6 +9,7 @@ from .tdcMetric import *
 from .TripletMetric import *
 
 from .varMetrics import *
+from .varDepthMetric import *
 
 from .lssMetrics import *
 from .nFollowStacker import *
