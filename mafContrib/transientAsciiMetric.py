@@ -18,9 +18,7 @@ class TransientAscii(BaseMetric):
                  surveyDuration=10., surveyStart=None, detectM5Plus=0.,
                  detectfactor={'u':1,'g':1,'r':1,'i':1,'z':1,'y':1},
                  maxdiscT=5, nPreT=0,nPerLC=1, nFilters=1, nPhaseCheck = 1,
-                 peakOffset=0,
-                 asciifile={'u':'','g':'','r':'','i':'','z':'','y':''},
-                 **kwargs):
+                 peakOffset=0, asciifile='', dataout = False, **kwargs):
         """
         transDuration = how long the transient lasts (days)
         peakOffset = magnitude offset compared to ascii file mag value (m_band+offset for each band).
@@ -39,12 +37,20 @@ class TransientAscii(BaseMetric):
         nPhaseCheck = number of different phases that will be tested
         nFilters = Number of filters that need to be observed for an object to be counted as detected.
         """
+
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
-        super(TransientAscii, self).__init__(col=[self.mjdCol, self.m5Col,self.filterCol],
-                                                 units='Fraction Detected',metricName=metricName,**kwargs)
+        self.dataout = dataout
 
+        # if you want to get the light curve in output you need to define the metricDtype as object
+        if self.dataout:
+            super(TransientAscii, self).__init__(col=[self.mjdCol, self.m5Col,self.filterCol],
+                                                 metricDtype='object',
+                                                 units='Fraction Detected',metricName=metricName,**kwargs)
+        else:
+            super(TransientAscii, self).__init__(col=[self.mjdCol, self.m5Col,self.filterCol],
+                                                 units='Fraction Detected',metricName=metricName,**kwargs)
         self.surveyDuration = surveyDuration
         self.surveyStart = surveyStart
         self.detectM5Plus = detectM5Plus
@@ -93,9 +99,7 @@ class TransientAscii(BaseMetric):
         nTransMax = np.floor(self.surveyDuration/(self.transDuration/365.25))
         tshifts = np.arange(self.nPhaseCheck)*self.transDuration/float(self.nPhaseCheck)
         nDetected = 0
-
         
-
         for tshift in tshifts:
             # Compute the total number of back-to-back transients are possible to detect
             # given the survey duration and the transient duration.
@@ -105,7 +109,6 @@ class TransientAscii(BaseMetric):
             if self.surveyStart is None:
                 surveyStart = dataSlice[self.mjdCol].min()
             time = (dataSlice[self.mjdCol] - surveyStart + tshift) % self.transDuration
-
 
             # Which lightcurve does each point belong to
             lcNumber = np.floor((dataSlice[self.mjdCol]-surveyStart)/self.transDuration)
@@ -173,7 +176,11 @@ class TransientAscii(BaseMetric):
             # Find the unique number of light curves that passed the required number of conditions
             nDetected += np.size(np.unique(lcNumber[np.where(detected >= detectThresh)]))
 
-  
+        if self.dataout:
+            # output all the light curve
+            return {'lcNumber':lcNumber, 'lcMag':lcMags, 'detected':detected,
+                    'time':time, 'detectThresh':detectThresh, 'filter':dataSlice[self.filterCol]}
+        else:
+            return float(nDetected)/nTransMax
 
-        return float(nDetected)/nTransMax
 
