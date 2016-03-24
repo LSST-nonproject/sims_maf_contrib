@@ -23,3 +23,4 @@ from .angularSpread import *
 from .newDitherStackers import *
 from .maskingAlgorithmGeneralized import *
 from .periodicStarMetric import *
+from .GRBTransientMetric import *
