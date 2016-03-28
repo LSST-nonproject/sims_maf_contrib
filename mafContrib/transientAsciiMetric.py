@@ -1,179 +1,244 @@
 # Transient metric with input ascii lightcurve
 # fbb@nyu.edu, svalenti@lcogt.net
 
+import os
 import numpy as np
-
 from lsst.sims.maf.metrics import BaseMetric
+from lsst.sims.maf.utils import m52snr
 
-class TransientAscii(BaseMetric):
-    """
-    Written according to the transient metric example.
+__all__ = ['TransientAsciiMetric']
+
+class TransientAsciiMetric(BaseMetric):
+    """Based on the transientMetric, but uses an ascii input file and provides option to write out lightcurve.
+
     Calculate what fraction of the transients would be detected. Best paired with a spatial slicer.
     The lightcurve in input is an ascii file per photometric band so that different lightcurve
     shapes can be implemented.
-    It also allows a different detection threshold for each filter in units of 5sigma's
+
+    Parameters
+    ----------
+    asciifile : str
+        The ascii file containing the inputs for the lightcurve (per filter):
+        File should contain three columns - ['ph', 'mag', 'flt'] -
+        of phase/epoch (in days), magnitude (in a particular filter), and filter.
+    surveyDuration : float, optional
+        Length of survey (years).
+        Default 10 or maximum of timespan of observations.
+    surveyStart : float, optional
+        MJD for the survey start date.
+        Default None (uses the time of the first observation).
+    detectSNR : dict, optional
+        An observation will be counted toward the discovery criteria if the light curve SNR
+        is higher than detectSNR (specified per bandpass).
+        Values must be provided for each filter which should be considered in the lightcurve.
+        Default is {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}
+    maxdiscT : float, optional
+        The time by which nPreT detections are required.
+        Default 5.0.
+    nPreT : int, optional
+        Number of observations (in any filter(s)) to demand before maxdiscT,
+        before saying a transient has been detected.
+        Default 0.
+    nPerLC : int, optional
+        Number of sections of the light curve that must be sampled above the detectM5Plus theshold
+        (in a single filter) for the light curve to be counted.
+        For example, setting nPerLC = 2 means a light curve  is only considered detected if there
+        is at least 1 observation in the first half of the LC, and at least one in the second half of the LC.
+        nPerLC = 4 means each quarter of the light curve must be detected to count.
+        Default 1.
+    nFilters : int, optional
+        Number of filters that need to be observed for an object to be counted as detected.
+        Default 1. (if nPerLC is 0, then this will be reset to 0).
+    nPhaseCheck : int, optional
+        Sets the number of phases that should be checked.
+        One can imagine pathological cadences where many objects pass the detection criteria,
+        but would not if the observations were offset by a phase-shift.
+        Default 1.
+    peakOffset : float, optional
+        Add peakOffset to the magnitudes in the ascii file. Default 0.
+    dataout : bool, optional
+        If True, metric returns full lightcurve at each point. Note that this will potentially
+        create a very large metric output data file.
+        If False, metric returns the number of transients detected.
     """
-    def __init__(self, metricName='TransientAsciiMetric', mjdCol='expMJD',
+    def __init__(self, asciifile, metricName='TransientAsciiMetric', mjdCol='expMJD',
                  m5Col='fiveSigmaDepth', filterCol='filter',
-                 surveyDuration=10., surveyStart=None, detectM5Plus=0.,
-                 detectfactor={'u':1,'g':1,'r':1,'i':1,'z':1,'y':1},
-                 maxdiscT=5, nPreT=0,nPerLC=1, nFilters=1, nPhaseCheck = 1,
-                 peakOffset=0,
-                 asciifile={'u':'','g':'','r':'','i':'','z':'','y':''},
-                 **kwargs):
-        """
-        transDuration = how long the transient lasts (days)
-        peakOffset = magnitude offset compared to ascii file mag value (m_band+offset for each band).
-        surveyDuration = Length of survey (years).
-        surveyStart = MJD for the survey start date (otherwise us the time of the first observation).
-        detectfactor = detection threshold per filter in units of 5 sigma's
-        maxdiscT = latest time acceptable for first detection (discovery)
-        nPreT = Number of observations (any filter(s)) to demand before Time maxdiscT
-                  before saying a transient has been detected.
-        nPerLC = Number of sections of the light curve that must be sampled above the detectM5Plus theshold
-                 (in a single filter) for the light curve to be counted. For example,
-                 setting nPerLC = 2 means a light curve  is only considered detected if there
-                 is at least 1 observation in the first half of the LC,
-                 and at least one in the second half of the LC. nPerLC = 4 means each quarter of the light curve
-                 must be detected to count.
-        nPhaseCheck = number of different phases that will be tested
-        nFilters = Number of filters that need to be observed for an object to be counted as detected.
-        """
+                 surveyDuration=10., surveyStart=None,
+                 detectSNR={'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5},
+                 maxdiscT=5.0, nPreT=0, nPerLC=1, nFilters=1, nPhaseCheck=1,
+                 peakOffset=0.0, dataout=False, **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
-        super(TransientAscii, self).__init__(col=[self.mjdCol, self.m5Col,self.filterCol],
-                                                 units='Fraction Detected',metricName=metricName,**kwargs)
+        self.dataout = dataout
 
+        # if you want to get the light curve in output you need to define the metricDtype as object
+        if self.dataout:
+            super(TransientAsciiMetric, self).__init__(col=[self.mjdCol, self.m5Col, self.filterCol],
+                                                       metricDtype='object', units='',
+                                                       metricName=metricName, **kwargs)
+        else:
+            super(TransientAsciiMetric, self).__init__(col=[self.mjdCol, self.m5Col, self.filterCol],
+                                                       units='Fraction Detected', metricName=metricName,
+                                                       **kwargs)
         self.surveyDuration = surveyDuration
         self.surveyStart = surveyStart
-        self.detectM5Plus = detectM5Plus
-        self.detectfactor  = detectfactor
+        self.detectSNR = detectSNR
         self.maxdiscT = maxdiscT
         self.nPreT = nPreT
         self.peakOffset = peakOffset
         self.nPerLC = nPerLC
         self.nFilters = nFilters
+        if self.nPerLC == 0:
+            self.nFilters = 0
         self.nPhaseCheck = nPhaseCheck
-        self.asciifile = asciifile
-        self.transDuration=0.0
+        # Read ascii lightcurve template here. It doesn't change per slicePoint.
+        self.read_lightCurve(asciifile)
 
-    def read_lightCurve_SV(self):
-        """
-        reads in an ascii file, 3 columns: epoch, magnitude, filter
-        """
-        if not self.asciifile:
-            return None
-        else:
-            data = np.genfromtxt(self.asciifile,dtype=[('ph','f8'),('mag','f8'), ('flt','S1')])
-               
-            self.transDuration=data['ph'].max()-data['ph'].min()
-        return data
+    def read_lightCurve(self, asciifile):
+        """Reads in an ascii file, 3 columns: epoch, magnitude, filter
 
-    def make_lightCurve_SV(self, lcv_dict, time, filters):
-        
+        Returns
+        -------
+        numpy.ndarray
+            The data read from the ascii text file, in a numpy structured array with columns
+            'ph' (phase / epoch, in days), 'mag' (magnitude), 'flt' (filter for the magnitude).
+        """
+        if not os.path.isfile(asciifile):
+            raise IOError('Could not find lightcurve ascii file %s' % (asciifile))
+        self.lcv_template = np.genfromtxt(asciifile, dtype=[('ph', 'f8'), ('mag', 'f8'), ('flt', 'S1')])
+        self.transDuration = self.lcv_template['ph'].max() - self.lcv_template['ph'].min()
+
+    def make_lightCurve(self, time, filters):
+        """Turn lightcurve definition into magnitudes at a series of times.
+
+        Parameters
+        ----------
+        time : numpy.ndarray
+            The times of the observations.
+        filters : numpy.ndarray
+            The filters of the observations.
+
+        Returns
+        -------
+        numpy.ndarray
+             The magnitudes of the object at the times and in the filters of the observations.
+        """
         lcMags = np.zeros(time.size, dtype=float)
-        
-        for key in set(lcv_dict['flt']):
-                fMatch_ascii = (np.array(lcv_dict['flt']) == key)
-                Lc_ascii_filter= np.interp(time,np.array(lcv_dict['ph'],float)[fMatch_ascii],
-                                           np.array(lcv_dict['mag'],float)[fMatch_ascii])
-                     
-                #fMatch = np.where(filters == key)
-                lcMags[filters==key]=Lc_ascii_filter[filters==key]
-        lcMags+=self.peakOffset
-
-   
+        for key in set(self.lcv_template['flt']):
+            fMatch_ascii = np.where(np.array(self.lcv_template['flt']) == key)[0]
+            # Interpolate the lightcurve template to the times of the observations, in this filter.
+            lc_ascii_filter = np.interp(time, np.array(self.lcv_template['ph'], float)[fMatch_ascii],
+                                        np.array(self.lcv_template['mag'], float)[fMatch_ascii])
+            lcMags[filters == key] = lc_ascii_filter[filters == key]
+        lcMags += self.peakOffset
         return lcMags
 
     def run(self, dataSlice, slicePoint=None):
+        """"Calculate the detectability of a transient with the specified lightcurve.
 
-        # Total number of transients that could go off back-to-back
-        inlcv_dict = self.read_lightCurve_SV()
-        nTransMax = np.floor(self.surveyDuration/(self.transDuration/365.25))
-        tshifts = np.arange(self.nPhaseCheck)*self.transDuration/float(self.nPhaseCheck)
+        If self.dataout is True, then returns the full lightcurve for each object instead of the total
+        number of transients that are detected.
+
+        Parameters
+        ----------
+        dataSlice : numpy.array
+            Numpy structured array containing the data related to the visits provided by the slicer.
+        slicePoint : dict, optional
+            Dictionary containing information about the slicepoint currently active in the slicer.
+
+        Returns
+        -------
+        float or dict
+            The total number of transients that could be detected. (if dataout is False)
+            A dictionary with arrays of 'lcNumber', 'lcMag', 'detected', 'time', 'detectThresh', 'filter'
+        """
+
+        # Sort the entire dataSlice in order of time.
+        dataSlice.sort(order=self.mjdCol)
+
+        # Check that surveyDuration is not larger than the time of observations we obtained.
+        # (if it is, then the nTransMax will not be accurate).
+        tSpan = (dataSlice[self.mjdCol].max() - dataSlice[self.mjdCol].min()) / 365.25
+        surveyDuration = np.max([tSpan, self.surveyDuration])
+
+        if self.surveyStart is None:
+            surveyStart = dataSlice[self.mjdCol].min()
+        else:
+            surveyStart = self.surveyStart
+
+        # Set up the starting times for each of the back-to-back sets of transients.
+        tshifts = np.arange(self.nPhaseCheck) * self.transDuration / float(self.nPhaseCheck)
+        # Total number of transient which have reached detection threshholds.
         nDetected = 0
+        # Total number of transients which could possibly be detected,
+        # given survey duration and transient duration.
+        nTransMax = 0
+        # Set this, in case surveyStart was set to be much earlier than this data (so we start counting at 0).
+        lcNumberStart = -1 * np.floor((dataSlice[self.mjdCol].min() - surveyStart) / self.transDuration)
 
-        
-
+        # Consider each different 'phase shift' separately.
+        # We then just have a series of lightcurves, taking place back-to-back.
         for tshift in tshifts:
-            # Compute the total number of back-to-back transients are possible to detect
-            # given the survey duration and the transient duration.
-            nTransMax += np.floor(self.surveyDuration/(self.transDuration/365.25))
-            if tshift != 0:
-                nTransMax -= 1
-            if self.surveyStart is None:
-                surveyStart = dataSlice[self.mjdCol].min()
+            # Update the maximum possible transients that could have been observed during surveyDuration.
+            nTransMax += np.ceil(surveyDuration / (self.transDuration / 365.25))
+            # Calculate the time/epoch for each lightcurve.
             time = (dataSlice[self.mjdCol] - surveyStart + tshift) % self.transDuration
+            # Identify the observations which belong to each distinct light curve.
+            lcNumber = np.floor((dataSlice[self.mjdCol] - surveyStart) / self.transDuration) + lcNumberStart
+            lcNumberStart = lcNumber.max()
+            ulcNumber = np.unique(lcNumber)
+            lcLeft = np.searchsorted(lcNumber, ulcNumber, side='left')
+            lcRight = np.searchsorted(lcNumber, ulcNumber, side='right')
 
+            # Generate the actual light curve magnitudes and SNR
+            lcMags = self.make_lightCurve(time, dataSlice[self.filterCol])
+            lcSNR = m52snr(lcMags, dataSlice[self.m5Col])
+            # Identify which detections rise above the required SNR threshhold, in each filter.
+            lcAboveThresh = np.zeros(len(lcSNR), dtype=bool)
+            for f in np.unique(dataSlice[self.filterCol]):
+                filtermatch = np.where(dataSlice[self.filterCol] == f)[0]
+                lcAboveThresh[filtermatch] = np.where(lcSNR[filtermatch] >= self.detectSNR[f],
+                                                      True,
+                                                      False)
 
-            # Which lightcurve does each point belong to
-            lcNumber = np.floor((dataSlice[self.mjdCol]-surveyStart)/self.transDuration)
+            # Track whether each individual light curve was detected.
+            # Start with the assumption that it is True, and if it fails criteria then becomes False.
+            lcDetect = np.ones(len(ulcNumber), dtype=bool)
 
-            lcMags = self.make_lightCurve_SV(inlcv_dict, time, dataSlice[self.filterCol])
-            
+            # Loop through each lightcurve and check if it meets requirements.
+            for lcN, le, ri in zip(ulcNumber, lcLeft, lcRight):
+                # If there were no observations at all for this lightcurve:
+                if le == ri:
+                    lcDetect[lcN] = False
+                    # Skip the rest of this loop.
+                    continue
+                lcTimesAboveThresh = time[le:ri][np.where(lcAboveThresh[le:ri])]
+                timesPreT = np.where(lcTimesAboveThresh < self.maxdiscT)[0]
+                # If we did not get enough detections before maxdiscT, set lcDetect to False.
+                if len(timesPreT) < self.nPreT:
+                    lcDetect[lcN] = False
 
-            # How many criteria needs to be passed
-            detectThresh = 0
+                timesSections = np.floor(lcTimesAboveThresh / self.transDuration * self.nPerLC)
+                # If we did not get detections over enough sections of the lightcurve, set lcDtect to False.
+                if len(timesSections) < self.nPerLC:
+                    lcDetect[lcN] = False
 
-            # Flag points that are above the SNR limit
-            detected = np.zeros(dataSlice.size, dtype=int)
-
-            ###FBB modified to allow a different threshold for each filter
-            #print dataSlice.dtype.names
-            factor=np.array([self.detectfactor[f] for f in dataSlice[self.filterCol]])
-            detected[np.where(lcMags < dataSlice[self.m5Col]-2.5*np.log10 (factor*np.sqrt(factor)))] += 1
-            detectThresh += 1
-
-            # If we demand points before a specified T (maxdectT)
-            try: float(self.nPreT)
-            except:
-                preT=np.array([self.nPreT[i] for i in ['u','g','r','i','z','y']])
-                if preT.any() > 0:
-                    self.nPreT=1
-            if self.nPreT>0:
-                detectThresh += 1
-                ord = np.argsort(dataSlice[self.mjdCol])
-                dataSlice = dataSlice[ord]
-                detected = detected[ord]
-                lcNumber = lcNumber[ord]
-                time = time[ord]
-                ulcNumber = np.unique(lcNumber)
-                left = np.searchsorted(lcNumber, ulcNumber)
-                right = np.searchsorted(lcNumber, ulcNumber, side='right')
-
-                for le,ri in zip(left,right):
-                    # Number of points where there are a detection
-                    good = np.where(time[le:ri] < self.maxdiscT)
-                    nd = np.sum(detected[le:ri][good])
-                    if nd >= self.nPreT:
-                        detected[le:ri] += 1
-
-            # Check if we need multiple points per light curve or multiple filters
-            if (self.nPerLC > 1) | (self.nFilters > 1) :
-                # make sure things are sorted by time
-                ord = np.argsort(dataSlice[self.mjdCol])
-                dataSlice = dataSlice[ord]
-                detected = detected[ord]
-                lcNumber = lcNumber[ord]
-                ulcNumber = np.unique(lcNumber)
-                left = np.searchsorted(lcNumber, ulcNumber)
-                right = np.searchsorted(lcNumber, ulcNumber, side='right')
-                detectThresh += self.nFilters
-
-                for le,ri in zip(left,right):
-                    points = np.where(detected[le:ri] > 0)
-                    ufilters = np.unique(dataSlice[self.filterCol][le:ri][points])
-                    phaseSections = np.floor(time[le:ri][points]/self.transDuration * self.nPerLC)
-                    for filtName in ufilters:
-                        good = np.where(dataSlice[self.filterCol][le:ri][points] == filtName)
-                        if np.size(np.unique(phaseSections[good])) >= self.nPerLC:
-                            detected[le:ri] += 1
+                lcFilters = dataSlice[le:ri][np.where(lcAboveThresh[le:ri])]
+                if len(np.unique(lcFilters)) < self.nFilters:
+                    lcDetect[lcN] = False
 
             # Find the unique number of light curves that passed the required number of conditions
-            nDetected += np.size(np.unique(lcNumber[np.where(detected >= detectThresh)]))
+            nDetected += len(np.where(lcDetect == True)[0])
 
-  
-
-        return float(nDetected)/nTransMax
-
+        if self.dataout:
+            # Output all the light curves, regardless of detection threshhold,
+            # but indicate which were 'detected'.
+            lcDetectOut = np.ones(len(dataSlice), dtype=bool)
+            for i, lcN in enumerate(lcNumber):
+                lcDetectOut[i] = lcDetect[lcN]
+            return {'lcNumber': lcNumber, 'expMJD': dataSlice[self.mjdCol], 'epoch': time,
+                    'filter': dataSlice[self.filterCol], 'lcMag': lcMags, 'SNR': lcSNR,
+                    'detected': lcDetectOut}
+        else:
+            return float(nDetected) / nTransMax
