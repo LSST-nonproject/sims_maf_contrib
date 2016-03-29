@@ -26,29 +26,32 @@ class TransientAsciiMetric(BaseMetric):
         Default 10 or maximum of timespan of observations.
     surveyStart : float, optional
         MJD for the survey start date.
-        Default None (uses the time of the first observation).
+        Default None (uses the time of the first observation at each pointing).
     detectSNR : dict, optional
         An observation will be counted toward the discovery criteria if the light curve SNR
         is higher than detectSNR (specified per bandpass).
         Values must be provided for each filter which should be considered in the lightcurve.
         Default is {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}
-    maxdiscT : float, optional
-        The time by which nPreT detections are required.
-        Default 5.0.
     nPreT : int, optional
-        Number of observations (in any filter(s)) to demand before maxdiscT,
+        Number of observations (in any filter(s)) to demand before preT,
         before saying a transient has been detected.
         Default 0.
-    nPerLC : int, optional
-        Number of sections of the light curve that must be sampled above the detectM5Plus theshold
-        (in a single filter) for the light curve to be counted.
-        For example, setting nPerLC = 2 means a light curve  is only considered detected if there
-        is at least 1 observation in the first half of the LC, and at least one in the second half of the LC.
-        nPerLC = 4 means each quarter of the light curve must be detected to count.
-        Default 1.
+    preT : float, optional
+        The time by which nPreT detections are required (in days).
+        Default 5.0.
     nFilters : int, optional
         Number of filters that need to be observed for an object to be counted as detected.
         Default 1. (if nPerLC is 0, then this will be reset to 0).
+    filterT : float, optional
+        The time within which observations in at least nFilters are required (in days).
+        Default None (no time constraint).
+    nPerLC : int, optional
+        Number of sections of the light curve that must be sampled above the detectSNR theshold
+        for the light curve to be counted.
+        For example, nPerLC = 2 means a light curve  is only considered detected if there
+        is at least 1 observation in the first half of the LC, and at least one in the second half of the LC.
+        nPerLC = 4 means each quarter of the light curve must be detected to count.
+        Default 1.
     nPhaseCheck : int, optional
         Sets the number of phases that should be checked.
         One can imagine pathological cadences where many objects pass the detection criteria,
@@ -65,7 +68,7 @@ class TransientAsciiMetric(BaseMetric):
                  m5Col='fiveSigmaDepth', filterCol='filter',
                  surveyDuration=10., surveyStart=None,
                  detectSNR={'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5},
-                 maxdiscT=5.0, nPreT=0, nPerLC=1, nFilters=1, nPhaseCheck=1,
+                 nPreT=0, preT=5.0, nFilters=1, filterT=None, nPerLC=1, nPhaseCheck=1,
                  peakOffset=0.0, dataout=False, **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
@@ -84,11 +87,12 @@ class TransientAsciiMetric(BaseMetric):
         self.surveyDuration = surveyDuration
         self.surveyStart = surveyStart
         self.detectSNR = detectSNR
-        self.maxdiscT = maxdiscT
         self.nPreT = nPreT
+        self.preT = preT
+        self.nFilters = nFilters
+        self.filterT = filterT
         self.peakOffset = peakOffset
         self.nPerLC = nPerLC
-        self.nFilters = nFilters
         if self.nPerLC == 0:
             self.nFilters = 0
         self.nPhaseCheck = nPhaseCheck
@@ -183,7 +187,7 @@ class TransientAsciiMetric(BaseMetric):
             # Update the maximum possible transients that could have been observed during surveyDuration.
             nTransMax += np.ceil(surveyDuration / (self.transDuration / 365.25))
             # Calculate the time/epoch for each lightcurve.
-            time = (dataSlice[self.mjdCol] - surveyStart + tshift) % self.transDuration
+            lcEpoch = (dataSlice[self.mjdCol] - surveyStart + tshift) % self.transDuration
             # Identify the observations which belong to each distinct light curve.
             lcNumber = np.floor((dataSlice[self.mjdCol] - surveyStart) / self.transDuration) + lcNumberStart
             lcNumberStart = lcNumber.max()
@@ -192,7 +196,7 @@ class TransientAsciiMetric(BaseMetric):
             lcRight = np.searchsorted(lcNumber, ulcNumber, side='right')
 
             # Generate the actual light curve magnitudes and SNR
-            lcMags = self.make_lightCurve(time, dataSlice[self.filterCol])
+            lcMags = self.make_lightCurve(lcEpoch, dataSlice[self.filterCol])
             lcSNR = m52snr(lcMags, dataSlice[self.m5Col])
             # Identify which detections rise above the required SNR threshhold, in each filter.
             lcAboveThresh = np.zeros(len(lcSNR), dtype=bool)
@@ -211,22 +215,38 @@ class TransientAsciiMetric(BaseMetric):
                 # If there were no observations at all for this lightcurve:
                 if le == ri:
                     lcDetect[lcN] = False
-                    # Skip the rest of this loop.
+                    # Skip the rest of this loop, go on to the next lightcurve.
                     continue
-                lcTimesAboveThresh = time[le:ri][np.where(lcAboveThresh[le:ri])]
-                timesPreT = np.where(lcTimesAboveThresh < self.maxdiscT)[0]
-                # If we did not get enough detections before maxdiscT, set lcDetect to False.
+                lcEpochAboveThresh = lcEpoch[le:ri][np.where(lcAboveThresh[le:ri])]
+                # If we did not get enough detections before preT, set lcDetect to False.
+                timesPreT = np.where(lcEpochAboveThresh < self.preT)[0]
                 if len(timesPreT) < self.nPreT:
                     lcDetect[lcN] = False
-
-                timesSections = np.floor(lcTimesAboveThresh / self.transDuration * self.nPerLC)
+                    continue
                 # If we did not get detections over enough sections of the lightcurve, set lcDtect to False.
-                if len(timesSections) < self.nPerLC:
+                phaseSections = np.unique(np.floor(lcEpochAboveThresh / self.transDuration * self.nPerLC))
+                if len(phaseSections) < self.nPerLC:
                     lcDetect[lcN] = False
-
-                lcFilters = dataSlice[le:ri][np.where(lcAboveThresh[le:ri])]
+                    continue
+                # If we did not get detections in enough filters, set lcDetect to False.
+                lcFilters = dataSlice[le:ri][np.where(lcAboveThresh[le:ri])][self.filterCol]
                 if len(np.unique(lcFilters)) < self.nFilters:
                     lcDetect[lcN] = False
+                    continue
+                # If we did not get detections in enough filters within required time, set lcDetect to False.
+                if (self.filterT is not None) and (self.nFilters > 1):
+                    xr = np.searchsorted(lcEpochAboveThresh, lcEpochAboveThresh + self.filterT, 'right')
+                    xr = np.where(xr < len(lcEpochAboveThresh) - 1, xr, len(lcEpochAboveThresh) - 1)
+                    foundGood = False
+                    for i, xri in enumerate(xr):
+                        if len(np.unique(lcFilters[i:xri])) >= self.nFilters:
+                            foundGood = True
+                            break
+                    if not foundGood:
+                        lcDetect[lcN] = False
+                        continue
+                # Done with current set of conditions.
+                # (more complicated conditions should go later in the loop, simpler ones earlier).
 
             # Find the unique number of light curves that passed the required number of conditions
             nDetected += len(np.where(lcDetect == True)[0])
