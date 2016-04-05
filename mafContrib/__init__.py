@@ -9,6 +9,7 @@ from .tdcMetric import *
 from .TripletMetric import *
 
 from .varMetrics import *
+from .varDepthMetric import *
 
 from .lssMetrics import *
 from .nFollowStacker import *
@@ -22,3 +23,4 @@ from .angularSpread import *
 from .newDitherStackers import *
 from .maskingAlgorithmGeneralized import *
 from .periodicStarMetric import *
+from .GRBTransientMetric import *
