@@ -11,6 +11,8 @@ from .TripletMetric import *
 from .varMetrics import *
 from .varDepthMetric import *
 
+from .transientAsciiMetric import *
+
 from .lssMetrics import *
 from .nFollowStacker import *
 
