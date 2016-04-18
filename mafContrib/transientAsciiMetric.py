@@ -257,7 +257,7 @@ class TransientAsciiMetric(BaseMetric):
             lcDetectOut = np.ones(len(dataSlice), dtype=bool)
             for i, lcN in enumerate(lcNumber):
                 lcDetectOut[i] = lcDetect[lcN]
-            return {'lcNumber': lcNumber, 'expMJD': dataSlice[self.mjdCol], 'epoch': time,
+            return {'lcNumber': lcNumber, 'expMJD': dataSlice[self.mjdCol], 'epoch': lcEpoch,
                     'filter': dataSlice[self.filterCol], 'lcMag': lcMags, 'SNR': lcSNR,
                     'detected': lcDetectOut}
         else:
