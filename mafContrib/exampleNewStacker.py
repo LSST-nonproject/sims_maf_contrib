@@ -5,6 +5,9 @@ import numpy as np
 from lsst.sims.maf.stackers import BaseStacker
 from lsst.sims.maf.stackers import wrapRADec
 
+__all__ = ['YearlyDitherStacker']
+
+
 class YearlyDitherStacker(BaseStacker):
     """
     Add a dither of half the FOV depending on the year of the survey.
@@ -23,9 +26,7 @@ class YearlyDitherStacker(BaseStacker):
         self.raCol = raCol
         self.decCol = decCol
 
-    def run(self, simData):
-        # Add new columns to simData.
-        simData = self._addStackers(simData)
+    def _run(self, simData):
         # What 'year' is each visit in?
         year = np.floor((simData[self.expMJDCol] - simData[self.expMJDCol][0]) / 365.25)
         # Define dither based on year.

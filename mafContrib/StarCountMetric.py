@@ -10,14 +10,16 @@ from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 from StarCounts.StarCounts import *
 
-class CountMetric(BaseMetric):
+__all__ = ['StarCountMetric']
+
+class StarCountMetric(BaseMetric):
    """
    Find the number of stars in a given field between D1 and D2 in parsecs.
    """
    def __init__(self,**kwargs):
       self.D1=kwargs.pop('D1', 100)
       self.D2=kwargs.pop('D2', 1000)
-      super(CountMetric, self).__init__(col=[], **kwargs)
+      super(StarCountMetric, self).__init__(col=[], **kwargs)
 
    def run(self, dataSlice, slicePoint=None):
       self.DECCol=np.degrees(dataSlice[0][3])

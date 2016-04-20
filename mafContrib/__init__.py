@@ -17,8 +17,8 @@ from .lssMetrics import *
 from .nFollowStacker import *
 
 from .photPrecMetrics import *
-from .CountMassMetric import *
-from .CountMetric import *
+from .StarCountMassMetric import *
+from .StarCountMetric import *
 from .PeriodicMetric import *
 from .angularSpread import *
 

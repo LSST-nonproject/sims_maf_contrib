@@ -5,6 +5,7 @@
 import numpy as np
 from lsst.sims.maf.metrics import BaseMetric
 
+__all__ = ['AngularSpreadMetric']
 
 class AngularSpreadMetric(BaseMetric):
     """Compute the angular spread statistic which measures uniformity of a distribution angles

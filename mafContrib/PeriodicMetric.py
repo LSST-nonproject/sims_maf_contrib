@@ -8,6 +8,8 @@
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 
+__all__ = ['PeriodMetric']
+
 class PeriodMetric(BaseMetric):
    """
    From a set of observation times, uses code provided by Robert Siverd (LCOGT) to calculate the spectral window function.
