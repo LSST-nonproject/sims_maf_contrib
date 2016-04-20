@@ -10,8 +10,9 @@ from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 from StarCounts.StarCounts import *
 
+__all__ = ['StarCountMassMetric']
 
-class CountMassMetric(BaseMetric):
+class StarCountMassMetric(BaseMetric):
    """
    Find the number of stars in a given field in the mass range fainter than magnitude 16 and bright enough to have noise less than 0.03 in a given band. M1 and M2 are the upper and lower limits of the mass range. 'band' is the band to be observed.
    """
@@ -19,7 +20,7 @@ class CountMassMetric(BaseMetric):
       self.M1=kwargs.pop('M1', 0.9)
       self.M2=kwargs.pop('M2', 1.0)
       self.band=kwargs.pop('band', 'i')
-      super(CountMassMetric, self).__init__(col=[], **kwargs)
+      super(StarCountMassMetric, self).__init__(col=[], **kwargs)
 
    def run(self, dataSlice, slicePoint=None):
       self.DECCol=np.degrees(dataSlice[0][3])

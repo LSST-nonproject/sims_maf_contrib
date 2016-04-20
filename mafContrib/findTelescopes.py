@@ -1,5 +1,8 @@
 import numpy as np
 
+__all__ = ['findTelescopes']
+
+
 def findTelescopes(minSize=3.):
     """
     Return an array of telescopes that are above minSize limit

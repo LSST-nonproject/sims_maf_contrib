@@ -6,6 +6,9 @@ from scipy.signal import lombscargle
 
 from lsst.sims.maf.metrics import BaseMetric
 
+__all__ = ['PeriodDeviationMetric']
+
+
 def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**5, verbose=False):
     """
     Find the period of a lightcurve using scipy's lombscargle method.

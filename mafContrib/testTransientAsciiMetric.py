@@ -1,6 +1,8 @@
 import numpy as np
 from mafContrib import TransientAsciiMetric
 
+__all__ = []
+
 
 def setupData(nVisits=100):
     names = ['expMJD', 'filter', 'fiveSigmaDepth']

@@ -8,9 +8,13 @@
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 
+__all__ = ['TripletMetric', 'TripletBandMetric']
+
 class TripletMetric(BaseMetric):
    """
-   Find the number of 'triplets' of three images taken in any band, based on user-selected minimum and maximum intervals (in hours), as well as constraining the ratio of the two exposures intervals. Triplets are not required to be consecutive observations and may be overlapping.
+   Find the number of 'triplets' of three images taken in any band, based on user-selected minimum and maximum intervals (in hours),
+   as well as constraining the ratio of the two exposures intervals.
+   Triplets are not required to be consecutive observations and may be overlapping.
    """
    def __init__(self, TimeCol='expMJD', **kwargs):
       self.TimeCol=TimeCol
@@ -47,7 +51,9 @@ class TripletMetric(BaseMetric):
 
 class TripletBandMetric(BaseMetric):
    """
-   Find the number of 'triplets' of three images taken in the same band, based on user-selected minimum and maximum intervals (in hours), as well as constraining the ratio of the two exposures intervals. Triplets are not required to be consecutive observations and may be overlapping.
+   Find the number of 'triplets' of three images taken in the same band, based on user-selected minimum and maximum intervals (in hours),
+   as well as constraining the ratio of the two exposures intervals.
+   Triplets are not required to be consecutive observations and may be overlapping.
    """
    def __init__(self, TimeCol='expMJD', FilterCol='filter', **kwargs):
       self.TimeCol=TimeCol
@@ -119,4 +125,3 @@ class TripletBandMetric(BaseMetric):
 
    def reduceBandy(self, bandcounter):
       return bandcounter['y']
-

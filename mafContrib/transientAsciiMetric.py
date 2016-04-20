@@ -8,6 +8,7 @@ from lsst.sims.maf.utils import m52snr
 
 __all__ = ['TransientAsciiMetric']
 
+
 class TransientAsciiMetric(BaseMetric):
     """Based on the transientMetric, but uses an ascii input file and provides option to write out lightcurve.
 

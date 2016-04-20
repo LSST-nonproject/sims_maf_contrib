@@ -4,7 +4,9 @@
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 
-    
+__all__ = ['NightsWithNFiltersMetric']
+
+
 class NightsWithNFiltersMetric(BaseMetric):
     """
     Count how many times more than NFilters are used within the same night, for this set of visits.
@@ -29,4 +31,4 @@ class NightsWithNFiltersMetric(BaseMetric):
             uniqueFilters = np.unique(dataSlice[self.filterCol][condition])
             if len(uniqueFilters) > self.nFilters:
                 count += 1
-        return count    
+        return count

@@ -4,6 +4,9 @@ from scipy.optimize import curve_fit
 from lsst.sims.maf.utils import m52snr
 import warnings
 
+__all__ = ['periodicStar', 'PeriodicStarMetric']
+
+
 def periodicStar(t,x0,x1,x2,x3,x4,x5,x6,x7,x8):
     """
     Approximate a periodic star as a simple sin wave
