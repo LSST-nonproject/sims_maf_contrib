@@ -4,6 +4,8 @@
 import lsst.sims.maf.metrics as metrics
 import numpy as np
 
+__all__ = ['GRBTransientMetric'] 
+
 class GRBTransientMetric(metrics.BaseMetric):
     """Detections for on-axis GRB afterglows decaying as 
 	F(t) = F(1min)((t-t0)/1min)^-alpha.  No jet break, for now.
