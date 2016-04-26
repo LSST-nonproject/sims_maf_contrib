@@ -26,4 +26,3 @@ from .newDitherStackers import *
 from .maskingAlgorithmGeneralized import *
 from .periodicStarMetric import *
 from .GRBTransientMetric import *
-from .kConsecutiveGapMetric import *
