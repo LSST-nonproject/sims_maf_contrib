@@ -7,6 +7,8 @@ from scipy.interpolate import UnivariateSpline
 
 from lsst.sims.maf.metrics import BaseMetric
 
+__all__ = ['VarDepth']
+
 #Calculate the survey depth there a variable star can be reliably identified
 class VarDepth(BaseMetric):
     def __init__(self, m5Col = 'fiveSigmaDepth', 

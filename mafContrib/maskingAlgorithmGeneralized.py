@@ -13,6 +13,9 @@ import healpy as hp
 import copy
 import lsst.sims.maf.plots as plots
 
+__all__ = ['maskingAlgorithmGeneralized']
+
+
 def maskingAlgorithmGeneralized(myBundles, plotHandler, dataLabel, nside= 128,
                                 findValue= 'unmasked', relation= '=',
                                 newValue= 'masked',

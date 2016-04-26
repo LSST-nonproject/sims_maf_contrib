@@ -8,8 +8,10 @@ from .campaignLengthMetric import CampaignLengthMetric
 from .seasonLengthMetric import SeasonLengthMetric
 from .meanNightSeparationMetric import MeanNightSeparationMetric
 
+__all__ = ['TdcMetric']
+
 class TdcMetric(BaseMetric):
-    
+
     def __init__(self, seasonCol='season', expMJDCol='expMJD', nightCol='night',
                  metricName = 'TDC', cadNorm=3., seaNorm=4., campNorm=5., badval=99, **kwargs):
         # Save the normalization values.
