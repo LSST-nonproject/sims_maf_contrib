@@ -3,7 +3,7 @@
 # functionality to plot skymaps, cartviews, and power spectra.
 
 # Humna Awan: humna.awan@rutgers.edu
-# Last updated: 06/27/15
+# Last updated: 07/01/15
  #####################################################################################################
  
 import matplotlib.pyplot as plt
@@ -31,7 +31,8 @@ def plotBundleMaps(path, outDir, bundle, dataLabel, filterBand,
       * path: str: path to the main directory where output directory is saved
       * outDir: str: name of the main output directory
       * bundle: metricBundle object.
-      * dataLabel: str: data type, e.g. 'counts', 'NumGal'.
+      * dataLabel: str: data type, e.g. 'counts', 'NumGal'. Will be the label for the colorbar in
+                        in skymaps/cartview plots.
       * filterBand: str: filter to consider, e.g. 'r'
     
     Optional Parameters
@@ -76,10 +77,7 @@ def plotBundleMaps(path, outDir, bundle, dataLabel, filterBand,
             cl = hp.anafast(hp.remove_dipole(bundle[dither].metricValues.filled(bundle[dither].slicer.badval)), lmax=500)            
             ell = np.arange(np.size(cl))
             plt.plot(ell, (cl*ell*(ell+1))/2.0/np.pi)
-            if dataLabel is not None:
-                plt.title(dither + ': ' + dataLabel, fontsize= 16)
-            else:
-                plt.title(dither, fontsize= 16)
+            plt.title(dither, fontsize= 16)
             plt.xlabel(r'$l$', fontsize=18)
             plt.ylabel(r'$l(l+1)C_l/(2\pi)$', fontsize=16)
             plt.tick_params(axis='x', labelsize=16)
