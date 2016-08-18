@@ -13,7 +13,7 @@ import healpy as hp
 __all__= ['almPlots']
     
 def almPlots(path, outDir, bundle,
-             nside= 128, lmax= 500, filterband= 'r',
+             nside= 128, lmax= 500, filterband= 'i',
              raRange= [-50,50], decRange= [-65,5],
              subsetsToConsider= [[130,165], [240, 300]],
              showPlots= True):
@@ -32,7 +32,7 @@ def almPlots(path, outDir, bundle,
     -------------------
       * nside: int: HEALpix resolution parameter. Default: 128
       * lmax: int: upper limit on the multipole. Default: 500
-      * filterBand: str: any one of 'u', 'g', 'r', 'i'. Default: 'r'
+      * filterBand: str: any one of 'u', 'g', 'r', 'i', 'z', 'y'. Default: 'i'
       * raRange: float array: range of right ascention (in degrees) to consider in cartview plot; only useful when 
                               cartview= True. Default: [-50,50]
       * decRange: float array: range of declination (in degrees) to consider in cartview plot; only useful when 
@@ -102,8 +102,8 @@ def almPlots(path, outDir, bundle,
         for key in lsubsets.keys():
             plt.plot(l[lsubsets[key]], (cl[lsubsets[key]]*l[lsubsets[key]]*(l[lsubsets[key]]+1))/(2.0*np.pi), color=color[key])
         plt.title(str(dither), fontsize= 20)
-        plt.xlabel('$l$', fontsize=16)
-        plt.ylabel(r'$l(l+1)C_l/(2\pi)$', fontsize=16)
+        plt.xlabel('$\ell$', fontsize=16)
+        plt.ylabel(r'$\ell(\ell+1)C_\ell/(2\pi)$', fontsize=16)
         plt.tick_params(axis='x', labelsize=16)
         plt.tick_params(axis='y', labelsize=16)
         os.chdir(path + outDir + '/' + outDir2)
@@ -185,7 +185,7 @@ def almPlots(path, outDir, bundle,
                         flip='astro', rot=(0,0,0), 
                         min=colorMin, max=colorMax ,title= '',cbar=False)
             hp.graticule(dpar=20, dmer=20, verbose=False)
-            plt.title(str(lowLim) + '<$l$<' + str(upLim), size=plotTitleSize)
+            plt.title(str(lowLim) + '<$\ell$<' + str(upLim), size=plotTitleSize)
             ax = plt.gca()
             im = ax.get_images()[0]
             fig= plt.gcf()
@@ -202,7 +202,7 @@ def almPlots(path, outDir, bundle,
                         lonra=raRange, latra= decRange, flip='astro', 
                         min= colorMin, max=colorMax,  title= '',cbar=False)
             hp.graticule(dpar=20, dmer=20, verbose=False)
-            plt.title(str(lowLim) + '<$l$<' + str(upLim), size=plotTitleSize)
+            plt.title(str(lowLim) + '<$\ell$<' + str(upLim), size=plotTitleSize)
 
             ax = plt.gca()
             im = ax.get_images()[0]
