@@ -2,7 +2,7 @@
 # Purpose: Calculate the number of observations in a given dataslice.
 
 # Humna Awan: humna.awan@rutgers.edu
-# Last updated: 06/10/15
+# Last updated: 06/10/16
  #####################################################################################################
  
 from lsst.sims.maf.metrics import BaseMetric

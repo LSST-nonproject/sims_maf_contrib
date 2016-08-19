@@ -2,7 +2,7 @@
 # Purpose: plot skymaps/cartview plots corresponding to alms with specfied l-range (s).
 
 # Humna Awan: humna.awan@rutgers.edu
-# Last updated: 06/27/15
+# Last updated: 06/27/16
  #####################################################################################################
 
 import matplotlib.pyplot as plt

@@ -3,7 +3,7 @@
 # functionality to plot skymaps, cartviews, and power spectra.
 
 # Humna Awan: humna.awan@rutgers.edu
-# Last updated: 07/01/15
+# Last updated: 07/01/16
  #####################################################################################################
  
 import matplotlib.pyplot as plt
