@@ -27,7 +27,7 @@
 # errors. See the method descrpition for further details.
 
 # Humna Awan: humna.awan@rutgers.edu
-# Last updated: 06/27/15
+# Last updated: 08/18/16
  #####################################################################################################
 
 import matplotlib.pyplot as plt
@@ -40,6 +40,8 @@ from sympy.solvers import solve
 from sympy import Symbol
 import copy
 import time
+import sys
+from matplotlib.ticker import FuncFormatter
 
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metrics as metrics
@@ -58,13 +60,16 @@ from mafContrib.plotBundleMaps import plotBundleMaps
 from mafContrib.numObsMetric import NumObsMetric
 from mafContrib.saveBundleData_npzFormat import saveBundleData_npzFormat
 
+from mafContrib.constantsForPipeline import powerLawConst_a, plotColor
+
 __all__ = ['artificialStructureCalculation']
 
 def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                    noDithOnly= False,
+                                   bestDithOnly= False,
                                    someDithOnly= False,
                                    
-                                   nside= 128, filterBand= 'r',
+                                   nside= 128, filterBand= 'i',
                                    cutOffYear= None, redshiftBin= 'all',
                                    CFHTLSCounts= False, normalizedMockCatalogCounts= True,
 
@@ -103,24 +108,25 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
       * path: str: path to the main directory where output directory is to be saved.
       * upperMagLimit: float: upper limit on magnitude when calculating the galaxy counts. 
       * dbfile: str: path to the OpSim output file, e.g. to a copy of enigma_1189
-      * runName: str: run name tag to identify the output of specified OpSim output, e.g. 'enigma1189'
-
+      * runName: str: run name tag to identify the output of specified OpSim output.
+                      Since new OpSim outputs have different columns, the runName for enigma_1189 **must**
+                      be 'enigma1189'; can be anything for other outputs, e.g. 'minion1016'
+                      
     Optional Parameters
     -------------------
       * noDithOnly: boolean: set to True if only want to consider the undithered survey. Default: False
       * someDithOnly: boolean: set to True if only want to consider undithered and a few dithered survey. 
                                Default: False
+      * bestDithOnly: boolean: set to True if only want to consider RepulsiveRandomDitherFieldPerVisit. 
+                               Default: False
       * nside: int: HEALpix resolution parameter. Default: 128
-      * filterBand: str: any one of 'u', 'g', 'r', 'i'. Default: 'r'
+      * filterBand: str: any one of 'u', 'g', 'r', 'i', 'z', 'y'. Default: 'i'
       * cutOffYear: int: year cut to restrict analysis to only a subset of the survey. 
                          Must range from 1 to 9, or None for the full survey analysis (10 yrs).
                         Default: None
-      * redshiftBin: str: options: '1' to consider 0.15<z<0.37
-                                   '2' to consider 0.37<z<0.66
-                                   '3' to consider 0.66<z<1.0
-                                   '4' to consider 1.0<z<1.5
-                                   '5' to consider 1.5<z<2.0    
-                                   'all' for no redshift restriction (i.e. 0.15<z<2.0)
+      * redshiftBin: str: options include '0.<z<0.15', '0.15<z<0.37', '0.37<z<0.66, '0.66<z<1.0',
+                          '1.0<z<1.5', '1.5<z<2.0', '2.0<z<2.5', '2.5<z<3.0','3.0<z<3.5', '3.5<z<4.0',
+                          'all' for no redshift restriction (i.e. 0.<z<4.0)
                           Default: 'all'
       * CFHTLSCounts: boolean: set to True if want to calculate the total galaxy counts from CFHTLS
                                powerlaw from LSST Science Book. Must be run with redshiftBin= 'all'
@@ -140,7 +146,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
       * pixelRadiusForMasking: int: number of pixels to mask along the shallow border. Default: 5
       * plotNumGalAfterMasking: boolean: set to True to plot (skymaps, power spectra) numGal data after 
                                          bordering masking. Default: True
-      * saveNumGalDataAfterMasking:: boolean: set to True to save numGal data after border masking.
+      * saveNumGalDataAfterMasking: boolean: set to True to save numGal data after border masking.
                                               Default: False
 
       * include0ptErrors: boolean: set to True to include photometric calibration errors.
@@ -198,37 +204,26 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     # OpSim database
     opsdb = db.OpsimDatabase(dbfile)
 
-    # set up the outDir
+    # set up the outDir name
     add=''
     add2=''
-    if include0ptErrors:
-        add= 'with0ptErrors'
-    else:
-        add= 'no0ptErrors'
-    if includeDustExtinction:
-        add2= 'withDustExtinction'
-    else:
-        add2= 'noDustExtinction'
+    if include0ptErrors: add= 'with0ptErrors'
+    else:add= 'no0ptErrors'
+        
+    if includeDustExtinction: add2= 'withDustExtinction'
+    else: add2= 'noDustExtinction'
 
-    add3= ''
-    if cutOffYear is not None:
-        add3= str(cutOffYear) + 'yearCut'
-    else:
-        add3= 'fullSurveyPeriod'
+    if cutOffYear is not None: add3= str(cutOffYear) + 'yearCut'
+    else: add3= 'fullSurveyPeriod'
 
-    if (redshiftBin=='all'):
-        add4= 'allRedshiftData'
-    if (redshiftBin == '1'):
-        add4= '0.15<z<0.37'
-    if (redshiftBin == '2'):
-        add4= '0.37<z<0.66'
-    if (redshiftBin == '3'):
-        add4= '0.66<z<1.0'
-    if (redshiftBin == '4'):
-        add4= '1.0<z<1.5'
-    if (redshiftBin == '5'):
-        add4= '1.5<z<2.0'
-
+    # check to make sure redshift bin is ok.
+    allowedRedshiftBins= powerLawConst_a.keys() + ['all']
+    if redshiftBin not in allowedRedshiftBins:
+        print 'ERROR: Invalid redshift bin. Input bin can only be among ' + str(allowedRedshiftBins) + '\n'
+        return
+    add4= redshiftBin
+    if (redshiftBin=='all'): add4= 'allRedshiftData'
+        
     add5= ''
     if addPoissonNoise:
         add5= '_withPoissonNoise'
@@ -259,60 +254,64 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     # setup all the slicers. set up randomSeed for random/repRandom strategies through stackerList.
     slicer= {}
     stackerList= {}
-    slicer['NoDither']= slicers.HealpixSlicer(lonCol='fieldRA', latCol='fieldDec', nside=nside, useCache=False)
 
-    if someDithOnly:
+    if bestDithOnly:
         stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(randomSeed=1000)]
         slicer['RepulsiveRandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerVisitRa', 
                                                                             latCol='repulsiveRandomDitherFieldPerVisitDec', nside=nside, useCache=False)
-        slicer['SequentialHexDitherFieldPerNight']=  slicers.HealpixSlicer(lonCol='hexDitherFieldPerNightRa', 
-                                                                        latCol='hexDitherFieldPerNightDec', nside=nside, useCache=False)
-        slicer['PentagonDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', 
-                                                                 latCol='pentagonDitherPerSeasonDec', nside=nside, useCache=False)
-        
-    elif not noDithOnly:
-        stackerList['RandomDitherPerNight'] = [mafStackers.RandomDitherPerNightStacker(randomSeed=1000)]
-        stackerList['RandomDitherFieldPerNight'] = [mafStackers.RandomDitherFieldPerNightStacker(randomSeed=1000)]
-        stackerList['RandomDitherFieldPerVisit'] = [mafStackers.RandomDitherFieldPerVisitStacker(randomSeed=1000)]
-        
-        stackerList['RepulsiveRandomDitherPerNight'] = [myStackers.RepulsiveRandomDitherPerNightStacker(randomSeed=1000)]
-        stackerList['RepulsiveRandomDitherFieldPerNight'] = [myStackers.RepulsiveRandomDitherFieldPerNightStacker(randomSeed=1000)]
-        stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(randomSeed=1000)]
-        
-        slicer['RandomDitherPerNight']= slicers.HealpixSlicer(lonCol='randomDitherPerNightRa', 
-                                                              latCol='randomDitherPerNightDec', nside=nside, useCache=False)
-        slicer['RandomDitherFieldPerNight']= slicers.HealpixSlicer(lonCol='randomDitherFieldPerNightRa', 
-                                                                   latCol='randomDitherFieldPerNightDec', nside=nside, useCache=False)
-        slicer['RandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='randomDitherFieldPerVisitRa',
-                                                                   latCol='randomDitherFieldPerVisitDec', nside=nside, useCache=False)
-        
-        slicer['RepulsiveRandomDitherPerNight']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherPerNightRa', 
-                                                                       latCol='repulsiveRandomDitherPerNightDec', nside=nside, useCache=False)
-        slicer['RepulsiveRandomDitherFieldPerNight']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerNightRa', 
-                                                                            latCol='repulsiveRandomDitherFieldPerNightDec', nside=nside, useCache=False)
-        slicer['RepulsiveRandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerVisitRa', 
-                                                                            latCol='repulsiveRandomDitherFieldPerVisitDec', nside=nside, useCache=False)
-        
-        slicer['FermatSpiralDitherPerNight']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherPerNightRa', 
-                                                                     latCol='fermatSpiralDitherPerNightDec', nside=nside, useCache=False)
-        slicer['FermatSpiralDitherFieldPerNight']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherFieldPerNightRa', 
-                                                                        latCol='fermatSpiralDitherFieldPerNightDec', nside=nside, useCache=False)
-        slicer['FermatSpiralDitherFieldPerVisit']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherFieldPerVisitRa', 
-                                                                          latCol='fermatSpiralDitherFieldPerVisitDec', nside=nside, useCache=False)
-        
-        slicer['SequentialHexDitherPerNight']=  slicers.HealpixSlicer(lonCol='hexDitherPerNightRa', 
-                                                                      latCol='hexDitherPerNightDec', nside=nside, useCache=False)
-        slicer['SequentialHexDitherFieldPerNight']=  slicers.HealpixSlicer(lonCol='hexDitherFieldPerNightRa', 
-                                                                        latCol='hexDitherFieldPerNightDec', nside=nside, useCache=False)
-        slicer['SequentialHexDitherFieldPerVisit']=  slicers.HealpixSlicer(lonCol='hexDitherFieldPerVisitRa', 
-                                                                           latCol='hexDitherFieldPerVisitDec', nside=nside, useCache=False)
-        
-        slicer['PentagonDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', 
-                                                                 latCol='pentagonDitherPerSeasonDec', nside=nside, useCache=False)
-        slicer['PentagonDiamondDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDiamondDitherPerSeasonRa', 
-                                                                        latCol='pentagonDiamondDitherPerSeasonDec', nside=nside, useCache= False)
-        slicer['SpiralDitherPerSeason']= slicers.HealpixSlicer(lonCol='spiralDitherPerSeasonRa', 
-                                                               latCol='spiralDitherPerSeasonDec', nside=nside, useCache= False)
+    else:
+        slicer['NoDither']= slicers.HealpixSlicer(lonCol='fieldRA', latCol='fieldDec', nside=nside, useCache=False)
+        if someDithOnly and not noDithOnly:
+            stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(randomSeed=1000)]
+            slicer['RepulsiveRandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerVisitRa', 
+                                                                                latCol='repulsiveRandomDitherFieldPerVisitDec', nside=nside, useCache=False)
+            slicer['SequentialHexDitherFieldPerNight']=  slicers.HealpixSlicer(lonCol='hexDitherFieldPerNightRa', 
+                                                                               latCol='hexDitherFieldPerNightDec', nside=nside, useCache=False)
+            slicer['PentagonDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', 
+                                                                     latCol='pentagonDitherPerSeasonDec', nside=nside, useCache=False)
+        elif not noDithOnly:
+            stackerList['RandomDitherPerNight'] = [mafStackers.RandomDitherPerNightStacker(randomSeed=1000)]
+            stackerList['RandomDitherFieldPerNight'] = [mafStackers.RandomDitherFieldPerNightStacker(randomSeed=1000)]
+            stackerList['RandomDitherFieldPerVisit'] = [mafStackers.RandomDitherFieldPerVisitStacker(randomSeed=1000)]
+            
+            stackerList['RepulsiveRandomDitherPerNight'] = [myStackers.RepulsiveRandomDitherPerNightStacker(randomSeed=1000)]
+            stackerList['RepulsiveRandomDitherFieldPerNight'] = [myStackers.RepulsiveRandomDitherFieldPerNightStacker(randomSeed=1000)]
+            stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(randomSeed=1000)]
+            
+            slicer['RandomDitherPerNight']= slicers.HealpixSlicer(lonCol='randomDitherPerNightRa', 
+                                                                  latCol='randomDitherPerNightDec', nside=nside, useCache=False)
+            slicer['RandomDitherFieldPerNight']= slicers.HealpixSlicer(lonCol='randomDitherFieldPerNightRa', 
+                                                                       latCol='randomDitherFieldPerNightDec', nside=nside, useCache=False)
+            slicer['RandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='randomDitherFieldPerVisitRa',
+                                                                       latCol='randomDitherFieldPerVisitDec', nside=nside, useCache=False)
+            
+            slicer['RepulsiveRandomDitherPerNight']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherPerNightRa', 
+                                                                           latCol='repulsiveRandomDitherPerNightDec', nside=nside, useCache=False)
+            slicer['RepulsiveRandomDitherFieldPerNight']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerNightRa', 
+                                                                                latCol='repulsiveRandomDitherFieldPerNightDec', nside=nside, useCache=False)
+            slicer['RepulsiveRandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerVisitRa', 
+                                                                                latCol='repulsiveRandomDitherFieldPerVisitDec', nside=nside, useCache=False)
+            
+            slicer['FermatSpiralDitherPerNight']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherPerNightRa', 
+                                                                         latCol='fermatSpiralDitherPerNightDec', nside=nside, useCache=False)
+            slicer['FermatSpiralDitherFieldPerNight']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherFieldPerNightRa', 
+                                                                              latCol='fermatSpiralDitherFieldPerNightDec', nside=nside, useCache=False)
+            slicer['FermatSpiralDitherFieldPerVisit']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherFieldPerVisitRa', 
+                                                                              latCol='fermatSpiralDitherFieldPerVisitDec', nside=nside, useCache=False)
+            
+            slicer['SequentialHexDitherPerNight']=  slicers.HealpixSlicer(lonCol='hexDitherPerNightRa', 
+                                                                          latCol='hexDitherPerNightDec', nside=nside, useCache=False)
+            slicer['SequentialHexDitherFieldPerNight']=  slicers.HealpixSlicer(lonCol='hexDitherFieldPerNightRa', 
+                                                                               latCol='hexDitherFieldPerNightDec', nside=nside, useCache=False)
+            slicer['SequentialHexDitherFieldPerVisit']=  slicers.HealpixSlicer(lonCol='hexDitherFieldPerVisitRa', 
+                                                                               latCol='hexDitherFieldPerVisitDec', nside=nside, useCache=False)
+            
+            slicer['PentagonDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', 
+                                                                     latCol='pentagonDitherPerSeasonDec', nside=nside, useCache=False)
+            slicer['PentagonDiamondDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDiamondDitherPerSeasonRa', 
+                                                                            latCol='pentagonDiamondDitherPerSeasonDec', nside=nside, useCache= False)
+            slicer['SpiralDitherPerSeason']= slicers.HealpixSlicer(lonCol='spiralDitherPerSeasonRa', 
+                                                                   latCol='spiralDitherPerSeasonDec', nside=nside, useCache= False)
     os.chdir(path)
     
     # set up bundle for numGal (and later deltaN/N)
@@ -350,7 +349,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     print '\n# Before any border masking or photometric error calibration: '
     for dither in myBundles:
         ind= np.where(myBundles[dither].metricValues.mask[:] == False)[0]
-        print 'Total Galaxies for ' + dither + ': %.7g' %(sum(myBundles[dither].metricValues.data[ind]))
+        print 'Total Galaxies for ' + dither + ': %.9e' %(sum(myBundles[dither].metricValues.data[ind]))
 
     print '\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.
     
@@ -371,8 +370,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     if saveNumGalDataAfterMasking:
         os.chdir(path + outDir)
         outDir_new= 'numGalData_afterBorderMasking'
-        if not os.path.exists(outDir_new):
-            os.makedirs(outDir_new)
+        if not os.path.exists(outDir_new): os.makedirs(outDir_new)
         saveBundleData_npzFormat(path + outDir + '/' + outDir_new, myBundles, 'numGalData_masked', filterBand)
     os.chdir(path)
         
@@ -381,7 +379,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         print '# After border masking: '
         for dither in myBundles:
             ind= np.where(myBundles[dither].metricValues.mask[:] == False)[0]
-            print 'Total Galaxies for ' + dither + ': %.7g' %(sum(myBundles[dither].metricValues.data[ind]))
+            print 'Total Galaxies for ' + dither + ': %.9e' %(sum(myBundles[dither].metricValues.data[ind]))
 
     print '\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.
     
@@ -392,12 +390,14 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     # and k is a constant such that var(del_i)= (0.01)^2. 0.01 for the 1% LSST goal.
     # k-constraint equation becomes: k^2*var(z_i/sqrt(nObs_i))= (0.01)^2    --- equation 1
     if include0ptErrors:
-        meanMetric= metrics.MeanMetric(col='finSeeing')   # for avgSeeing per HEALpix pixel
-        nObsMetric= NumObsMetric(nside= nside)   # for numObs per HEALpix pixel
-        if includeDustExtinction:
-            coaddMetric= metrics.ExgalM5(lsstFilter= filterBand)
+        if (runName== 'enigma1189'):
+            meanMetric= metrics.MeanMetric(col='finSeeing')   # for avgSeeing per HEALpix pixel
         else:
-            coaddMetric= metrics.Coaddm5Metric()
+            meanMetric= metrics.MeanMetric(col='FWHMeff')   # for avgSeeing per HEALpix pixel
+        
+        nObsMetric= NumObsMetric(nside= nside)   # for numObs per HEALpix pixel
+        if includeDustExtinction: coaddMetric= metrics.ExgalM5(lsstFilter= filterBand)
+        else: coaddMetric= metrics.Coaddm5Metric()
 
         avgSeeingBundle= {}
         nObsBundle= {}
@@ -572,10 +572,8 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                     plt.savefig('0ptSkymap_' + str(dither) + '.pdf', bbox_inches='tight',format= 'pdf')
                     os.chdir(path + outDir)
                     
-                if show0ptPlots:
-                    plt.show()
-                else:
-                    plt.close()
+                if show0ptPlots: plt.show()
+                else: plt.close()
 
                 # plot power spectrum
                 plt.clf()
@@ -598,10 +596,9 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                     plt.savefig('0ptPowerSpectrum_' + str(dither) + '.pdf',  bbox_inches='tight', format= 'pdf')
                     os.chdir(path + outDir)
                     
-                if show0ptPlots:
-                    plt.show()
-                else:
-                    plt.close()
+                if show0ptPlots: plt.show()
+                else: plt.close()
+                
             os.chdir(path)
 
         print '\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.
@@ -611,7 +608,6 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         for dither in myBundles:
             zeroPtErr= zeroPtError[dither].copy()
             inSurvey=  np.where(myBundles[dither].metricValues.mask == False)[0]   # 04/27: only look at inSurvey region
-
             for i in inSurvey:   # 4/27 
                 if (zeroPtErr[i] != -500):   # run only when zeroPt was calculated
                     myBundles[dither].metricValues.data[i] = GalaxyCounts_0ptErrors(coaddBundle[dither].metricValues.data[i],
@@ -631,8 +627,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         if saveNumGalDataAfter0pt:
             os.chdir(path + outDir)
             outDir_new= 'numGalData_afterBorderMasking_after0pt'
-            if not os.path.exists(outDir_new):
-                os.makedirs(outDir_new)
+            if not os.path.exists(outDir_new): os.makedirs(outDir_new)
             saveBundleData_npzFormat(path + outDir + '/' + outDir_new, myBundles, 'numGalData_masked_with0pt', filterBand)
         os.chdir(path)
     
@@ -640,7 +635,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         print '\n# After 0pt error calculation and border masking: '
         for dither in myBundles:
             ind= np.where(myBundles[dither].metricValues.mask[:] == False)[0]
-            print 'Total Galaxies for ' + dither + ': %.7g' %(sum(myBundles[dither].metricValues.data[ind])) 
+            print 'Total Galaxies for ' + dither + ': %.9e' %(sum(myBundles[dither].metricValues.data[ind])) 
 
     #########################################################################################################
     # add poisson noise?
@@ -667,15 +662,14 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         if saveNumGalDataAfterPoisson:
             os.chdir(path + outDir)
             outDir_new= 'numGalData_afterBorderMasking_after0pt_afterPoisson'
-            if not os.path.exists(outDir_new):
-                os.makedirs(outDir_new)
+            if not os.path.exists(outDir_new): os.makedirs(outDir_new)
             saveBundleData_npzFormat(path + outDir + '/' + outDir_new, myBundles, 'numGalData_masked_with0pt_withPoisson', filterBand)
         os.chdir(path)
             
         print '\n# After adding poisson noise: '
         for dither in myBundles:
             ind= np.where(myBundles[dither].metricValues.mask[:] == False)[0]
-            print 'Total Galaxies for ' + dither + ': %.7g' %(sum(myBundles[dither].metricValues.data[ind])) 
+            print 'Total Galaxies for ' + dither + ': %.9e' %(sum(myBundles[dither].metricValues.data[ind])) 
 
     print '\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.
     #########################################################################################################
@@ -721,8 +715,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     if saveDeltaNByNData:
         os.chdir(path + outDir)
         outDir_new= 'deltaNByNData'
-        if not os.path.exists(outDir_new):
-            os.makedirs(outDir_new)
+        if not os.path.exists(outDir_new): os.makedirs(outDir_new)
         saveBundleData_npzFormat(path + outDir + '/' + outDir_new, myBundles, 'deltaNByNData_masked', filterBand)
     os.chdir(path)
     
@@ -733,9 +726,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         myBundles[dither].setSummaryMetrics(summarymetric)
         myBundles[dither].computeSummaryStats()
         print '# Total power for %s case is %f.' %(dither, myBundles[dither].summaryValues['TotalPower'])
-        myBundles[dither].setPlotDict({'label':'%s (power: %.8f)' %(dither, 
-                                                                    myBundles[dither].summaryValues['TotalPower'])})
-
+        
     # calculate the power spectra
     cl= {}
     for dither in myBundles:
@@ -746,8 +737,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     if saveClsForDeltaNByN:
         os.chdir(path + outDir)
         outDir_new= 'cls_DeltaByN'
-        if not os.path.exists(outDir_new):
-            os.makedirs(outDir_new)
+        if not os.path.exists(outDir_new): os.makedirs(outDir_new)
         os.chdir(path + outDir + '/' + outDir_new)
         
         for dither in myBundles:
@@ -762,30 +752,6 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     if not os.path.exists(outDir2):
         os.makedirs(outDir2)
     
-    # create the powerspectrum
-    plotColor={}
-    plotColor['NoDither']= [0., 0., 0.]  # black
-    
-    plotColor['PentagonDiamondDitherPerSeason']= [255/255.,0.,255/255.] # magenta
-    plotColor['PentagonDitherPerSeason']= [25/255.,50/255.,55/255.] # random
-    plotColor['SpiralDitherPerSeason']= [255/255.,0.,250/255.] # random
-    
-    plotColor['RandomDitherFieldPerVisit']= [0, 206/255., 209/255.] # turqoise
-    plotColor['RandomDitherFieldPerNight']= [0.,0.,255/255.]  # blue
-    plotColor['RandomDitherPerNight']= [139/255., 0.,0.] # dark red
-    
-    plotColor['RepulsiveRandomDitherFieldPerVisit']= [124/255., 252/255.,   0.] # lawngreen
-    plotColor['RepulsiveRandomDitherFieldPerNight']= [255/255., 255/255.,   0.]  # yellow
-    plotColor['RepulsiveRandomDitherPerNight']= [147/255., 112/255., 219/255.] # medium purple
-    
-    plotColor['FermatSpiralDitherFieldPerVisit']= [184/255., 134/255.,  11/255.] # dark goldenrod
-    plotColor['FermatSpiralDitherFieldPerNight']= [34/255., 139/255.,  34/255.] # forestgreen
-    plotColor['FermatSpiralDitherPerNight']= [255/255., 105/255., 180/255.] # hot pink
-    
-    plotColor['SequentialHexDitherFieldPerVisit']= [75/255., 0., 130/255.] # indigo
-    plotColor['SequentialHexDitherFieldPerNight']= [220/255.,  20/255.,  60/255.] # crimson
-    plotColor['SequentialHexDitherPerNight']= [ 0/255., 255/255., 127/255.] # spring green
-
     # power spectra
     for dither in myBundles:
         ell = np.arange(np.size(cl[dither]))
@@ -793,36 +759,53 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         plt.plot(ell, (cl[dither]*ell*(ell+1))/2.0/np.pi,
                  color=plotColor[dither], linestyle='-', label=str(dither))
 
-    plt.xlabel(r'$l$', fontsize=16)
-    plt.ylabel(r'$l(l+1)C_l/(2\pi)$', fontsize=16)
+    plt.xlabel(r'$\ell$', fontsize=16)
+    plt.ylabel(r'$\ell(\ell+1)C_\ell/(2\pi)$', fontsize=16)
     plt.tick_params(axis='x', labelsize=14)
     plt.tick_params(axis='y', labelsize=14)        
     plt.xlim(0,500)
     fig = plt.gcf()
     fig.set_size_inches(10.5, 7.5)
-    plt.legend(fontsize='x-large', labelspacing=0.001)
+    leg= plt.legend(fontsize='x-large', labelspacing=0.001)
+    for legobj in leg.legendHandles:
+        legobj.set_linewidth(2.0) 
     os.chdir(path + outDir + '/' + outDir2)
     plt.savefig('powerspectrum_comparison.pdf',format= 'pdf')
     plt.show()
 
     # create the histogram
+    scale = hp.nside2pixarea(nside, degrees=True)
+    def tickFormatter(y, pos):
+        return '%d' % (y * scale)    # convert pixel count to area
+
     for dither in myBundles:
         ind= np.where(myBundles[dither].metricValues.mask == False)[0]
         binsize= 0.01
         binAll= int((max(myBundles[dither].metricValues.data[ind])-min(myBundles[dither].metricValues.data[ind]))/binsize)
         plt.hist(myBundles[dither].metricValues.data[ind],bins=binAll,label=str(dither),
                  histtype='step',color=plotColor[dither])
-    plt.xlim(-0.6,1.2)
+    #plt.xlim(-0.6,1.2)
+    ax = plt.gca()
+    ymin, ymax = ax.get_ylim()
+    nYticks= 10.
+    wantedYMax= ymax*scale
+    wantedYMax= 10.*np.ceil(float(wantedYMax)/10.)
+    increment= 5.*np.ceil(float(wantedYMax/nYticks)/5.)
+    wantedArray= np.arange(0, wantedYMax, increment)
+    ax.yaxis.set_ticks(wantedArray/scale)
+    ax.yaxis.set_major_formatter(FuncFormatter(tickFormatter))
     plt.xlabel(r'$\mathrm{\Delta N/\overline{N}}$', fontsize= 16)
-    plt.ylabel('Area (1000s of square degrees)', fontsize= 16)
+    plt.ylabel('Area (deg$^2$)', fontsize= 16)
     plt.tick_params(axis='x', labelsize=15)
     plt.tick_params(axis='y', labelsize=15)
     fig = plt.gcf()
     fig.set_size_inches(10.5, 7.5)
-    plt.legend(fontsize='x-large', labelspacing=0.001, loc='center left', bbox_to_anchor=(1, 0.5))
+    leg= plt.legend(fontsize='x-large', labelspacing=0.001, loc='center left', bbox_to_anchor=(1, 0.5))
+    for legobj in leg.legendHandles:
+        legobj.set_linewidth(2.0) 
     plt.savefig('histogram_comparison.pdf',bbox_inches='tight', format= 'pdf')
 
     if include0ptErrors:
-        return myBundles, plotColor, outDir, resultsDb, zeroPtError
+        return myBundles, outDir, resultsDb, zeroPtError
     else:
-        return myBundles, plotColor, outDir, resultsDb
+        return myBundles, outDir, resultsDb
