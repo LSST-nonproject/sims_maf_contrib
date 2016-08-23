@@ -4,6 +4,9 @@ from lsst.sims.utils import altAzPaFromRaDec
 
 from .findTelescopes import findTelescopes
 
+__all__ = ['NFollowStacker']
+
+
 class NFollowStacker(BaseStacker):
     """
     Add the number of telescopes that could follow up any visit,

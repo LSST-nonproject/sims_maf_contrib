@@ -5,6 +5,8 @@
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 
+__all__ = ['SeasonLengthMetric']
+
 
 class SeasonLengthMetric(BaseMetric):
     """
@@ -14,9 +16,8 @@ class SeasonLengthMetric(BaseMetric):
     averaged. Season length seems to the most important sampling 
     pattern property for minimising lensed quasar time delay bias: the 
     longer, the better.
-    
+
     Units: months
-    
     Used by: LensedQuasarTimeDelays, ...
     """
     def __init__(self, seasonCol='season', expMJDCol='expMJD', **kwargs):

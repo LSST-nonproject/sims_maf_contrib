@@ -5,6 +5,7 @@
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 
+__all__ = ['CampaignLengthMetric']
 
 class CampaignLengthMetric(BaseMetric):
     """

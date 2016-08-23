@@ -4,6 +4,8 @@ import scipy
 
 from lsst.sims.maf.metrics import BaseMetric, Coaddm5Metric
 
+__all__ = ['GalaxyCountsMetric']
+
 
 class GalaxyCountsMetric(BaseMetric):
     """

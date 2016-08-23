@@ -6,18 +6,9 @@ Authors: Sergey Koposov, Thomas Collett
 import numpy as np
 from lsst.sims.maf.metrics import BaseMetric
 
+__all__ = ['RelRmsMetric', 'SNMetric', 'ThreshSEDSNMetric', 'SEDSNMetric']
 
-# This is needed to avoid an error when a metric is redefined
-from lsst.sims.maf.metrics import BaseMetric
-try:
-	#print BaseMetric.registry.keys()
-	del BaseMetric.registry['PhotPrecMetrics.RelRmsMetric']
-	del BaseMetric.registry['PhotPrecMetrics.ThreshSEDSNMetric']
-	del BaseMetric.registry['PhotPrecMetrics.SEDSNMetric']
-	del BaseMetric.registry['PhotPrecMetrics.SNMetric']
-except KeyError:
-	pass
-    
+
 twopi = 2.0*np.pi
 
 class RelRmsMetric(BaseMetric):
@@ -25,7 +16,7 @@ class RelRmsMetric(BaseMetric):
 	# the metric which computed the RMS over median
 	def run(self, dataSlice, slicePoint=None):
 		return np.std(dataSlice[self.colname])/np.median(dataSlice[self.colname])
-		
+
 
 class SNMetric(BaseMetric):
 	"""Calculate the signal to noise metric in a given filter for an object 
@@ -33,28 +24,24 @@ class SNMetric(BaseMetric):
 	We assume point source aperture photometry and assume that we do 
 	the measurement over the stack
 	"""
-	def __init__(self, m5Col = 'fiveSigmaDepth', 
-				finSeeCol='finSeeing',
-				skyBCol='filtSkyBrightness',
-				expTCol='visitExpTime',
-				filterCol='filter',
-				metricName='SNMetric',
-				filter=None,
-				mag=None,
-				 **kwargs):
-		"""Instantiate metric.
-
-		m5col = the column name of the individual visit m5 data."""
-		super(SNMetric, self).__init__(col=[m5Col,finSeeCol,
-			skyBCol,expTCol,filterCol], metricName=metricName, **kwargs)
+	def __init__(self, m5Col = 'fiveSigmaDepth', seeingCol='finSeeing',
+                     skyBCol='filtSkyBrightness',
+                     expTCol='visitExpTime',
+                     filterCol='filter',
+                     metricName='SNMetric',
+                     filter=None,
+                     mag=None,
+                     **kwargs):
+		super(SNMetric, self).__init__(col=[m5Col, seeingCol,
+                                                    skyBCol,expTCol,filterCol], metricName=metricName, **kwargs)
 		self.filter = filter
 		self.mag = mag
 
 	def run(self, dataSlice, slicePoint=None):
 		#print 'x'
-		npoints = len(dataSlice['finSeeing'])
-		seeing= dataSlice['finSeeing']
-		depth5 = dataSlice['fiveSigmaDepth']
+		npoints = len(dataSlice[self.seeingCol])
+		seeing= dataSlice[self.seeingCol]
+		depth5 = dataSlice[self.m5Col]
 		#mag = depth5 
 		mag = self.mag
 
@@ -71,18 +58,18 @@ class SNMetric(BaseMetric):
 
 		zptArr= np.zeros(npoints)
 		for filt in 'ugrizy':
-			zptArr[dataSlice['filter']==filt]=zpts[filt]
-		sky_mag_arcsec=dataSlice['filtSkyBrightness']
-		exptime = dataSlice['visitExpTime']
+			zptArr[dataSlice[self.filterCol]==filt]=zpts[filt]
+		sky_mag_arcsec=dataSlice[self.skyBCol]
+		exptime = dataSlice[self.expTCol]
 		sky_adu = 10**(-(sky_mag_arcsec-zptArr)/2.5) * exptime
 		sky_adu = sky_adu * np.pi * seeing**2 # adu per seeing circle
 
-		source_fluxes = 10**(-mag/2.5)		
+		source_fluxes = 10**(-mag/2.5)
 		source_adu = 10**(-(mag-zptArr)/2.5)*exptime
 		err_adu = np.sqrt(source_adu+sky_adu)/np.sqrt(gain)
 		err_fluxes = err_adu * (source_fluxes/source_adu)
 
-		ind = dataSlice['filter']==curfilt
+		ind = dataSlice[self.filterCol]==curfilt
 		flux0 = source_fluxes
 		stack_flux_err=1./np.sqrt((1/err_fluxes[ind]**2).sum())
 		errMag = 2.5/np.log(10)*stack_flux_err/flux0
@@ -99,31 +86,26 @@ class SEDSNMetric(BaseMetric):
 	Computes the S/Ns for a given SED 
 	"""
 	def __init__(self, m5Col = 'fiveSigmaDepth', 
-				finSeeCol='finSeeing',
-				skyBCol='filtSkyBrightness',
-				expTCol='visitExpTime',
-				filterCol='filter',
-				metricName='SEDSNMetric',
-				#filter=None,
-				mags=None,
-				 **kwargs):
-		"""Instantiate metric.
-
-		m5col = the column name of the individual visit m5 data."""
-		super(SEDSNMetric, self).__init__(col=[m5Col,finSeeCol,
-			skyBCol,expTCol,filterCol], metricName=metricName, **kwargs)
+                     seeingCol='finSeeing',
+                     skyBCol='filtSkyBrightness',
+                     expTCol='visitExpTime',
+                     filterCol='filter',
+                     metricName='SEDSNMetric',
+                     #filter=None,
+                     mags=None,
+                     **kwargs):
+		super(SEDSNMetric, self).__init__(col=[m5Col, seeingCol,
+                                                       skyBCol,expTCol,filterCol], metricName=metricName, **kwargs)
 		self.mags=mags
 		self.metrics={}
-		
 		for curfilt, curmag in mags.iteritems():
-			self.metrics[curfilt]=SNMetric(mag=curmag,filter=curfilt)
-		
+                        self.metrics[curfilt]=SNMetric(mag=curmag,filter=curfilt)
 		#self.filter = filter
 		#self.mag = mag
 
 	def run(self, dataSlice, slicePoint=None):
 		res={}
-		for curf,curm in self.metrics.iteritems():
+		for curf, curm in self.metrics.iteritems():
 			curr=curm.run(dataSlice, slicePoint=slicePoint)
 			res['sn_'+curf]=curr
 		return res
@@ -145,21 +127,19 @@ class ThreshSEDSNMetric(BaseMetric):
 	in all the bands for a given SED
 	"""
 	def __init__(self, m5Col = 'fiveSigmaDepth', 
-				finSeeCol='finSeeing',
-				skyBCol='filtSkyBrightness',
-				expTCol='visitExpTime',
-				filterCol='filter',
-				metricName='ThreshSEDSNMetric',
-				snlim=20,
-				#filter=None,
-				mags=None,
-				 **kwargs):
+                     seeingCol='finSeeing',
+                     skyBCol='filtSkyBrightness',
+                     expTCol='visitExpTime',
+                     filterCol='filter',
+                     metricName='ThreshSEDSNMetric',
+                     snlim=20,
+                     #filter=None,
+                     mags=None,
+                     **kwargs):
 		"""Instantiate metric."""
-
-		super(ThreshSEDSNMetric, self).__init__(col=[m5Col,finSeeCol,
-			skyBCol,expTCol,filterCol], metricName=metricName, **kwargs)
-		
-		self.xmet = SEDSNMetric(mags=mags)		
+		super(ThreshSEDSNMetric, self).__init__(col=[m5Col, seeingCol, skyBCol,
+                                                             expTCol, filterCol], metricName=metricName, **kwargs)
+		self.xmet = SEDSNMetric(mags=mags)
 		self.snlim = snlim
 		#self.filter = filter
 		#self.mag = mag

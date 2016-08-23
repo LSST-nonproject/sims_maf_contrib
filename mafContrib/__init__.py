@@ -9,16 +9,20 @@ from .tdcMetric import *
 from .TripletMetric import *
 
 from .varMetrics import *
+from .varDepthMetric import *
+
+from .transientAsciiMetric import *
 
 from .lssMetrics import *
 from .nFollowStacker import *
 
 from .photPrecMetrics import *
-from .CountMassMetric import *
-from .CountMetric import *
+from .StarCountMassMetric import *
+from .StarCountMetric import *
 from .PeriodicMetric import *
 from .angularSpread import *
 
 from .newDitherStackers import *
 from .maskingAlgorithmGeneralized import *
 from .periodicStarMetric import *
+from .GRBTransientMetric import *

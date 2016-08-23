@@ -3,7 +3,7 @@
 
 This repository contains user contributed code for MAF (sims_maf), as well as tutorials on the use of MAF.
 
-MAF ipython notebook tutorials can be found in the 'tutorials' directory. Start with the [Index](https://github.com/LSST-nonproject/sims_maf_contrib/blob/master/tutorials/Index.ipynb). 
+MAF ipython notebook tutorials can be found in the 'tutorials' directory. Start with the [Index](https://github.com/LSST-nonproject/sims_maf_contrib/blob/master/tutorials/Index.ipynb), which provides information on how to install MAF as well as an index to (some of) the tutorial notebooks.
 
 MAF ipython notebooks demonstrating science applications can be found in the 'science' directory. 
       To browse some example MAF analyses, check out the **[sims_maf_contrib    Wiki!](https://github.com/LSST-nonproject/sims_maf_contrib/wiki)**
@@ -29,7 +29,7 @@ OR (to clone via https instead of ssh, if you do not have a github account)
 Make sure you have setup the lsst environment, and declare the package with eups (you only need to do this once):
 
     cd sims_maf_contrib
-    eups declare -r . -t $USER
+    eups declare sims_maf_contrib -r . -t $USER
 
 Setup the package (you have to do this every time you log into a new shell):
 
@@ -39,5 +39,5 @@ Now you can run one of the ipython notebooks from the examples in your workspace
 
     cd tutorials
     ln -s [your data directory]/enigma_1189_sqlite.db .
-    ipython notebook
+    jupyter notebook
 (and then run the relevant notebooks).
