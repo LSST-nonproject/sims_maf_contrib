@@ -28,7 +28,7 @@ class TdcMetric(BaseMetric):
                                         **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
-        # Calculate accuracy from combined individual metrics. 
+        # Calculate accuracy from combined individual metrics.
         camp = self.campaignLength.run(dataSlice)
         sea = self.seasonLength.run(dataSlice)
         cad = self.meanNightSeparation.run(dataSlice)
@@ -40,7 +40,8 @@ class TdcMetric(BaseMetric):
             accuracy = 0.06 * (self.seaNorm / sea) * (self.campNorm / camp)**(1.1)
             precision = 4.0 * (cad/self.cadNorm)**(0.7) * (self.seaNorm/sea)**(0.3) * (self.campNorm/camp)**(0.6)
             rate = 30. * (self.cadNorm/cad)**(0.4) * (sea/self.seaNorm)**(0.8) * (self.campNorm/camp)**(0.2)
-        return {'accuracy':accuracy, 'precision':precision, 'rate':rate}
+        return {'accuracy':accuracy, 'precision':precision, 'rate':rate,
+                'cadence':cad, 'season':sea, 'campaign':camp}
 
 
     def reduceAccuracy(self, metricValue):
@@ -52,3 +53,11 @@ class TdcMetric(BaseMetric):
     def reduceRate(self, metricValue):
         return metricValue['rate']
 
+    def reduceCadence(self, metricValue):
+        return metricValue['cadence']
+
+    def reduceSeason(self, metricValue):
+        return metricValue['season']
+
+    def reduceCampaign(self, metricValue):
+        return metricValue['campaign']
