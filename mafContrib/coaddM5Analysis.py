@@ -4,8 +4,7 @@
 # an alm analysis, and save data.
 
 # Humna Awan: humna.awan@rutgers.edu
-# Last updated: 08/13/16
- #####################################################################################################
+#####################################################################################################
  
 import matplotlib.pyplot as plt
 import numpy as np
@@ -190,7 +189,7 @@ def coaddM5Analysis(path, dbfile, runName,
             slicer['PentagonDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', 
                                                                      latCol='pentagonDitherPerSeasonDec', nside=nside, useCache=False)
             slicer['PentagonDiamondDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDiamondDitherPerSeasonRa', 
-                                                                            latCol='pentagonDiamondDitherPerSeasonDec', nside=nside, uceCache= False)
+                                                                            latCol='pentagonDiamondDitherPerSeasonDec', nside=nside, useCache= False)
             slicer['SpiralDitherPerSeason']= slicers.HealpixSlicer(lonCol='spiralDitherPerSeasonRa', 
                                                                    latCol='spiralDitherPerSeasonDec', nside=nside, useCache= False)
     os.chdir(path) 
@@ -337,7 +336,6 @@ def coaddM5Analysis(path, dbfile, runName,
     wantedArray= np.arange(0, wantedYMax, increment)
     ax.yaxis.set_ticks(wantedArray/scale)
     ax.yaxis.set_major_formatter(FuncFormatter(tickFormatter))
-    plt.xlim(25., 28.)
     plt.xlabel('$' + filterBand + '$-band Coadded Depth', fontsize= 18)
     plt.ylabel('Area (deg$^2$)', fontsize= 18)
     plt.tick_params(axis='x', labelsize=18)
