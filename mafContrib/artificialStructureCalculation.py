@@ -27,8 +27,7 @@
 # errors. See the method descrpition for further details.
 
 # Humna Awan: humna.awan@rutgers.edu
-# Last updated: 08/31/16
- #####################################################################################################
+#####################################################################################################
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -281,6 +280,8 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                                                                latCol='hexDitherFieldPerNightDec', nside=nside, useCache=False)
             slicer['PentagonDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', 
                                                                      latCol='pentagonDitherPerSeasonDec', nside=nside, useCache=False)
+            slicer['FermatSpiralDitherPerNight']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherPerNightRa',
+                                                                         latCol='fermatSpiralDitherPerNightDec', nside=nside, useCache=False)
         elif not noDithOnly:
             stackerList['RandomDitherPerNight'] = [mafStackers.RandomDitherPerNightStacker(randomSeed=1000)]
             stackerList['RandomDitherFieldPerNight'] = [mafStackers.RandomDitherFieldPerNightStacker(randomSeed=1000)]
