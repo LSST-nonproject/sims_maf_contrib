@@ -14,8 +14,27 @@ __all__= ['plotFOV', 'plotRegion', 'buildAndPlotRegion']
 
 def plotFOV(coaddBundle, pixels_in_FOV, IDs, filterBand,
             raRange= [-180,180], decRange= [-70,10]):
+    """
+
+    Plot FOVs given the pixels.
+
+    Required Parameters
+    -------------------
+      * coaddBundle: dict: dictionary with keys= observing strategy names, pointing to corresponding
+                           to a metricBundle object.
+      * pixels_in_FOV: dict: dictionary with keys= field ID, pointing to the list of HEALPix pixels
+                             that fall in the FOV.
+      * IDs: list: list of fieldIDs to consider.
+      * filterBand: str: filter to consider, e.g. 'r'
+
+    Optional Parameters
+    --------------------
+      * raRange: list: constraint on the RA in cartview. Default: [-180,180]
+      * decRange: list: constraint on the Dec in cartview. Default: [-70,10]
+
+    """
     for dither in coaddBundle:
-        # plot the initial plot
+        # plot the initial plot (with the data provided in coaddBundle)
         plt.clf()
         hp.cartview(coaddBundle[dither].metricValues.filled(coaddBundle[dither].slicer.badval), 
                     flip='astro', rot=(0,0,0) ,
@@ -33,12 +52,12 @@ def plotFOV(coaddBundle, pixels_in_FOV, IDs, filterBand,
         cb.ax.tick_params(labelsize= 18)
         plt.show()
 
-        # plot the FOVs pointed out
+        # plot the FOVs specified. aritifical color.
         check= copy.deepcopy(coaddBundle[dither])
         for fID in IDs: # loop over specified fieldIDs
             check.metricValues.data[:]= 0
-            check.metricValues.data[pixels_in_FOV[dither][fID]]= 1000
-            
+            check.metricValues.data[pixels_in_FOV[dither][fID]]= 1000   # artificial data
+            # plot the FOV
             plt.clf()
             hp.cartview(check.metricValues.filled(check.slicer.badval), 
                         flip='astro', rot=(0,0,0) ,
@@ -59,6 +78,29 @@ def plotFOV(coaddBundle, pixels_in_FOV, IDs, filterBand,
 
 def plotRegion(coaddBundle, dithStrategy, pixels_in_FOV, centerIDs, regionPixels, filterBand= 'i',
                raRange= [-180,180], decRange= [-70,10]):
+    """
+
+    Plot the specified region.
+
+    Required Parameters
+    -------------------
+      * coaddBundle: dict: dictionary with keys= observing strategy names, pointing to corresponding
+                           to a metricBundle object.
+      * dithStrategy: str: dither strategy to focus on.
+      * pixels_in_FOV: dict: dictionary with keys= dither strategy. Each key points to a dictionary with
+                             keys= field ID, pointing to the list of HEALPix pixels
+                             that fall in the FOV.
+      * centerIDs: list: list of fieldIDs on which the region(s) are based.
+      * regionPixels: list: list of list of pixel numbers in the region to plot, i.e.
+                            ith list contains the pixels corresponding to ith ID in IDs.
+
+    Optional Parameters
+    --------------------
+      * filterBand: str: filter to consider. Default: 'i'
+      * raRange: list: constraint on the RA in cartview. Default: [-180,180]
+      * decRange: list: constraint on the Dec in cartview. Default: [-70,10]
+
+    """
     check= copy.deepcopy(coaddBundle[dithStrategy])
     for i, ID in enumerate(centerIDs):
         check.metricValues.data[:]= 0
@@ -70,7 +112,7 @@ def plotRegion(coaddBundle, dithStrategy, pixels_in_FOV, centerIDs, regionPixels
                     lonra= raRange, latra= decRange,
                     min= 26.3, max= 26.5, title= '', cbar=False)
         hp.graticule(dpar=20, dmer=20, verbose=False)
-        plt.title(dithStrategy + ' fiD' + str(ID) , size= 22)
+        plt.title(dithStrategy + ': fID ' + str(ID) , size= 22)
         ax = plt.gca()
         im = ax.get_images()[0]
         fig= plt.gcf()
@@ -85,6 +127,32 @@ def buildAndPlotRegion(fID, simdata, coaddBundle, FOV_radius,
                        nside= 256,
                        disc= False,
                        FOVBasedPlot= False, pixels_in_FOV= None, simdataIndex_for_pixel= None):
+    """
+
+    Find the region (disc or rectangular) based on the specified field ID and plot it (full survey
+    region and a zoomed in version).
+
+    Required Parameters
+    -------------------
+      * fID: int: fieldID for the FOV on which to base the region.
+      * simdata: np.array: array containing OpSim columns (must have fieldID, fieldRA, fieldDec).
+      * coaddBundle: dict: dictionary with keys= observing strategy names, pointing to corresponding
+                           to a metricBundle object.
+      * FOV_radius: float: radius of the FOV in radians.
+
+    Optional Parameters
+    -------------------
+      * nside: int: HEALPix resolution parameter. Defaut: 256
+      * disc: bool: set to True if want disc-like region; False for rectangular. Default: False
+      * FOVBasedPlot: bool: set to True if want to plot entire FOVs that contain any HEALPix pixel
+                            within the region. Default: False
+      * pixels_in_FOV: dict: dictionary with keys= dither strategy. Each key points to a dictionary with
+                             keys= field ID, pointing to the list of HEALPix pixels
+                             that fall in the FOV. Default: None (ok when FOVBasedPlot= False)
+      * simdataIndex_for_pixel: dict: dictionary with keys= dither strategy. Each key points to a dictionary
+                                      with keys= pixel number, pointing to the list of indices corresponding
+                                      to that pixel in simdata array.
+    """
     centralRA, centralDec, regionPixels= findRegionPixels(fID, simdata, nside, disc, FOV_radius)
     
     for dither in coaddBundle:    

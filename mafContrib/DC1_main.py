@@ -16,9 +16,35 @@ __all__= ['findDC1Regions', 'findDC1Chips']
 def findDC1Regions(coaddBundle, dbpath, plotTestPlots= True,
                    filterBand= 'i', threshold= 0.0001, nside= 256,
                    returnAll= False):
-    # coaddBundle: should have always have NoDither. If want to find regions based on a dithered survey,
-    # the bundle should have the dithered data ALONGWITH the undithered one.
-    
+    """
+
+    Find candidate regions for DC1 (based on how wildly the average depth in the region 
+    differs from the survey median depth).
+
+    Returns a bunch of stuff ...
+
+    Required Parameters
+    -------------------
+      * coaddBundle: dict: dictionary with keys= observing strategy names, pointing to corresponding
+                           to a metricBundle object.
+           NOTE: coaddBundle should have always have NoDither. If want to find regions based on a dithered
+                 survey, the bundle should have the dithered data ALONG WITH the undithered one.
+      * dbpath: str: path to the OpSim database.
+
+    Optional Parameters
+    -------------------
+      * plotTestPlots: bool: set to False if dont want to plot things for debugging/testing code.
+                             Default: True
+      * filterBand: str: filter to consider. Default: 'i'
+      * threshold: float: region will be considered good if average depth in the region is within the
+                          threshold of survey median depth. Default: 0.0001
+      * nside: int: HEALPix resolution parameter. Defaut: 256
+      * returnAll: bool: set to True to get (things needed to find chips.. ):
+                         [focusDither, output_rect, output_disc, simdata, pixels_in_FOV,
+                                                   simdataIndex_for_pixel, pixelNum, pixRA, pixDec]
+                         Default: False returns:
+                         [focusDither, output_rect, output_disc]
+    """
     FOV_radius= 0.0305
     printProgress('Getting RA, Dec for HEALPix pixels ...', highlight= True)
     pixelNum, pixRA, pixDec= getSurveyHEALPixRADec(coaddBundle)   # each output is a dicitonary.
@@ -87,6 +113,21 @@ def findDC1Regions(coaddBundle, dbpath, plotTestPlots= True,
 
 
 def findDC1Chips(dither, regionPixels, simdataIndex_for_pixel, pixelNum, pixRA, pixDec, simdata):
+    """
+
+    Find the chips that are used in the region.
+
+    Required Parameters
+    -------------------
+      * dither: str: dither strategy to focus on.
+      * regionPixels: list: list of pixel numbers in the region to plot.
+      * simdataIndex_for_pixel: dict: dictionary with keys= dither strategy. Each key points to a dictionary
+                                      with keys= pixel number, pointing to the list of indices corresponding
+                                      to that pixel in simdata array.
+      * pixelNum, pixelRA, pixelDec: output of getSurveyHEALPixRADec
+      * simdata: output of getSimData (must have fieldRA, fieldDec, ditheredRA, ditheredDec, rotSkyPos, expMJD)
+
+    """
     from lsst.obs.lsstSim import LsstSimMapper
     from lsst.sims.utils import ObservationMetaData
     from lsst.sims.coordUtils import chipNameFromRaDec
