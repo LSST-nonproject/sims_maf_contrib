@@ -36,5 +36,6 @@ from .galaxyCounts_withPixelCalibration import *
 from .artificialStructureCalculation import *
 from .almPlots import *
 from .coaddM5Analysis import *
-
 from .constantsForPipeline import *
+
+from .DC1_main import *
