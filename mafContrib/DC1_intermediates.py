@@ -8,8 +8,14 @@ import sys
 import time
 import numpy as np
 
-def printProgress(whatToPrint):
-    print '\n## ' + whatToPrint
+__all__= ['printProgress', 'getSurveyHEALPixRADec', 'getSimData',
+          'getFOVsHEALPixReln', 'enclosingPolygon', 'findRegionPixels',
+          'findGoodRegions', 'findRegionFOVs' ]
+
+def printProgress(whatToPrint, highlight= False):
+    append= ''
+    if highlight: append= '\n############################################'
+    print append + '#\n## ' + whatToPrint
     sys.stdout.flush()
     time.sleep(1.0)
         
@@ -91,10 +97,37 @@ def enclosingPolygon(radius, fieldRA, fieldDec):
     corners[3,]= c.cartesian.xyz
 
     return corners
-    
-def findGoodRegions(simdata, coaddBundle, surveyMedianDepth, FOV_radius, pixels_in_FOV, 
-                    allIDs= True, plotMinInd= 912, plotMaxInd= 915,
-                    disc= False, threshold= 0.01, raRange= [-180,180], decRange= [-70,10]):
+
+def findRegionPixels(fID, simdata, nside, disc, FOV_radius):
+    ind= np.where(simdata[:]['fieldID']== fID)[0]
+    # fieldRA, fieldDec remain fixed for NoDither; dont change with expMJD.
+    # use as the 'center' of the enclosing region (disc or rectangle).
+    fixedRA= simdata[ind[0]]['fieldRA']
+    fixedDec= simdata[ind[0]]['fieldDec']
+    if not disc:
+        centralRA, centralDec= fixedRA, fixedDec
+        corners= enclosingPolygon(FOV_radius, centralRA, centralDec)
+        diskPixels= hp.query_polygon(nside, corners)    # HEALpixel numbers
+    else:
+        centralRA, centralDec= fixedRA, fixedDec-FOV_radius*np.sqrt(3)/2.
+        c = SkyCoord(ra=centralRA*u.radian, dec= centralDec*u.radian)
+        diskPixels= hp.query_disc(nside= nside, vec=c.cartesian.xyz, radius= 2.5*FOV_radius)
+
+    return [centralRA, centralDec, diskPixels]
+
+def findRegionFOVs(regionPixels, dither, simdataIndex_for_pixel, simdata):
+    idList= []
+    for p in regionPixels:
+        ind= simdataIndex_for_pixel[dither][p]
+        ids = simdata[ind['idxs']]['fieldID']   # fieldIDs corresponding to pixelNum[i]
+        uniqID= np.unique(ids)
+        idList+= list(uniqID)
+    return np.unique(idList)
+
+def findGoodRegions(simdata, coaddBundle, surveyMedianDepth, FOV_radius, pixels_in_FOV,
+                    nside= 256, threshold= 0.01,
+                    allIDs= True, IDsToTestWith= [],
+                    disc= False,  raRange= [-180,180], decRange= [-70,10]):
     # a region is 'good' if abs(typicalDepth in the region -surveyMedianDepth)<threshold
     goodIDs= []
     goodPixelNums= []
@@ -105,42 +138,10 @@ def findGoodRegions(simdata, coaddBundle, surveyMedianDepth, FOV_radius, pixels_
     
     focusDither= surveyMedianDepth.keys()[0]
     considerIDs= pixels_in_FOV[focusDither].keys()
-    if not allIDs: considerIDs= pixels_in_FOV[focusDither].keys()[plotMinInd: plotMaxInd]
+    if not allIDs: considerIDs= IDsToTestWith
         
     for ID in considerIDs:
-        ind= np.where(simdata[:]['fieldID']==ID)[0]
-
-        fixedRA= simdata[ind[0]]['fieldRA']
-        fixedDec= simdata[ind[0]]['fieldDec']
-        if not disc:
-            centralRA, centralDec= fixedRA, fixedDec
-            corners= enclosingPolygon(FOV_radius, centralRA, centralDec)
-            diskPixels= hp.query_polygon(256, corners)    # HEALpixel numbers
-        else:
-            centralRA, centralDec= fixedRA, fixedDec-FOV_radius*np.sqrt(3)/2.
-            c = SkyCoord(ra=centralRA*u.radian, dec= centralDec*u.radian)
-            diskPixels= hp.query_disc(nside= 256, vec=c.cartesian.xyz, radius= 2.5*FOV_radius)
-
-        
-        #fixedRA= simdata[ind[0]]['fieldRA']
-        #fixedDec= simdata[ind[0]]['fieldDec']
-        #if not disc: corners= enclosingPolygon(FOV_radius, fixedRA, fixedDec)
-        #else: c = SkyCoord(ra=fixedRA*u.radian, dec=(fieldDec-FOV_radius*np.sqrt(3)/2.)*u.radian)
-            
-        #for index in ind:
-        #    if (dithStrategy=='NoDither'):
-        #        fieldRA= simdata[index]['fieldRA']
-        #        fieldDec= simdata[index]['fieldDec']
-        #    else:
-        #        fieldRA= simdata[index]['ditheredRA']
-        #        fieldDec= simdata[index]['ditheredDec']
-        # 
-        #    if not disc:
-        #        corners= enclosingPolygon(FOV_radius, fieldRA, fieldDec)
-        #        diskPixels= hp.query_polygon(256, corners)
-        #    else:
-        #        c = SkyCoord(ra=fieldRA*u.radian, dec=(fieldDec-FOV_radius*np.sqrt(3)/2.)*u.radian)
-        #        diskPixels= hp.query_disc(nside= 256, vec=c.cartesian.xyz, radius= 3*FOV_radius)
+        centralRA, centralDec, diskPixels= findRegionPixels(ID, simdata, nside, disc, FOV_radius)
 
         typicalDepth= np.mean(coaddBundle[focusDither].metricValues.data[diskPixels])
         diff= abs(typicalDepth-surveyMedianDepth[focusDither])
@@ -171,8 +172,10 @@ def findGoodRegions(simdata, coaddBundle, surveyMedianDepth, FOV_radius, pixels_
             cbaxes = fig.add_axes([0.1, 0.25, 0.8, 0.04]) # [left, bottom, width, height]
             cb = plt.colorbar(im,  orientation='horizontal',
                               format= '%.1f', cax = cbaxes) 
-            cb.set_label(str('i-Band Coadded Depth'), fontsize=18)
-            cb.ax.tick_params(labelsize= 18)
+            #cb.set_label(str('i-Band Coadded Depth'), fontsize=18)
+            #cb.ax.tick_params(labelsize= 18)
             plt.show()
             
     return [np.array(goodPixelNums), np.array(goodIDs), np.array(diffMeanMedian), np.array(scatterInDepth), np.array(centerRA), np.array(centerDec)]
+
+
