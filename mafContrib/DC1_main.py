@@ -64,21 +64,13 @@ def findDC1Regions(coaddBundle, dbpath, plotTestPlots= True,
     
         printProgress('Code test: Plotting regions using buildAndPlotRegion ...', highlight= True)
         fID= 1421
-        printProgress('Code test: Plots with all the HEALPix pixels in the RECTANGULAR region of interst ...')
+        printProgress('Code test: buildAndPlotRegion: Plots with a RECTANGULAR region of interest ...')
         buildAndPlotRegion(fID, simdata, coaddBundle, FOV_radius, nside= nside,
-                           FOVBasedPlot= False , pixels_in_FOV= pixels_in_FOV, simdataIndex_for_pixel= simdataIndex_for_pixel,
+                           pixels_in_FOV= pixels_in_FOV, simdataIndex_for_pixel= simdataIndex_for_pixel,
                            disc= False)
-        printProgress('Code test: Plots with all FOVs that contain HEALPix pixels in the RECTANGULAR region of interst ...')
+        printProgress('Code test: buildAndPlotRegion: Plots with a CIRCULAR region of interest ...')
         buildAndPlotRegion(fID, simdata, coaddBundle, FOV_radius, nside= nside,
-                           FOVBasedPlot= True , pixels_in_FOV= pixels_in_FOV, simdataIndex_for_pixel= simdataIndex_for_pixel,
-                           disc= False)
-        printProgress('Code test: Plots with all the HEALPix pixels in the CIRCULAR region of interst ...')
-        buildAndPlotRegion(fID, simdata, coaddBundle, FOV_radius, nside= nside,
-                           FOVBasedPlot= False, pixels_in_FOV= pixels_in_FOV, simdataIndex_for_pixel= simdataIndex_for_pixel,
-                           disc= True)
-        printProgress('Code test: Plots with all FOVs that contain HEALPix pixels in the CIRCULAR region of interst ...')
-        buildAndPlotRegion(fID, simdata, coaddBundle, FOV_radius, nside= nside,
-                           FOVBasedPlot= True, pixels_in_FOV= pixels_in_FOV, simdataIndex_for_pixel= simdataIndex_for_pixel,
+                            pixels_in_FOV= pixels_in_FOV, simdataIndex_for_pixel= simdataIndex_for_pixel,
                            disc= True)
     ########################################################################################################################
     printProgress('Finding good regions ...', highlight= True)

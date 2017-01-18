@@ -124,9 +124,8 @@ def plotRegion(coaddBundle, dithStrategy, pixels_in_FOV, centerIDs, regionPixels
         plt.show()
         
 def buildAndPlotRegion(fID, simdata, coaddBundle, FOV_radius,
-                       nside= 256,
-                       disc= False,
-                       FOVBasedPlot= False, pixels_in_FOV= None, simdataIndex_for_pixel= None):
+                       pixels_in_FOV, simdataIndex_for_pixel,
+                       nside= 256, disc= False,):
     """
 
     Find the region (disc or rectangular) based on the specified field ID and plot it (full survey
@@ -154,43 +153,30 @@ def buildAndPlotRegion(fID, simdata, coaddBundle, FOV_radius,
                                       to that pixel in simdata array.
     """
     centralRA, centralDec, regionPixels= findRegionPixels(fID, simdata, nside, disc, FOV_radius)
+    centralLat= np.pi/2. - centralDec
+    centralPix = hp.ang2pix(nside= 256, theta= centralLat, phi= centralRA)
     
-    for dither in coaddBundle:    
-        if FOVBasedPlot:   # need to find all the FOVs involved (even partially)
-            if (pixels_in_FOV is None) or (simdataIndex_for_pixel is None):
-                print 'PROBLEM'
-                return
-            idList= findRegionFOVs(regionPixels, dither, simdataIndex_for_pixel, simdata)
-            print 'FID List for %s: [%s]' % (dither,  ", ".join([str(x) for x in idList]))
+    for dither in coaddBundle:
+        # need to find all the FOVs involved (even partially)
+        idList= findRegionFOVs(regionPixels, dither, simdataIndex_for_pixel, simdata)
+        print 'FID List for %s: [%s]' % (dither,  ", ".join([str(x) for x in idList]))
             
         check= copy.deepcopy(coaddBundle[dither])
         check.metricValues.data[:]= 0
-        
-        if FOVBasedPlot:
-            printProgress('Grey (masked) FOV contains the pixel that was inputted in the query_ function.')
-            for i,ID in enumerate(idList):
-                if (ID==fID):
-                    check.metricValues.mask[pixels_in_FOV[dither][ID]]= True
-                else:
-                    check.metricValues.data[pixels_in_FOV[dither][ID]]= coaddBundle[dither].metricValues.data[pixels_in_FOV[dither][ID]]
 
-                    for i, p in enumerate(regionPixels):
-                        centralLat= np.pi/2. - centralDec
-                        centralPix = hp.ang2pix(nside= 256, theta= centralLat, phi= centralRA)
-                        check.metricValues.data[p]= coaddBundle[dither].metricValues.data[p]-1
-        else:
-            printProgress('Grey (masked) pixel was inputted in the query_ function.')
-            for i, p in enumerate(regionPixels):
-                centralLat= np.pi/2. - centralDec
-                centralPix = hp.ang2pix(nside= 256, theta= centralLat, phi= centralRA)
-                check.metricValues.mask[centralPix]= True
-                check.metricValues.data[p]= coaddBundle[dither].metricValues.data[p]
+        printProgress('Grey (masked) pixel was inputted in the query_ function.')
+        for i,ID in enumerate(idList):
+            if (ID!=fID):
+                check.metricValues.data[pixels_in_FOV[dither][ID]]= coaddBundle[dither].metricValues.data[pixels_in_FOV[dither][ID]]
+                for i, p in enumerate(regionPixels):
+                    check.metricValues.data[p]= coaddBundle[dither].metricValues.data[p]-1
+        #check.metricValues.mask[pixels_in_FOV[dither][ID]]= True
+        check.metricValues.data[pixels_in_FOV[dither][fID]]= coaddBundle[dither].metricValues.data[pixels_in_FOV[dither][fID]]-5
+        check.metricValues.mask[centralPix]= True
 
         # full survey plot
         raRange= [-180, 180]
         decRange= [-70, 10]
-        for i in range(2):
-            if raRange[i]>180: raRange[i]= raRange[i]-360
         plt.clf()
         hp.cartview(check.metricValues.filled(check.slicer.badval),
                     flip='astro', rot=(0,0,0) ,
@@ -199,10 +185,7 @@ def buildAndPlotRegion(fID, simdata, coaddBundle, FOV_radius,
                     min= max([min(coaddBundle[dither].metricValues.data), 0]),
                     title= '', cbar=False)
         hp.graticule(dpar=20, dmer=20, verbose=False)
-        if FOVBasedPlot:
-            plt.title(dither + ': fID: ' + str(fID) , size= 22)
-        else:
-            plt.title(dither , size= 22)
+        plt.title(dither + ': fID containing regionCenter: ' + str(fID) , size= 22)
         ax = plt.gca()
         im = ax.get_images()[0]
         fig= plt.gcf()
@@ -225,10 +208,7 @@ def buildAndPlotRegion(fID, simdata, coaddBundle, FOV_radius,
                     min= max([min(coaddBundle[dither].metricValues.data), 0]),
                     title= '', cbar=False)
         hp.graticule(dpar=20, dmer=20, verbose=False)
-        if FOVBasedPlot:
-            plt.title(dither + ': fID: ' + str(fID) , size= 22)
-        else:
-            plt.title(dither , size= 22)
+        plt.title(dither + ': fID containing regionCenter: ' + str(fID) , size= 22)
         ax = plt.gca()
         im = ax.get_images()[0]
         fig= plt.gcf()
