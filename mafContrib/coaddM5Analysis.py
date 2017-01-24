@@ -353,7 +353,7 @@ def coaddM5Analysis(path, dbfile, runName,
     if (totKeys>1):
         plt.clf()
         nCols= 2
-        nRows= int(np.ceil(totKeys/nCols))
+        nRows= int(np.ceil(float(totKeys)/nCols))
         fig, ax = plt.subplots(nRows,nCols)
         plotRow= 0
         plotCol= 0
