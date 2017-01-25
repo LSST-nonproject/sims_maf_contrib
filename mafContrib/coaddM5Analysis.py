@@ -34,6 +34,7 @@ from mafContrib.constantsForPipeline import plotColor
 __all__= ['coaddM5Analysis']
 
 def coaddM5Analysis(path, dbfile, runName,
+                    WFDandDDFs= False,
                     noDithOnly= False, bestDithOnly= False, someDithOnly= False,
                     nside= 128, filterBand= 'r',
                     includeDustExtinction= False,
@@ -65,6 +66,8 @@ def coaddM5Analysis(path, dbfile, runName,
 
     Optional Parameters
     -------------------
+      * WFDandDDFs: boolean: set to True if want to consider both WFD survet and DDFs. Otherwise will only work
+                             with WFD. Default: False
       * noDithOnly: boolean: set to True if only want to consider the undithered survey. Default: False
       * bestDithOnly: boolean: set to True if only want to consider RepulsiveRandomDitherFieldPerVisit. 
                                Default: False
@@ -116,19 +119,30 @@ def coaddM5Analysis(path, dbfile, runName,
 
     if includeDustExtinction: add2= 'withDustExtinction'
     else: add2= 'noDustExtinction'
+
+    regionType= ''
+    if  WFDandDDFs:
+        regionType= 'WFDandDDFs_'
         
-    outDir = 'coaddM5Analysis_nside' + str(nside) + '_' + add2 + '_' + str(pixelRadiusForMasking) + 'pixelRadiusForMasking_' + filterBand + 'Band_' + runName + '_' + add + '_directory'
+    outDir = 'coaddM5Analysis_' + regionType +'nside' + str(nside) + '_' + add2 + '_' + str(pixelRadiusForMasking) + 'pixelRadiusForMasking_' + filterBand + 'Band_' + runName + '_' + add + '_directory'
     print '# outDir: ', outDir
     resultsDb = db.ResultsDb(outDir=outDir)
 
     # set up the sql constraint
-    propIds, propTags = opsdb.fetchPropInfo()
-    wfdWhere = mafUtils.createSQLWhere('WFD', propTags)
-    if cutOffYear is not None:
-        nightCutOff= (cutOffYear)*365.25
-        sqlconstraint  = wfdWhere + ' and night <= ' + str(nightCutOff) + ' and filter=="' + filterBand + '"'
+    if  WFDandDDFs:
+        if cutOffYear is not None:
+            nightCutOff= (cutOffYear)*365.25
+            sqlconstraint  = 'night <= ' + str(nightCutOff) + ' and filter=="' + filterBand + '"'
+        else:
+            sqlconstraint  =  'filter=="' + filterBand + '"'
     else:
-        sqlconstraint  = wfdWhere + ' and filter=="' + filterBand + '"'
+        propIds, propTags = opsdb.fetchPropInfo()
+        wfdWhere = mafUtils.createSQLWhere('WFD', propTags)
+        if cutOffYear is not None:
+            nightCutOff= (cutOffYear)*365.25
+            sqlconstraint  = wfdWhere + ' and night <= ' + str(nightCutOff) + ' and filter=="' + filterBand + '"'
+        else:
+            sqlconstraint  = wfdWhere + ' and filter=="' + filterBand + '"'
     print '# sqlconstraint: ', sqlconstraint
 
     # setup all the slicers
