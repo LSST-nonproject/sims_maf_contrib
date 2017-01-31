@@ -38,4 +38,3 @@ from .almPlots import *
 from .coaddM5Analysis import *
 from .constantsForPipeline import *
 
-from .DC1_main import *
