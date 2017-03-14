@@ -35,7 +35,7 @@ class V2m5Stacker(stackers.BaseStacker):
     def run(self, simData):
         simData=self._addStackers(simData)
 
-        for filterName in list(self.m5Deltas.keys()):
+        for filterName in self.m5Deltas:
             good = np.where(simData[self.filterCol] == filterName)[0]
             simData['v2fiveSigmaDepth'][good] = simData[self.m5Col][good] + self.m5Deltas[filterName]
         return simData
@@ -177,7 +177,7 @@ for year,nw in zip(years,nightWheres):
 
 
 for year,nw in zip(years,nightWheres):
-    for raftConfig in list(raftConfigs.keys()):
+    for raftConfig in raftConfigs:
         for filterName in filters:
             metric = MixedM5Metric(metricName='MixedM5 config %s, year %i' % (raftConfig,year),
                                    **raftConfigs[raftConfig])
