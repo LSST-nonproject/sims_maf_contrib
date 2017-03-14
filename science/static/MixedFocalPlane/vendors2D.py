@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import zip
 # How well do we cover the sky with a mixed vendor focal plane, comparing dithering and rotational dithering.
 
 import numpy as np
@@ -129,10 +131,10 @@ sensors = ['S:0,0', 'S:0,1', 'S:0,2',
 
 if bigBlob:
     tableFile = open('table.dat', 'w')
-    print >>tableFile, 'metadata:  area w/4 or more visits (sq deg) after year1  year2  year5 '
+    print('metadata:  area w/4 or more visits (sq deg) after year1  year2  year5 ', file=tableFile)
 
 
-    for raftConfig in raftConfigs.keys():
+    for raftConfig in raftConfigs:
         rafts1 = []
         rafts2 = []
         for indx in raftConfigs[raftConfig]['rafts1']:
@@ -177,20 +179,20 @@ if bigBlob:
                 metric = metrics.AccumulateCountMetric()
 
                 bins = np.arange(0,np.ceil(year*365.25)+1,1)
-                slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True,
+                slicer = slicers.HealpixSlicer(nside=nside, useCamera=True,
                                                  latCol=latCol, lonCol=lonCol,
                                                  rotSkyPosColName=rotSkyPosColName)
                 bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Single Vendor')
                 bundle.Single=True
                 bundleList.append(bundle)
 
-                slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True, chipNames=chips1,
+                slicer = slicers.HealpixSlicer(nside=nside, useCamera=True, chipNames=chips1,
                                                  latCol=latCol, lonCol=lonCol,
                                                  rotSkyPosColName=rotSkyPosColName)
                 bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Vendor 1')
                 bundleList.append(bundle)
 
-                slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True, chipNames=chips2,
+                slicer = slicers.HealpixSlicer(nside=nside, useCamera=True, chipNames=chips2,
                                                  latCol=latCol, lonCol=lonCol,
                                                  rotSkyPosColName=rotSkyPosColName)
                 bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Vendor 2')
@@ -232,7 +234,7 @@ if bigBlob:
                     ax.set_title(bundle.metadata)
                     filename = outDir+'/%s' % 'timeEvo'+'_'+bundle.metadata.replace(' ','').replace(',','_')+'_'+raftConfig+'.png'
                     fig.savefig(filename)
-                    print 'Made file %s' % filename
+                    print('Made file %s' % filename)
                     plt.close(fig)
 
                     # Compute values for table
@@ -240,7 +242,7 @@ if bigBlob:
                     nHp = np.zeros(bundle.metricValues.shape)
                     nHp[good] = 1.
                     nHp = np.sum(nHp, axis=0)
-                    print >>tableFile, bundle.metadata, ': ', nHp[365]*pix2area, nHp[365*2]*pix2area, nHp[365*5]*pix2area
+                    print(bundle.metadata, ': ', nHp[365]*pix2area, nHp[365*2]*pix2area, nHp[365*5]*pix2area, file=tableFile)
 
     tableFile.close()
 
@@ -253,7 +255,7 @@ read = True
 fig = plt.figure()
 ax = fig.add_subplot(111)
 haveSingle = False
-for raftConfig in raftConfigs.keys():
+for raftConfig in raftConfigs:
     rafts1 = []
     rafts2 = []
     for indx in raftConfigs[raftConfig]['rafts1']:
@@ -298,20 +300,20 @@ for raftConfig in raftConfigs.keys():
             metric = metrics.AccumulateCountMetric()
 
             bins = np.arange(0,np.ceil(year*365.25)+1,1)
-            slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True,
+            slicer = slicers.HealpixSlicer(nside=nside, useCamera=True,
                                              latCol=latCol, lonCol=lonCol,
                                              rotSkyPosColName=rotSkyPosColName)
             bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Single Vendor')
             bundle.Single=True
             bundleList.append(bundle)
 
-            slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True, chipNames=chips1,
+            slicer = slicers.HealpixSlicer(nside=nside, useCamera=True, chipNames=chips1,
                                              latCol=latCol, lonCol=lonCol,
                                              rotSkyPosColName=rotSkyPosColName)
             bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Vendor 1')
             bundleList.append(bundle)
 
-            slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True, chipNames=chips2,
+            slicer = slicers.HealpixSlicer(nside=nside, useCamera=True, chipNames=chips2,
                                              latCol=latCol, lonCol=lonCol,
                                              rotSkyPosColName=rotSkyPosColName)
             bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Vendor 2')

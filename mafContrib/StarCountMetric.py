@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # Example for CountMetric
 # Mike Lund - Vanderbilt University
 # mike.lund@gmail.com
@@ -8,7 +9,7 @@
 
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
-from StarCounts.StarCounts import *
+from .StarCounts.StarCounts import *
 
 __all__ = ['StarCountMetric']
 

@@ -1,3 +1,6 @@
+from __future__ import print_function
+from builtins import str
+from builtins import range
 #####################################################################################################
 # Motivation: changing the values/mask of a metricBundle in the pixels with a
 # certain value/mask. Example applicaiton: mask the outermost edge of skymaps. 
@@ -52,10 +55,10 @@ def maskingAlgorithmGeneralized(myBundles, plotHandler, dataLabel, nside= 128,
     # make sure that relation is compatible with findValue
     if ((findValue == 'masked') | (findValue == 'unmasked')):
         if (relation != '='):
-            print 'ERROR: must have relation== "=" if findValue is related to mask.'
-            print 'Setting:  relation= "="'
+            print('ERROR: must have relation== "=" if findValue is related to mask.')
+            print('Setting:  relation= "="')
             relation= '='
-            print ''
+            print('')
             
     # translate findValue into what has to be assigned
     findValueToConsider= findValue
@@ -104,8 +107,8 @@ def maskingAlgorithmGeneralized(myBundles, plotHandler, dataLabel, nside= 128,
                     if (relation == '>'):
                         condition= ((origArray[i] > findValueToConsider) & (origArray[j] <= findValueToConsider))
                     if (condition == None):
-                        print 'ERROR: invalid relation: ', relation
-                        print 'Aborting.'
+                        print('ERROR: invalid relation: ', relation)
+                        print('Aborting.')
                         stop
                         
                     if condition:
@@ -116,9 +119,9 @@ def maskingAlgorithmGeneralized(myBundles, plotHandler, dataLabel, nside= 128,
             totalBorderPixel.extend(borderPixel)
 
             if printInfo:
-                print 'Border pixels from run', r+1, ':', len(borderPixel)
-                print 'Total pixels so far: ', len(totalBorderPixel)
-                print ''
+                print('Border pixels from run', r+1, ':', len(borderPixel))
+                print('Total pixels so far: ', len(totalBorderPixel))
+                print('')
       
             # plot found pixels
             if plotIntermediatePlots:

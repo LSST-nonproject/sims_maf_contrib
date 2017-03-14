@@ -98,14 +98,14 @@ class SEDSNMetric(BaseMetric):
                                                        skyBCol,expTCol,filterCol], metricName=metricName, **kwargs)
 		self.mags=mags
 		self.metrics={}
-		for curfilt, curmag in mags.iteritems():
+		for curfilt, curmag in mags.items():
                         self.metrics[curfilt]=SNMetric(mag=curmag,filter=curfilt)
 		#self.filter = filter
 		#self.mag = mag
 
 	def run(self, dataSlice, slicePoint=None):
 		res={}
-		for curf, curm in self.metrics.iteritems():
+		for curf, curm in self.metrics.items():
 			curr=curm.run(dataSlice, slicePoint=slicePoint)
 			res['sn_'+curf]=curr
 		return res
@@ -147,7 +147,7 @@ class ThreshSEDSNMetric(BaseMetric):
 	def run(self, dataSlice, slicePoint=None):
 		res=self.xmet.run(dataSlice, slicePoint=slicePoint)
 		cnt=0
-		for k,v in res.iteritems():
+		for k,v in res.items():
 			if v>self.snlim:
 				cnt+=1
 		if cnt>0:

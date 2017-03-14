@@ -1,3 +1,4 @@
+from builtins import zip
 # Transient metric with input ascii lightcurve
 # fbb@nyu.edu, svalenti@lcogt.net
 
