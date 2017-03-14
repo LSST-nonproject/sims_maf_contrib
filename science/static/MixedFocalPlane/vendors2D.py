@@ -134,7 +134,7 @@ if bigBlob:
     print('metadata:  area w/4 or more visits (sq deg) after year1  year2  year5 ', file=tableFile)
 
 
-    for raftConfig in list(raftConfigs.keys()):
+    for raftConfig in raftConfigs:
         rafts1 = []
         rafts2 = []
         for indx in raftConfigs[raftConfig]['rafts1']:
@@ -255,7 +255,7 @@ read = True
 fig = plt.figure()
 ax = fig.add_subplot(111)
 haveSingle = False
-for raftConfig in list(raftConfigs.keys()):
+for raftConfig in raftConfigs:
     rafts1 = []
     rafts2 = []
     for indx in raftConfigs[raftConfig]['rafts1']:
