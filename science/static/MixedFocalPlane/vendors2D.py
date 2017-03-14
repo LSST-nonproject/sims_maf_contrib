@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import zip
 # How well do we cover the sky with a mixed vendor focal plane, comparing dithering and rotational dithering.
 
 import numpy as np
@@ -133,7 +134,7 @@ if bigBlob:
     print('metadata:  area w/4 or more visits (sq deg) after year1  year2  year5 ', file=tableFile)
 
 
-    for raftConfig in raftConfigs.keys():
+    for raftConfig in list(raftConfigs.keys()):
         rafts1 = []
         rafts2 = []
         for indx in raftConfigs[raftConfig]['rafts1']:
@@ -254,7 +255,7 @@ read = True
 fig = plt.figure()
 ax = fig.add_subplot(111)
 haveSingle = False
-for raftConfig in raftConfigs.keys():
+for raftConfig in list(raftConfigs.keys()):
     rafts1 = []
     rafts2 = []
     for indx in raftConfigs[raftConfig]['rafts1']:

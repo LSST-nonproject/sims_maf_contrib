@@ -106,7 +106,7 @@ class TripletBandMetric(BaseMetric):
       return bandcounter #return bandcounter dictionary
 
    def reduceBandall(self, bandcounter):
-      return np.sum(bandcounter.values())
+      return np.sum(list(bandcounter.values()))
 
    def reduceBandu(self, bandcounter):
       return bandcounter['u']

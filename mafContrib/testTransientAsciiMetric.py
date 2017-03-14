@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import zip
 import numpy as np
 from mafContrib import TransientAsciiMetric
 
@@ -8,7 +9,7 @@ __all__ = []
 def setupData(nVisits=100):
     names = ['expMJD', 'filter', 'fiveSigmaDepth']
     types = [float,'|S1', float]
-    data = np.zeros(nVisits, dtype=zip(names, types))
+    data = np.zeros(nVisits, dtype=list(zip(names, types)))
     # So, 100 days are well sampled in 2 filters
     data['expMJD'] = np.arange(0., nVisits/2.0, .5)
     data['filter']= 'r'

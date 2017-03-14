@@ -1,4 +1,6 @@
 from __future__ import print_function
+from builtins import str
+from builtins import range
 #####################################################################################################
 # Motivation: changing the values/mask of a metricBundle in the pixels with a
 # certain value/mask. Example applicaiton: mask the outermost edge of skymaps. 

@@ -1,3 +1,4 @@
+from builtins import zip
 import numpy as np
 
 __all__ = ['findTelescopes']
@@ -48,8 +49,8 @@ def findTelescopes(minSize=3.):
         [3.0,'NASA IRTF','Mauna Kea'],
     ]
 
-    scopes = np.zeros(len(telescopes), dtype = zip(
-        ['apperture','name','lat','lon'],[float, '|S38', float, float]))
+    scopes = np.zeros(len(telescopes), dtype = list(zip(
+        ['apperture','name','lat','lon'],[float, '|S38', float, float])))
 
 
     # name, lat (S negative), lon (W negative)

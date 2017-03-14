@@ -6,6 +6,7 @@
 # Description: Calculates spectral types for stars on the main sequence as a function of stellar mass. For use with Field Star Count metric
 
 from __future__ import print_function
+from builtins import map
 import numpy as np
 import sys
 from scipy.interpolate import interp1d
@@ -23,7 +24,7 @@ def extrap1d(interpolator):
             return interpolator(x)
 
     def ufunclike(xs):
-        return np.array(map(pointwise, np.array(xs)))
+        return np.array(list(map(pointwise, np.array(xs))))
 
     return ufunclike
 
