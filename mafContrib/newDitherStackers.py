@@ -1,3 +1,4 @@
+from __future__ import print_function
 ##############################################################################################################
 # Motivation: implement various dithering strategies.
 
@@ -101,15 +102,15 @@ class RepulsiveRandomDitherFieldPerVisitStacker(BaseStacker):
                             (yCenter >= -h))[0] 
 
         numPointsInsideHex= len(insideHex)
-        print 'numPointsInsideHexagon: ', numPointsInsideHex
+        print('numPointsInsideHexagon: ', numPointsInsideHex)
         #print 'numPointsOutsideHex: ', numTiles-len(insideHex)
         #print 'need offsets: ', noffsets
-        print 'total squares chosen: ', len(xCenter)
-        print 'Filling factor for repRandom (Number of points needed/Number of points in hexagon): ', float(noffsets)/numPointsInsideHex
+        print('total squares chosen: ', len(xCenter))
+        print('Filling factor for repRandom (Number of points needed/Number of points in hexagon): ', float(noffsets)/numPointsInsideHex)
 
         # if too few points, stop
         if (numPointsInsideHex < noffsets):
-            print 'ERROR: Must increase the number of tiling squares, numTiles'
+            print('ERROR: Must increase the number of tiling squares, numTiles')
             stop
 
         # keep only the points that are insside the hexagon
@@ -141,7 +142,7 @@ class RepulsiveRandomDitherFieldPerVisitStacker(BaseStacker):
                 while (randIndex > len(xCenter)-1):  # keep choosing random index until get a valid one
                     index_sq += 1
                     if (index_sq > len(randNumsForLatticeSq)-1):
-                        print 'Increase the length of randNumsForLatticeSq array'
+                        print('Increase the length of randNumsForLatticeSq array')
                         stop
                 randIndex= int(np.floor(randNumsForLatticeSq[index_sq]*numPointsInsideHex))
                 index_sq += 1
@@ -316,10 +317,10 @@ class PentagonDitherFieldPerSeasonStacker(BaseStacker):
 
         # check how many entries in the >10 season
         ind= np.where(seasons > 9)[0]
-        print 'Seasons to wrap ', np.unique(seasons[ind])
+        print('Seasons to wrap ', np.unique(seasons[ind]))
         # should be only 1 extra seasons ..
         if len(np.unique(seasons[ind])) > 1:
-            print 'ERROR: Too many seasons'
+            print('ERROR: Too many seasons')
             stop
         # wrap the season around: 10th == 0th
         seasons[ind]= seasons[ind]%10
@@ -383,10 +384,10 @@ class PentagonDiamondDitherFieldPerSeasonStacker(BaseStacker):
 
         # check how many entries in the >10 season
         ind= np.where(seasons > 9)[0]
-        print 'Seasons to wrap ', np.unique(seasons[ind])
+        print('Seasons to wrap ', np.unique(seasons[ind]))
         # should be only 1 extra seasons ..
         if len(np.unique(seasons[ind])) > 1:
-            print 'ERROR: Too many seasons'
+            print('ERROR: Too many seasons')
             stop
         # wrap the season around: 10th == 0th
         seasons[ind]= seasons[ind]%10
@@ -434,7 +435,7 @@ class PentagonDitherPerSeasonStacker(PentagonDitherFieldPerSeasonStacker):
         
         # check how many entries in the >10 season
         ind= np.where(seasons > 9)[0]
-        print 'Seasons to wrap ', np.unique(seasons[ind]), 'with total entries: ', len(seasons[ind])
+        print('Seasons to wrap ', np.unique(seasons[ind]), 'with total entries: ', len(seasons[ind]))
         # should be only 1 extra seasons ..
         #if len(np.unique(seasons[ind])) > 1:
         #    print 'ERROR: Too many seasons'
@@ -447,8 +448,8 @@ class PentagonDitherPerSeasonStacker(PentagonDitherFieldPerSeasonStacker):
         # Generate the spiral offset vertices.
         self._generatePentagonOffsets()
 
-        print 'Total visits for all fields:', len(seasons)
-        print ''
+        print('Total visits for all fields:', len(seasons))
+        print('')
         # for debugging; fill dithered as non-dithered
         #simData['PentagonDitherPerSeasonRA'] = simData[self.raCol]
         #simData['PentagonDitherPerSeasonDec'] = simData[self.decCol]
@@ -461,13 +462,13 @@ class PentagonDitherPerSeasonStacker(PentagonDitherFieldPerSeasonStacker):
             match = np.where(seasons == s)[0]
 
             # print details
-            print 'season', s
-            print 'numEntries ', len(match), '; ', float(len(match))/len(seasons)*100, '% of total'
+            print('season', s)
+            print('numEntries ', len(match), '; ', float(len(match))/len(seasons)*100, '% of total')
             matchYears= np.unique(years[match])
-            print 'Corresponding years: ', matchYears
+            print('Corresponding years: ', matchYears)
             for i in matchYears:
-                print '     Entries in year', i, ': ', len(np.where(i == years[match])[0])    
-            print ''
+                print('     Entries in year', i, ': ', len(np.where(i == years[match])[0]))    
+            print('')
             
             vertexID= vertexID %  len(self.xOff)
             simData['PentagonDitherPerSeasonRA'][match] = simData[self.raCol][match] + self.xOff[vertexID]/np.cos(simData[self.decCol][match])
@@ -499,10 +500,10 @@ class PentagonDiamondDitherPerSeasonStacker(PentagonDiamondDitherFieldPerSeasonS
         
         # check how many entries in the >10 season
         ind= np.where(seasons > 9)[0]
-        print 'Seasons to wrap ', np.unique(seasons[ind])
+        print('Seasons to wrap ', np.unique(seasons[ind]))
         # should be only 1 extra seasons ..
         if len(np.unique(seasons[ind])) > 1:
-            print 'ERROR: Too many seasons'
+            print('ERROR: Too many seasons')
             stop
         # wrap the season around: 10th == 0th
         seasons[ind]= seasons[ind]%10

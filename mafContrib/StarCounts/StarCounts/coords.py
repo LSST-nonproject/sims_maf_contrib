@@ -5,6 +5,7 @@
 # Last edited 8/15/2015
 # Description: Provides the coordinate conversions between equatorial and galactic coordinates, as well as to galactic cylindrical coordinates. Two different functions are present that do the conversion, and a third that uses ephem package, for redundancy purposes. For use with Field Star Count metric
 
+from __future__ import print_function
 import numpy as np
 import sys
 from scipy.optimize import fsolve
@@ -87,6 +88,6 @@ def gal_cyn(b_deg, l_deg, dist):
    
 if __name__ == "__main__":
    gal_lat, gal_lon=eq_gal2(float(sys.argv[1]), float(sys.argv[2]))
-   print gal_lat, gal_lon
+   print(gal_lat, gal_lon)
    R, rho, z=gal_cyn(gal_lat, gal_lon, float(sys.argv[3]))
-   print R, rho, z
+   print(R, rho, z)

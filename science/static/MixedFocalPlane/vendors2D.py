@@ -1,3 +1,4 @@
+from __future__ import print_function
 # How well do we cover the sky with a mixed vendor focal plane, comparing dithering and rotational dithering.
 
 import numpy as np
@@ -129,7 +130,7 @@ sensors = ['S:0,0', 'S:0,1', 'S:0,2',
 
 if bigBlob:
     tableFile = open('table.dat', 'w')
-    print >>tableFile, 'metadata:  area w/4 or more visits (sq deg) after year1  year2  year5 '
+    print('metadata:  area w/4 or more visits (sq deg) after year1  year2  year5 ', file=tableFile)
 
 
     for raftConfig in raftConfigs.keys():
@@ -232,7 +233,7 @@ if bigBlob:
                     ax.set_title(bundle.metadata)
                     filename = outDir+'/%s' % 'timeEvo'+'_'+bundle.metadata.replace(' ','').replace(',','_')+'_'+raftConfig+'.png'
                     fig.savefig(filename)
-                    print 'Made file %s' % filename
+                    print('Made file %s' % filename)
                     plt.close(fig)
 
                     # Compute values for table
@@ -240,7 +241,7 @@ if bigBlob:
                     nHp = np.zeros(bundle.metricValues.shape)
                     nHp[good] = 1.
                     nHp = np.sum(nHp, axis=0)
-                    print >>tableFile, bundle.metadata, ': ', nHp[365]*pix2area, nHp[365*2]*pix2area, nHp[365*5]*pix2area
+                    print(bundle.metadata, ': ', nHp[365]*pix2area, nHp[365*2]*pix2area, nHp[365*5]*pix2area, file=tableFile)
 
     tableFile.close()
 
