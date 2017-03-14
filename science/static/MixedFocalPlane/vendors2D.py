@@ -179,20 +179,20 @@ if bigBlob:
                 metric = metrics.AccumulateCountMetric()
 
                 bins = np.arange(0,np.ceil(year*365.25)+1,1)
-                slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True,
+                slicer = slicers.HealpixSlicer(nside=nside, useCamera=True,
                                                  latCol=latCol, lonCol=lonCol,
                                                  rotSkyPosColName=rotSkyPosColName)
                 bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Single Vendor')
                 bundle.Single=True
                 bundleList.append(bundle)
 
-                slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True, chipNames=chips1,
+                slicer = slicers.HealpixSlicer(nside=nside, useCamera=True, chipNames=chips1,
                                                  latCol=latCol, lonCol=lonCol,
                                                  rotSkyPosColName=rotSkyPosColName)
                 bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Vendor 1')
                 bundleList.append(bundle)
 
-                slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True, chipNames=chips2,
+                slicer = slicers.HealpixSlicer(nside=nside, useCamera=True, chipNames=chips2,
                                                  latCol=latCol, lonCol=lonCol,
                                                  rotSkyPosColName=rotSkyPosColName)
                 bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Vendor 2')
@@ -300,20 +300,20 @@ for raftConfig in raftConfigs:
             metric = metrics.AccumulateCountMetric()
 
             bins = np.arange(0,np.ceil(year*365.25)+1,1)
-            slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True,
+            slicer = slicers.HealpixSlicer(nside=nside, useCamera=True,
                                              latCol=latCol, lonCol=lonCol,
                                              rotSkyPosColName=rotSkyPosColName)
             bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Single Vendor')
             bundle.Single=True
             bundleList.append(bundle)
 
-            slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True, chipNames=chips1,
+            slicer = slicers.HealpixSlicer(nside=nside, useCamera=True, chipNames=chips1,
                                              latCol=latCol, lonCol=lonCol,
                                              rotSkyPosColName=rotSkyPosColName)
             bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Vendor 1')
             bundleList.append(bundle)
 
-            slicer = slicers.Healpix2dSlicer(nside=nside, bins=bins, useCamera=True, chipNames=chips2,
+            slicer = slicers.HealpixSlicer(nside=nside, useCamera=True, chipNames=chips2,
                                              latCol=latCol, lonCol=lonCol,
                                              rotSkyPosColName=rotSkyPosColName)
             bundle = metricBundles.MetricBundle(metric,slicer,sql, metadata=mdf+'Vendor 2')
