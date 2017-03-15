@@ -1,3 +1,4 @@
+from __future__ import print_function
 #####################################################################################################
 # An extension to the GalaxyCountsMetric from Lynne Jones: sims_maf_contrib/mafContrib/lssMetrics.py
 
@@ -106,12 +107,12 @@ class GalaxyCountsMetric_extended(BaseMetric):
         elif (self.filterBand=='y'):   # brighter than i: z-y= 0.4 => z= y+0.4 => i= y+0.4*2
             bandCorrection= 0.4*2.
         else:
-            print 'ERROR: Invalid band in GalaxyCountsMetric_extended. Assuming i-band.'
+            print('ERROR: Invalid band in GalaxyCountsMetric_extended. Assuming i-band.')
             bandCorrection= 0
     
         # check to make sure that the z-bin assigned is valid.
         if ((self.redshiftBin != 'all') and (self.redshiftBin not in self.powerLawConst_a.keys())):
-            print 'ERROR: Invalid redshift bin in GalaxyCountsMetric_extended. Defaulting to all redshifts.'
+            print('ERROR: Invalid redshift bin in GalaxyCountsMetric_extended. Defaulting to all redshifts.')
             self.redshiftBin= 'all'
         
         # consider the power laws

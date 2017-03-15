@@ -1,3 +1,4 @@
+from __future__ import print_function
 #####################################################################################################
 # Purpose: Calculate the galaxy counts for each Healpix pixel directly.
 # Necessary when accounting for pixel-specific calibration errors (as they modify the magnitude limit to
@@ -72,12 +73,12 @@ def GalaxyCounts_withPixelCalibration(coaddm5, upperMagLimit, nside=128,
     elif (filterBand=='y'):   # brighter than i: z-y= 0.4 => z= y+0.4 => i= y+0.4*2
         bandCorrection= 0.4*2.
     else:
-        print 'ERROR: Invalid band in GalaxyCountsMetric_withPixelCalibErrors. Assuming i-band.'
+        print('ERROR: Invalid band in GalaxyCountsMetric_withPixelCalibErrors. Assuming i-band.')
         bandCorrection= 0
         
     # check to make sure that the z-bin assigned is valid.
     if ((redshiftBin != 'all') and (redshiftBin not in powerLawConst_a.keys())):
-        print 'ERROR: Invalid redshift bin in GalaxyCountsMetric_withPixelCalibration. Defaulting to all redshifts.'
+        print('ERROR: Invalid redshift bin in GalaxyCountsMetric_withPixelCalibration. Defaulting to all redshifts.')
         redshiftBin= 'all'
 
     # set up the functions for the integrand

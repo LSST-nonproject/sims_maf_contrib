@@ -5,6 +5,7 @@
 # Last edited 8/15/2015
 # Description: Calculates the stellar density based off of Juric et al 2008 and Jackson et al 2002. For use with Field Star Count metric
 
+from __future__ import print_function
 import numpy as np
 import sys
 from scipy.optimize import fsolve
@@ -51,7 +52,7 @@ def stellardensity(R, Z, rho=0):
    return tot_density
 
 if __name__ == "__main__":
-   print stellardensity(float(sys.argv[1]), float(sys.argv[2]))
+   print(stellardensity(float(sys.argv[1]), float(sys.argv[2])))
 
 
 #Juric et al 2008

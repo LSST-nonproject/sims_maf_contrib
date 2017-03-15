@@ -1,3 +1,4 @@
+from __future__ import print_function
 #####################################################################################################
 # Purpose: change the values/mask of a metricBundle in the pixels with a certain value/mask.
 # Example applicaton: mask the outermost/shallow edge of skymaps. 
@@ -55,7 +56,7 @@ def maskingAlgorithmGeneralized(myBundles, plotHandler, dataLabel, nside= 128,
     # data indices are the pixels numbers ..
 
     if (pixelRadius == 0):
-        print 'No masking/changing of the original data.'
+        print('No masking/changing of the original data.')
         if returnBorderIndices:
             borders= {}
             for dither in myBundles:
@@ -68,10 +69,10 @@ def maskingAlgorithmGeneralized(myBundles, plotHandler, dataLabel, nside= 128,
     # make sure that relation is compatible with findValue
     if ((findValue == 'masked') | (findValue == 'unmasked')):
         if (relation != '='):
-            print 'ERROR: must have relation== "=" if findValue is related to mask.'
-            print 'Setting:  relation= "="'
+            print('ERROR: must have relation== "=" if findValue is related to mask.')
+            print('Setting:  relation= "="')
             relation= '='
-            print ''
+            print('')
             
     # translate findValue into what has to be assigned
     findValueToConsider= findValue
@@ -95,7 +96,7 @@ def maskingAlgorithmGeneralized(myBundles, plotHandler, dataLabel, nside= 128,
         totalBorderPixel= []
 
         if printIntermediateInfo:
-            print 'Survey strategy: ', dither
+            print('Survey strategy: ', dither)
             
         # find the appropriate array to look at.
         if (str(findValue)).__contains__('mask'):
@@ -123,8 +124,8 @@ def maskingAlgorithmGeneralized(myBundles, plotHandler, dataLabel, nside= 128,
                     if (relation == '>'):
                         condition= ((origArray[i] > findValueToConsider) & (origArray[j] <= findValueToConsider))
                     if (condition == None):
-                        print 'ERROR: invalid relation: ', relation
-                        print 'Aborting.'
+                        print('ERROR: invalid relation: ', relation)
+                        print('Aborting.')
                         stop
                         
                     if condition:
@@ -135,9 +136,9 @@ def maskingAlgorithmGeneralized(myBundles, plotHandler, dataLabel, nside= 128,
             totalBorderPixel.extend(borderPixel)
 
             if printIntermediateInfo:     
-                print 'Border pixels from run', r+1, ':', len(borderPixel)
-                print 'Total pixels so far: ', len(totalBorderPixel)
-                print ''
+                print('Border pixels from run', r+1, ':', len(borderPixel))
+                print('Total pixels so far: ', len(totalBorderPixel))
+                print('')
       
             # plot found pixels
             if plotIntermediatePlots:
@@ -165,9 +166,9 @@ def maskingAlgorithmGeneralized(myBundles, plotHandler, dataLabel, nside= 128,
         totalBorderPixel= borders[dither]
 
         if printFinalInfo:
-            print 'Survey strategy: ', dither
-            print 'Total pixels changed: ', len(totalBorderPixel)
-            print ''
+            print('Survey strategy: ', dither)
+            print('Total pixels changed: ', len(totalBorderPixel))
+            print('')
             
         if (str(newValue)).__contains__('mask'):
             myBundles[dither].metricValues.mask[totalBorderPixel]= newValueToAssign
