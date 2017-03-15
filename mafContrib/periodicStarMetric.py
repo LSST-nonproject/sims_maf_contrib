@@ -113,7 +113,7 @@ class PeriodicStarMetric(BaseMetric):
         # Throw out any magnitude fits if there are no observations in that filter
         ufilters = np.unique(dataSlice[self.filterCol])
         if ufilters.size < 9:
-            for key in list(self.filter2index.keys()):
+            for key in self.filter2index:
                 if key not in ufilters:
                     fits[:,self.filter2index[key]] = -np.inf
 
