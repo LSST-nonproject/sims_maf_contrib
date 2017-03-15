@@ -80,7 +80,7 @@ class GalaxyCountsMetric_extended(BaseMetric):
 
         # Need to scale down to indivdual HEALpix pixels. Galaxy count from the coadded depth is per 1 square degree. 
         # Number of galaxies ~= 41253 sq. degrees in the full sky divided by number of HEALpix pixels.
-        self.scale = 41253.0/(long(12)*nside**2)
+        self.scale = 41253.0/(int(12)*nside**2)
         
         # Reset units (otherwise uses magnitudes).
         self.units = 'Galaxy Counts'
@@ -111,7 +111,7 @@ class GalaxyCountsMetric_extended(BaseMetric):
             bandCorrection= 0
     
         # check to make sure that the z-bin assigned is valid.
-        if ((self.redshiftBin != 'all') and (self.redshiftBin not in self.powerLawConst_a.keys())):
+        if ((self.redshiftBin != 'all') and (self.redshiftBin not in list(self.powerLawConst_a.keys()))):
             print('ERROR: Invalid redshift bin in GalaxyCountsMetric_extended. Defaulting to all redshifts.')
             self.redshiftBin= 'all'
         
@@ -125,7 +125,7 @@ class GalaxyCountsMetric_extended(BaseMetric):
                 # full z-range considered here: 0.<z<4.0
                 # sum the galaxy counts from each individual z-bin
                 dn_gal= 0.
-                for key in self.powerLawConst_a.keys():
+                for key in list(self.powerLawConst_a.keys()):
                     dn_gal += np.power(10., self.powerLawConst_a[key]*(apparent_mag+bandCorrection)+self.powerLawConst_b[key])    
         else:
             dn_gal = np.power(10., self.powerLawConst_a[self.redshiftBin]*(apparent_mag+bandCorrection)+self.powerLawConst_b[self.redshiftBin])

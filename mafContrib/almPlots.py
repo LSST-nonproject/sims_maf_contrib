@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import range
 #####################################################################################################
 # Purpose: plot skymaps/cartview plots corresponding to alms with specfied l-range (s).
 
@@ -99,7 +101,7 @@ def almPlots(path, outDir, bundle,
         # plot things out
         plt.clf()
         plt.plot(l, (cl*l*(l+1))/(2.0*np.pi), color='b')
-        for key in lsubsets.keys():
+        for key in list(lsubsets.keys()):
             plt.plot(l[lsubsets[key]], (cl[lsubsets[key]]*l[lsubsets[key]]*(l[lsubsets[key]]+1))/(2.0*np.pi), color=color[key])
         plt.title(str(dither), fontsize= 20)
         plt.xlabel('$\ell$', fontsize=16)
@@ -169,7 +171,7 @@ def almPlots(path, outDir, bundle,
         ticks= np.arange(colorMin+increment,colorMax,increment)
 
         # consider each l-range
-        for case in lsubsets.keys():
+        for case in list(lsubsets.keys()):
             index= []
             lowLim=subsetsToConsider[case][0]
             upLim= subsetsToConsider[case][1]

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import str
 #####################################################################################################
 # Purpose: calculate the coadded 5-sigma depth from various survey strategies. Incudes functionality
 # to consider various survey strategies, mask shallow borders, create/save/show relevant plots, do
@@ -364,7 +365,7 @@ def coaddM5Analysis(path, dbfile, runName,
     plt.show()
 
     # plot power spectra for the separte panel
-    totKeys= len(coaddBundle.keys())
+    totKeys= len(list(coaddBundle.keys()))
     if (totKeys>1):
         plt.clf()
         nCols= 2
@@ -372,8 +373,8 @@ def coaddM5Analysis(path, dbfile, runName,
         fig, ax = plt.subplots(nRows,nCols)
         plotRow= 0
         plotCol= 0
-        for dither in plotColor.keys():
-            if dither in coaddBundle.keys():
+        for dither in list(plotColor.keys()):
+            if dither in list(coaddBundle.keys()):
                 ell = np.arange(np.size(cl[dither]))
                 ax[plotRow, plotCol].plot(ell, (cl[dither]*ell*(ell+1))/2.0/np.pi,
                                           color=plotColor[dither], label=str(dither))

@@ -1,4 +1,6 @@
 from __future__ import print_function
+from builtins import str
+from builtins import range
 #####################################################################################################
 # Purpose: calculate artificial structure, i.e. fluctuations in galaxy counts, resulting from
 # imperfect observing strategy (OS). Includes the functionality to account for dust extinction,
@@ -218,7 +220,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     else: add3= 'fullSurveyPeriod'
 
     # check to make sure redshift bin is ok.
-    allowedRedshiftBins= powerLawConst_a.keys() + ['all']
+    allowedRedshiftBins= list(powerLawConst_a.keys()) + ['all']
     if redshiftBin not in allowedRedshiftBins:
         print('ERROR: Invalid redshift bin. Input bin can only be among ' + str(allowedRedshiftBins) + '\n')
         return
@@ -329,7 +331,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
 
     os.chdir(path + outDir)
     readMEfile= open('ReadMe.txt', 'a')
-    readMEfile.write('\nObserving strategies considered: ' + str(slicer.keys()) + '\n')
+    readMEfile.write('\nObserving strategies considered: ' + str(list(slicer.keys())) + '\n')
     readMEfile.close()
     os.chdir(path)
     

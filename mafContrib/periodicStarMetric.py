@@ -1,3 +1,4 @@
+from builtins import zip
 import numpy as np
 from lsst.sims.maf.metrics.baseMetric import BaseMetric
 from scipy.optimize import curve_fit
@@ -81,12 +82,12 @@ class PeriodicStarMetric(BaseMetric):
             return self.badval
 
         # Generate input for true light curve
-        t = np.empty(dataSlice.size, dtype=zip(['time','filter'],[float,'|S1']))
+        t = np.empty(dataSlice.size, dtype=list(zip(['time','filter'],[float,'|S1'])))
         t['time'] = dataSlice[self.mjdCol]-dataSlice[self.mjdCol].min()
         t['filter'] = dataSlice[self.filterCol]
 
         # If we are adding a distance modulus to the magnitudes
-        if 'distMod' in slicePoint.keys():
+        if 'distMod' in list(slicePoint.keys()):
             mags = self.means + slicePoint['distMod']
         else:
             mags = self.means
@@ -112,7 +113,7 @@ class PeriodicStarMetric(BaseMetric):
         # Throw out any magnitude fits if there are no observations in that filter
         ufilters = np.unique(dataSlice[self.filterCol])
         if ufilters.size < 9:
-            for key in self.filter2index.keys():
+            for key in list(self.filter2index.keys()):
                 if key not in ufilters:
                     fits[:,self.filter2index[key]] = -np.inf
 
