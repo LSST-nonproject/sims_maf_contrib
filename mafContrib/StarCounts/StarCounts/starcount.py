@@ -5,12 +5,14 @@
 # Last edited 8/15/2015
 # Description: Calculates the number of stars in a given direction and between a given set of distances. For use with Field Star Count metric
 
+from __future__ import print_function
+from __future__ import absolute_import
 import numpy as np
 import sys
 from scipy.optimize import fsolve
 import math
-import stellardensity
-import coords
+from . import stellardensity
+from . import coords
 #from lsst.sims.coordUtils import AstronomyBase
 skyarea=41253.
 distancebins=51
@@ -33,5 +35,5 @@ def starcount(eqRA, eqDEC, D1, D2):
 
 
 if __name__ == "__main__":
-   print starcount(float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4]))
+   print(starcount(float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4])))
 

@@ -1,3 +1,6 @@
+from __future__ import print_function
+from builtins import str
+from builtins import range
 #####################################################################################################
 # Purpose: calculate artificial structure, i.e. fluctuations in galaxy counts, resulting from
 # imperfect observing strategy (OS). Includes the functionality to account for dust extinction,
@@ -217,9 +220,9 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     else: add3= 'fullSurveyPeriod'
 
     # check to make sure redshift bin is ok.
-    allowedRedshiftBins= powerLawConst_a.keys() + ['all']
+    allowedRedshiftBins= list(powerLawConst_a.keys()) + ['all']
     if redshiftBin not in allowedRedshiftBins:
-        print 'ERROR: Invalid redshift bin. Input bin can only be among ' + str(allowedRedshiftBins) + '\n'
+        print('ERROR: Invalid redshift bin. Input bin can only be among ' + str(allowedRedshiftBins) + '\n')
         return
     add4= redshiftBin
     if (redshiftBin=='all'): add4= 'allRedshiftData'
@@ -237,8 +240,8 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         add6= 'unnormalizedGalaxyCounts'
         
     outDir= 'artificialStructure_' + add5 + '_nside' + str(nside) + '_' + str(pixelRadiusForMasking) + 'pixelRadiusForMasking_'  + add + '_' + add2 + '_' + filterBand + '<' + str(upperMagLimit) + '_' + runName + '_' + add3 + '_' + add4 + '_' + add6 + '_directory'
-    print '# outDir: ', outDir
-    print ''
+    print('# outDir: ', outDir)
+    print('')
     resultsDb = db.ResultsDb(outDir=outDir)
 
     # set up the sql constraint
@@ -249,7 +252,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         sqlconstraint  = wfdWhere + ' and night <= ' + str(nightCutOff) + ' and filter=="' + filterBand + '"'
     else:
         sqlconstraint  = wfdWhere + ' and filter=="' + filterBand + '"'
-    print '# sqlconstraint: ', sqlconstraint
+    print('# sqlconstraint: ', sqlconstraint)
 
     # create a ReadMe type file to put info in.
     os.chdir(path + outDir)
@@ -328,7 +331,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
 
     os.chdir(path + outDir)
     readMEfile= open('ReadMe.txt', 'a')
-    readMEfile.write('\nObserving strategies considered: ' + str(slicer.keys()) + '\n')
+    readMEfile.write('\nObserving strategies considered: ' + str(list(slicer.keys())) + '\n')
     readMEfile.close()
     os.chdir(path)
     
@@ -345,7 +348,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                                        runName=runName, metadata= dither, mapsList=[dustMap])
             
     # run the metric/slicer combination for galaxy counts (numGal)
-    print '\n# Running myBundles ...'
+    print('\n# Running myBundles ...')
     bGroup = metricBundles.MetricBundleGroup(myBundles, opsdb, outDir=outDir, resultsDb=resultsDb, saveEarly= False)
     bGroup.runAll()
     
@@ -369,21 +372,21 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     readMEfile= open('ReadMe.txt', 'a')
     
     printOut= '\n# Before any border masking or photometric error calibration: '
-    print printOut
+    print(printOut)
     readMEfile.write(str(printOut))
     for dither in myBundles:
         ind= np.where(myBundles[dither].metricValues.mask[:] == False)[0]
         printOut= 'Total Galaxies for ' + dither + ': %.9e' %(sum(myBundles[dither].metricValues.data[ind]))
-        print printOut
+        print(printOut)
         readMEfile.write('\n' + str(printOut))
     readMEfile.write('\n')
     readMEfile.close()
     os.chdir(path)
-    print '\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.
+    print('\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.)
     
     # mask the edges: the data in the masked pixels is not changed
     plotHandler = plots.PlotHandler(outDir=outDir, resultsDb=resultsDb, thumbnail= False, savefig= False)
-    print '\n# Masking the edges ...'
+    print('\n# Masking the edges ...')
     myBundles, borderPixelsMasked= maskingAlgorithmGeneralized(myBundles, plotHandler, 'Number of Galaxies', nside= nside,
                                                                pixelRadius= pixelRadiusForMasking, plotIntermediatePlots= False, 
                                                                plotFinalPlots= False, printFinalInfo= True, returnBorderIndices= True)
@@ -409,17 +412,17 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         readMEfile= open('ReadMe.txt', 'a')
         
         printOut= '# After border masking: '
-        print printOut
+        print(printOut)
         readMEfile.write('\n' + str(printOut))
         for dither in myBundles:
             ind= np.where(myBundles[dither].metricValues.mask[:] == False)[0]
             printOut= 'Total Galaxies for ' + dither + ': %.9e' %(sum(myBundles[dither].metricValues.data[ind]))
-            print printOut
+            print(printOut)
             readMEfile.write('\n' + str(printOut))
         readMEfile.write('\n')
         readMEfile.close()
         os.chdir(path)
-    print '\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.
+    print('\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.)
     
     ################################################################################################################
     # If include 0pt errors
@@ -462,15 +465,15 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                                                 runName=runName, metadata= dither)
                 coaddBundle[dither] = metricBundles.MetricBundle(coaddMetric, slicer[dither], sqlconstraint, 
                                                                  runName=runName, metadata= dither, mapsList=[dustMap])
-        print '\n# Running avgSeeingBundle ...'
+        print('\n# Running avgSeeingBundle ...')
         aGroup = metricBundles.MetricBundleGroup(avgSeeingBundle, opsdb, outDir=outDir, resultsDb=resultsDb, saveEarly= False)
         aGroup.runAll()
 
-        print '\n# Running nObsBundle ...'
+        print('\n# Running nObsBundle ...')
         nGroup = metricBundles.MetricBundleGroup(nObsBundle, opsdb, outDir=outDir, resultsDb=resultsDb, saveEarly= False)
         nGroup.runAll()
 
-        print '\n# Running coaddBundle ...'
+        print('\n# Running coaddBundle ...')
         cGroup = metricBundles.MetricBundleGroup(coaddBundle, opsdb, outDir=outDir, resultsDb=resultsDb, saveEarly= False)
         cGroup.runAll()
 
@@ -501,7 +504,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         bundleGroup.runAll()
         avgSeeingAcrossMap= bundle['avgSeeingAcrossMap'].metricValues.data[0]
         printOut= '\n# Average seeing across map: ' + str(avgSeeingAcrossMap)
-        print printOut
+        print(printOut)
         
         # add to the readme
         os.chdir(path+outDir)
@@ -518,7 +521,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         zeroPtError= {}
         kValue= {}
 
-        print '\n# 0pt calculation ansatz: \delta_i= k*z_i/sqrt{nObs_i}, where k is s.t. var(\delta_i)= (0.01)^$'
+        print('\n# 0pt calculation ansatz: \delta_i= k*z_i/sqrt{nObs_i}, where k is s.t. var(\delta_i)= (0.01)^$')
         
         if save0ptPlots:
             os.chdir(path + outDir)
@@ -553,12 +556,12 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
             os.chdir(path)
 
             if print0ptInformation:
-                print '\n# ' + dither
+                print('\n# ' + dither)
                 ind= np.where(zeroPtError[dither] != -500)[0]
                 goodError= zeroPtError[dither][ind]
-                print 'var(0pt):', np.var(goodError)
-                print '0.01^2 - var(0pt) = ', (0.01)**2-np.var(goodError)
-                print 'k-value:', kValue[dither]
+                print('var(0pt):', np.var(goodError))
+                print('0.01^2 - var(0pt) = ', (0.01)**2-np.var(goodError))
+                print('k-value:', kValue[dither])
                 
                 # add to the readme
                 os.chdir(path+outDir)
@@ -577,11 +580,11 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                 for i in range(len(goodError)):
                     goodError[i]= float(goodError[i])
 
-                print '\n# ' + dither
-                print 'Min error: ', min(goodError)
-                print 'Max error: ', max(goodError)
-                print 'Mean error: ', np.mean(goodError)
-                print 'Std of error: ', np.std(goodError)
+                print('\n# ' + dither)
+                print('Min error: ', min(goodError))
+                print('Max error: ', max(goodError))
+                print('Mean error: ', np.mean(goodError))
+                print('Std of error: ', np.std(goodError))
                                  
                 # add to the readme
                 os.chdir(path+outDir)
@@ -681,10 +684,10 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                 
             os.chdir(path)
 
-        print '\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.
+        print('\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.)
 
         # Now recalculate the numGal with the fluctuations in depth due to calibation uncertainties.
-        print '\n# Recalculating numGal including 0pt errors on the upper mag limit .. '
+        print('\n# Recalculating numGal including 0pt errors on the upper mag limit .. ')
         for dither in myBundles:
             zeroPtErr= zeroPtError[dither].copy()
             inSurvey=  np.where(myBundles[dither].metricValues.mask == False)[0]   # 04/27: only look at inSurvey region
@@ -716,12 +719,12 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         os.chdir(path + outDir)
         readMEfile= open('ReadMe.txt', 'a')
         printOut= '\n# After 0pt error calculation and border masking: '
-        print printOut
+        print(printOut)
         readMEfile.write(str(printOut))                    
         for dither in myBundles:
             ind= np.where(myBundles[dither].metricValues.mask[:] == False)[0]
             printOut= 'Total Galaxies for ' + dither + ': %.9e' %(sum(myBundles[dither].metricValues.data[ind])) 
-            print printOut
+            print(printOut)
             readMEfile.write('\n' + str(printOut))
         readMEfile.write('\n')
         readMEfile.close()
@@ -730,7 +733,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     #########################################################################################################
     # add poisson noise?
     if addPoissonNoise:
-        print '\n# Adding poisson noise to numGal ... ' 
+        print('\n# Adding poisson noise to numGal ... ') 
         for dither in myBundles:
             # make sure the values are valid; sometimes metric leaves negative numbers or nan values.
             outOfSurvey= np.where(myBundles[dither].metricValues.mask == True)[0]
@@ -761,22 +764,22 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         os.chdir(path + outDir)
         readMEfile= open('ReadMe.txt', 'a')
         printOut= '\n# After adding poisson noise: '
-        print printOut
+        print(printOut)
         readMEfile.write(str(printOut)) 
         for dither in myBundles:
             ind= np.where(myBundles[dither].metricValues.mask[:] == False)[0]
             printOut= 'Total Galaxies for ' + dither + ': %.9e' %(sum(myBundles[dither].metricValues.data[ind])) 
-            print printOut
+            print(printOut)
             readMEfile.write('\n' + str(printOut))
         readMEfile.write('\n')
         readMEfile.close()
         os.chdir(path)
-    print '\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.
+    print('\n## Time since the start of the calculation (hrs): ', (time.time()-startTime)/3600.)
     #########################################################################################################
     os.chdir(path)
     plotHandler = plots.PlotHandler(outDir=outDir, resultsDb=resultsDb, thumbnail= False, savefig= False)
 
-    print '\n# Calculating fluctuations in the galaxy counts ...'
+    print('\n# Calculating fluctuations in the galaxy counts ...')
     # Change numGal metric data to deltaN/N
     numGal= {}
     # add to readme
@@ -798,11 +801,11 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         myBundles[dither].metricValues.data[:]= 0.0
         myBundles[dither].metricValues.data[validPixel]= (numGal[dither][validPixel]-galaxyAverage)/galaxyAverage
         printOut= '# Galaxy Average for ' + str(dither) + ': ' +  str(galaxyAverage)
-        print printOut       
+        print(printOut)       
         readMEfile.write(str(printOut) + '\n')
     readMEfile.close()
     os.chdir(path)
-    print ''
+    print('')
     
     # plot deltaN/N plots
     if plotDeltaNByN:
@@ -832,12 +835,12 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     os.chdir(path + outDir)
     readMEfile= open('ReadMe.txt', 'a')
     summarymetric = metrics.TotalPowerMetric()
-    print ''
+    print('')
     for dither in myBundles:
         myBundles[dither].setSummaryMetrics(summarymetric)
         myBundles[dither].computeSummaryStats()
         printOut= '# Total power for %s case is %f.' %(dither, myBundles[dither].summaryValues['TotalPower'])
-        print printOut
+        print(printOut)
         readMEfile.write('\n' + str(printOut))
     readMEfile.write('\n')
     readMEfile.close()

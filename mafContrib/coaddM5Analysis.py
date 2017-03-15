@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 #####################################################################################################
 # Purpose: calculate the coadded 5-sigma depth from various survey strategies. Incudes functionality
 # to consider various survey strategies, mask shallow borders, create/save/show relevant plots, do
@@ -125,7 +127,7 @@ def coaddM5Analysis(path, dbfile, runName,
         regionType= 'WFDandDDFs_'
         
     outDir = 'coaddM5Analysis_' + regionType +'nside' + str(nside) + '_' + add2 + '_' + str(pixelRadiusForMasking) + 'pixelRadiusForMasking_' + filterBand + 'Band_' + runName + '_' + add + '_directory'
-    print '# outDir: ', outDir
+    print('# outDir: ', outDir)
     resultsDb = db.ResultsDb(outDir=outDir)
 
     # set up the sql constraint
@@ -143,7 +145,7 @@ def coaddM5Analysis(path, dbfile, runName,
             sqlconstraint  = wfdWhere + ' and night <= ' + str(nightCutOff) + ' and filter=="' + filterBand + '"'
         else:
             sqlconstraint  = wfdWhere + ' and filter=="' + filterBand + '"'
-    print '# sqlconstraint: ', sqlconstraint
+    print('# sqlconstraint: ', sqlconstraint)
 
     # setup all the slicers
     slicer= {}
@@ -227,8 +229,8 @@ def coaddM5Analysis(path, dbfile, runName,
                                                              runName=runName, metadata= dither, mapsList=[dustMap])
 
     # run the analysis
-    if includeDustExtinction: print '\n# Running coaddBundle with dust extinction ...'
-    else: print '\n# Running coaddBundle without dust extinction ...'
+    if includeDustExtinction: print('\n# Running coaddBundle with dust extinction ...')
+    else: print('\n# Running coaddBundle without dust extinction ...')
     cGroup = metricBundles.MetricBundleGroup(coaddBundle, opsdb, outDir=outDir, resultsDb=resultsDb,saveEarly= False)
     cGroup.runAll()
 
@@ -241,14 +243,14 @@ def coaddM5Analysis(path, dbfile, runName,
                    nTicks= nTicks,
                    showPlots= showPlots, saveFigs= saveFigs,
                    outDirNameForSavedFigs= 'coaddM5Plots_unmaskedBorders')
-    print '\n# Done saving plots without border masking.\n'
+    print('\n# Done saving plots without border masking.\n')
     
     os.chdir(path)
     plotHandler = plots.PlotHandler(outDir=outDir, resultsDb=resultsDb, thumbnail= False, savefig= False)
 
-    print '# Number of pixels in the survey region (before masking the border):'
+    print('# Number of pixels in the survey region (before masking the border):')
     for dither in coaddBundle:
-        print '  ' + dither + ': ' +  str(len(np.where(coaddBundle[dither].metricValues.mask == False)[0]))
+        print('  ' + dither + ': ' +  str(len(np.where(coaddBundle[dither].metricValues.mask == False)[0])))
 
     # save the unmasked data?
     if saveunMaskedCoaddData:
@@ -260,7 +262,7 @@ def coaddM5Analysis(path, dbfile, runName,
     os.chdir(path)
     
     # mask the edges
-    print '\n# Masking the edges for coadd ...'
+    print('\n# Masking the edges for coadd ...')
     coaddBundle= maskingAlgorithmGeneralized(coaddBundle, plotHandler,
                                              dataLabel= '$' + filterBand + '$-band Coadded Depth',
                                              nside= nside,
@@ -276,7 +278,7 @@ def coaddM5Analysis(path, dbfile, runName,
                    nTicks=nTicks,
                    showPlots= showPlots, saveFigs= saveFigs,
                    outDirNameForSavedFigs= 'coaddM5Plots_maskedBorders')
-    print '\n# Done saving plots with border masking. \n'
+    print('\n# Done saving plots with border masking. \n')
     os.chdir(path)
         
     # Calculate total power
@@ -284,8 +286,8 @@ def coaddM5Analysis(path, dbfile, runName,
     for dither in coaddBundle:
         coaddBundle[dither].setSummaryMetrics(summarymetric)
         coaddBundle[dither].computeSummaryStats()
-        print '# Total power for %s case is %f.' %(dither, coaddBundle[dither].summaryValues['TotalPower'])
-    print ''
+        print('# Total power for %s case is %f.' %(dither, coaddBundle[dither].summaryValues['TotalPower']))
+    print('')
     
     # run the alm analysis
     if almAnalysis: almPlots(path, outDir, copy.deepcopy(coaddBundle),
@@ -363,7 +365,7 @@ def coaddM5Analysis(path, dbfile, runName,
     plt.show()
 
     # plot power spectra for the separte panel
-    totKeys= len(coaddBundle.keys())
+    totKeys= len(list(coaddBundle.keys()))
     if (totKeys>1):
         plt.clf()
         nCols= 2
@@ -371,8 +373,8 @@ def coaddM5Analysis(path, dbfile, runName,
         fig, ax = plt.subplots(nRows,nCols)
         plotRow= 0
         plotCol= 0
-        for dither in plotColor.keys():
-            if dither in coaddBundle.keys():
+        for dither in list(plotColor.keys()):
+            if dither in list(coaddBundle.keys()):
                 ell = np.arange(np.size(cl[dither]))
                 ax[plotRow, plotCol].plot(ell, (cl[dither]*ell*(ell+1))/2.0/np.pi,
                                           color=plotColor[dither], label=str(dither))

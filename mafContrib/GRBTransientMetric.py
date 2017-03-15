@@ -1,3 +1,4 @@
+from builtins import zip
 # Gamma-ray burst afterglow metric
 # ebellm@caltech.edu
 
@@ -187,7 +188,7 @@ class GRBTransientMetric(metrics.BaseMetric):
                     bandcounter['any'] += 1
 
         bandfraction = {}
-        for band in bandcounter.iterkeys():
+        for band in bandcounter.keys():
             bandfraction[band] = float(bandcounter[band]) / nTransMax
 
         return bandfraction
@@ -195,7 +196,7 @@ class GRBTransientMetric(metrics.BaseMetric):
 
     def reduceBand1FiltAvg(self, bandfraction):
         "Average fraction detected in single filter" 
-        return np.mean(bandfraction.values())
+        return np.mean(list(bandfraction.values()))
       
     def reduceBandanyNfilters(self, bandfraction):
         "Fraction of events detected in Nfilters or more" 

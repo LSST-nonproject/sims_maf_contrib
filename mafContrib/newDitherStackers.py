@@ -1,3 +1,6 @@
+from __future__ import print_function
+from builtins import zip
+from builtins import range
 ##############################################################################################################
 # Purpose: implement new dithering strategies.
 
@@ -120,9 +123,9 @@ class RepulsiveRandomDitherFieldPerVisitStacker(BaseStacker):
 
         numPointsInsideHex= len(insideHex)
         if self.printInfo:
-            print 'NumPointsInsideHexagon: ', numPointsInsideHex
-            print 'Total squares chosen: ', len(xCenter)
-            print 'Filling factor for repRandom (Number of points needed/Number of points in hexagon): ', float(noffsets)/numPointsInsideHex
+            print('NumPointsInsideHexagon: ', numPointsInsideHex)
+            print('Total squares chosen: ', len(xCenter))
+            print('Filling factor for repRandom (Number of points needed/Number of points in hexagon): ', float(noffsets)/numPointsInsideHex)
 
         # keep only the points that are inside the hexagon
         tempX= xCenter.copy()
@@ -172,7 +175,7 @@ class RepulsiveRandomDitherFieldPerVisitStacker(BaseStacker):
 
             if (len(xCenter)==0):
                 # have used all the squares ones
-                print 'Starting reuse of the squares inside the hexagon'
+                print('Starting reuse of the squares inside the hexagon')
                 xCenter= xCenter_copy.copy()
                 yCenter= yCenter_copy.copy()
             xCenter.pop(randIndexForSquares)
@@ -542,7 +545,7 @@ class PentagonDitherFieldPerSeasonStacker(BaseStacker):
             raise ValueError('Too many seasons (more than 11). Check SeasonStacker.')
 
         if self.wrapLastSeason:
-            print 'Seasons to wrap ', np.unique(seasons[ind])
+            print('Seasons to wrap ', np.unique(seasons[ind]))
             # wrap the season around: 10th == 0th
             seasons[ind]= seasons[ind]%10
 
@@ -619,7 +622,7 @@ class PentagonDiamondDitherFieldPerSeasonStacker(BaseStacker):
             raise ValueError('Too many seasons (more than 11). Check SeasonStacker.')
 
         if self.wrapLastSeason:
-            print 'Seasons to wrap ', np.unique(seasons[ind])
+            print('Seasons to wrap ', np.unique(seasons[ind]))
             # wrap the season around: 10th == 0th
             seasons[ind]= seasons[ind]%10
             
@@ -681,26 +684,26 @@ class PentagonDitherPerSeasonStacker(PentagonDitherFieldPerSeasonStacker):
 
         if self.wrapLastSeason:
             # check how many entries in the >10 season
-            print 'Seasons to wrap ', np.unique(seasons[ind]), 'with total entries: ', len(seasons[ind])
+            print('Seasons to wrap ', np.unique(seasons[ind]), 'with total entries: ', len(seasons[ind]))
             seasons[ind]= seasons[ind]%10
 
         # Generate the spiral offset vertices.
         self._generatePentagonOffsets()
         # print details
-        print 'Total visits for all fields:', len(seasons)
-        print ''
+        print('Total visits for all fields:', len(seasons))
+        print('')
        
         # Add to RA and dec values.
         vertexID= 0
         for s in np.unique(seasons):
             match = np.where(seasons == s)[0]
             # print details
-            print 'season', s
-            print 'numEntries ', len(match), '; ', float(len(match))/len(seasons)*100, '% of total'
+            print('season', s)
+            print('numEntries ', len(match), '; ', float(len(match))/len(seasons)*100, '% of total')
             matchYears= np.unique(years[match])
-            print 'Corresponding years: ', matchYears
-            for i in matchYears: print '     Entries in year', i, ': ', len(np.where(i == years[match])[0])    
-            print ''
+            print('Corresponding years: ', matchYears)
+            for i in matchYears: print('     Entries in year', i, ': ', len(np.where(i == years[match])[0]))    
+            print('')
             vertexID= vertexID %  len(self.xOff)
             simData['pentagonDitherPerSeasonRa'][match] = simData[self.raCol][match] + self.xOff[vertexID]/np.cos(simData[self.decCol][match])
             simData['pentagonDitherPerSeasonDec'][match] = simData[self.decCol][match] + self.yOff[vertexID]
@@ -748,7 +751,7 @@ class PentagonDiamondDitherPerSeasonStacker(PentagonDiamondDitherFieldPerSeasonS
             raise ValueError('Too many seasons (more than 11). Check SeasonStacker.')
 
         if self.wrapLastSeason:
-            print 'Seasons to wrap ', np.unique(seasons[ind])
+            print('Seasons to wrap ', np.unique(seasons[ind]))
             # wrap the season around: 10th == 0th
             seasons[ind]= seasons[ind]%10
         
@@ -811,7 +814,7 @@ class SpiralDitherPerSeasonStacker(SpiralDitherFieldPerVisitStacker):
             raise ValueError('Too many seasons (more than 11). Check SeasonStacker.')
 
         if self.wrapLastSeason:
-            print 'Seasons to wrap ', np.unique(seasons[ind])
+            print('Seasons to wrap ', np.unique(seasons[ind]))
             # wrap the season around: 10th == 0th
             seasons[ind]= seasons[ind]%10
         

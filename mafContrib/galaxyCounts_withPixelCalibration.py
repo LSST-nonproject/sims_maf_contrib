@@ -1,3 +1,4 @@
+from __future__ import print_function
 #####################################################################################################
 # Purpose: Calculate the galaxy counts for each Healpix pixel directly.
 # Necessary when accounting for pixel-specific calibration errors (as they modify the magnitude limit to
@@ -53,7 +54,7 @@ def GalaxyCounts_withPixelCalibration(coaddm5, upperMagLimit, nside=128,
     """
     # Need to scale down to indivdual HEALpix pixels. Galaxy count from the Coadded depth is per 1 square degree. 
     # Number of galaxies ~= 41253 sq. degrees in the full sky divided by number of HEALpix pixels.
-    scale = 41253.0/(long(12)*nside**2)
+    scale = 41253.0/(int(12)*nside**2)
     # Reset units (otherwise uses magnitudes).
     units = 'Galaxy Counts'
 
@@ -72,12 +73,12 @@ def GalaxyCounts_withPixelCalibration(coaddm5, upperMagLimit, nside=128,
     elif (filterBand=='y'):   # brighter than i: z-y= 0.4 => z= y+0.4 => i= y+0.4*2
         bandCorrection= 0.4*2.
     else:
-        print 'ERROR: Invalid band in GalaxyCountsMetric_withPixelCalibErrors. Assuming i-band.'
+        print('ERROR: Invalid band in GalaxyCountsMetric_withPixelCalibErrors. Assuming i-band.')
         bandCorrection= 0
         
     # check to make sure that the z-bin assigned is valid.
-    if ((redshiftBin != 'all') and (redshiftBin not in powerLawConst_a.keys())):
-        print 'ERROR: Invalid redshift bin in GalaxyCountsMetric_withPixelCalibration. Defaulting to all redshifts.'
+    if ((redshiftBin != 'all') and (redshiftBin not in list(powerLawConst_a.keys()))):
+        print('ERROR: Invalid redshift bin in GalaxyCountsMetric_withPixelCalibration. Defaulting to all redshifts.')
         redshiftBin= 'all'
 
     # set up the functions for the integrand
@@ -95,7 +96,7 @@ def GalaxyCounts_withPixelCalibration(coaddm5, upperMagLimit, nside=128,
             # full z-range considered here: 0.<z<4.0
             # sum the galaxy counts from each individual z-bin
             dn_gal= 0.
-            for key in powerLawConst_a.keys():
+            for key in list(powerLawConst_a.keys()):
                 dn_gal += np.power(10., powerLawConst_a[key]*(apparent_mag+bandCorrection)+powerLawConst_b[key])         
         completeness = 0.5*scipy.special.erfc(apparent_mag-coaddm5)
         return dn_gal*completeness

@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Example of a *very* simple variabiilty metric
 # krughoff@uw.edu, ebellm, ljones
 
@@ -27,7 +28,7 @@ def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**5, verb
     nbins = int((times.max() - times.min())/minperiod * 1000)
     if nbins > nbinmax:
         if verbose:
-            print 'lowered nbins'
+            print('lowered nbins')
         nbins = nbinmax
 
     # Recenter the magnitude measurements about zero
