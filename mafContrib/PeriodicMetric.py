@@ -11,8 +11,7 @@ import numpy as np
 __all__ = ['PeriodMetric']
 
 class PeriodMetric(BaseMetric):
-   """
-   From a set of observation times, uses code provided by Robert Siverd (LCOGT) to calculate the spectral window function.
+   """From a set of observation times, uses code provided by Robert Siverd (LCOGT) to calculate the spectral window function.
    """
    def __init__(self, TimeCol='expMJD', **kwargs):
       self.TimeCol=TimeCol

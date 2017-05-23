@@ -8,9 +8,8 @@ import numpy as np
 __all__ = ['MeanNightSeparationMetric']
 
 class MeanNightSeparationMetric(BaseMetric):
-    """
-    The mean separation between nights within a season, and then 
-    the mean over the campaign. Intranight cadence is not so important
+    """The mean separation between nights within a season, and then the mean over the campaign. 
+    Intranight cadence is not so important
     for lensed quasar time delays, but the internight cadence seems
     to drive the precision of their measurement. We first list all 
     unique observing nights within a season, and then the mean differences 

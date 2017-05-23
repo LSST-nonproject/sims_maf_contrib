@@ -26,8 +26,7 @@ from mafContrib.constantsForPipeline import powerLawConst_a, powerLawConst_b, no
 __all__ = ['GalaxyCountsMetric_extended']
 
 class GalaxyCountsMetric_extended(BaseMetric):
-    """
-    Estimate galaxy counts per HEALpix pixel. Accomodates for dust extinction, magnitude cuts,
+    """Estimate galaxy counts per HEALpix pixel. Accomodates for dust extinction, magnitude cuts,
     and specification of the galaxy LF to specific redshift bin to consider.
     
     Dependency (aside from MAF classes): constantsForPipeline.py

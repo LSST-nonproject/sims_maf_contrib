@@ -8,8 +8,7 @@ from lsst.sims.maf.metrics import BaseMetric
 __all__ = ['AngularSpreadMetric']
 
 class AngularSpreadMetric(BaseMetric):
-    """Compute the angular spread statistic which measures uniformity of a distribution angles
-    accounting for 2pi periodicity.
+    """Compute the angular spread statistic which measures uniformity of a distribution angles accounting for 2pi periodicity.
 
     The strategy is to first map angles into unit vectors on the unit circle, and then compute the
     2D centroid of those vectors.  A uniform distribution of angles will lead to a distribution of

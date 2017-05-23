@@ -26,8 +26,7 @@ def GalaxyCounts_withPixelCalibration(coaddm5, upperMagLimit, nside=128,
                                       filterBand= 'i', redshiftBin= 'all',
                                       CFHTLSCounts= False,
                                       normalizedMockCatalogCounts= True):
-    """
-    Estimate galaxy counts for a given HEALpix pixel directly (without a slicer).
+    """Estimate galaxy counts for a given HEALpix pixel directly (without a slicer).
 
     Dependency (aside from MAF classes): constantsForPipeline.py
     ----------

@@ -9,8 +9,8 @@ __all__ = ['SeasonLengthMetric']
 
 
 class SeasonLengthMetric(BaseMetric):
-    """
-    The mean season length, in months. The SeasonStacker must be run 
+    """The mean season length, in months.
+    The SeasonStacker must be run 
     before this metric can be computed; then, the visits in each season
     are examined an end-to-end length computed. These lengths are then 
     averaged. Season length seems to the most important sampling 

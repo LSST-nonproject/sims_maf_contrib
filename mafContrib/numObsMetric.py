@@ -10,8 +10,8 @@ from lsst.sims.maf.metrics import BaseMetric
 __all__= ['NumObsMetric']
 
 class NumObsMetric(BaseMetric):
-    """
-    Calculate the number of observations per data slice, e.g. HealPix pixel when using HealPix slicer.
+    """Calculate the number of observations per data slice.
+     e.g. HealPix pixel when using HealPix slicer.
 
     Optional Parameters:
     --------------------

@@ -8,8 +8,7 @@ __all__ = ['NightsWithNFiltersMetric']
 
 
 class NightsWithNFiltersMetric(BaseMetric):
-    """
-    Count how many times more than NFilters are used within the same night, for this set of visits.
+    """Count how many times more than NFilters are used within the same night, for this set of visits.
     """
     def __init__(self, nightCol='night', filterCol='filter', nFilters=3, **kwargs):
         """

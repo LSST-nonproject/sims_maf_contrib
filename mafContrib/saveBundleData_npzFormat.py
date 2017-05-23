@@ -11,9 +11,7 @@ __all__ = ['saveBundleData_npzFormat']
 
 
 def saveBundleData_npzFormat(path, bundle, baseFilename, filterBand):
-     """
-
-     Save data in the metricBundle. For each key, a new .npz file is created to
+     """Save data in the metricBundle. For each key, a new .npz file is created to
      save the content of the metricBundle object.
      
      Required Parameters

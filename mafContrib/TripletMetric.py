@@ -11,8 +11,7 @@ import numpy as np
 __all__ = ['TripletMetric', 'TripletBandMetric']
 
 class TripletMetric(BaseMetric):
-   """
-   Find the number of 'triplets' of three images taken in any band, based on user-selected minimum and maximum intervals (in hours),
+   """Find the number of 'triplets' of three images taken in any band, based on user-selected minimum and maximum intervals (in hours),
    as well as constraining the ratio of the two exposures intervals.
    Triplets are not required to be consecutive observations and may be overlapping.
    """
@@ -50,8 +49,7 @@ class TripletMetric(BaseMetric):
 
 
 class TripletBandMetric(BaseMetric):
-   """
-   Find the number of 'triplets' of three images taken in the same band, based on user-selected minimum and maximum intervals (in hours),
+   """Find the number of 'triplets' of three images taken in the same band, based on user-selected minimum and maximum intervals (in hours),
    as well as constraining the ratio of the two exposures intervals.
    Triplets are not required to be consecutive observations and may be overlapping.
    """

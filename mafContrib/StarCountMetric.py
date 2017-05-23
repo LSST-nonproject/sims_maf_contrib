@@ -14,8 +14,7 @@ from .StarCounts.StarCounts import *
 __all__ = ['StarCountMetric']
 
 class StarCountMetric(BaseMetric):
-   """
-   Find the number of stars in a given field between D1 and D2 in parsecs.
+   """Find the number of stars in a given field between D1 and D2 in parsecs.
    """
    def __init__(self,**kwargs):
       self.D1=kwargs.pop('D1', 100)

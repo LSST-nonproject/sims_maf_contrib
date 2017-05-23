@@ -9,8 +9,7 @@ __all__ = ['YearlyDitherStacker']
 
 
 class YearlyDitherStacker(BaseStacker):
-    """
-    Add a dither of half the FOV depending on the year of the survey.
+    """ Add a dither of half the FOV depending on the year of the survey.
     """
     def __init__(self, expMJDCol='expMJD', raCol='fieldRA', decCol='fieldDec'):
         # Names of columns we want to add.

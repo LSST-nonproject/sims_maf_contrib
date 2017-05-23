@@ -14,8 +14,7 @@ from .StarCounts.StarCounts import *
 __all__ = ['StarCountMassMetric']
 
 class StarCountMassMetric(BaseMetric):
-   """
-   Find the number of stars in a given field in the mass range fainter than magnitude 16 and bright enough to have noise less than 0.03 in a given band. M1 and M2 are the upper and lower limits of the mass range. 'band' is the band to be observed.
+   """Find the number of stars in a given field in the mass range fainter than magnitude 16 and bright enough to have noise less than 0.03 in a given band. M1 and M2 are the upper and lower limits of the mass range. 'band' is the band to be observed.
    """
    def __init__(self,**kwargs):
       self.M1=kwargs.pop('M1', 0.9)

@@ -9,8 +9,7 @@ __all__ = ['periodicStar', 'PeriodicStarMetric']
 
 
 def periodicStar(t,x0,x1,x2,x3,x4,x5,x6,x7,x8):
-    """
-    Approximate a periodic star as a simple sin wave
+    """ Approximate a periodic star as a simple sin wave.
     t: array with "time" in days, and "filter" dtype names.
     x0: Period (days)
     x1: Phase (days)
@@ -35,8 +34,7 @@ def periodicStar(t,x0,x1,x2,x3,x4,x5,x6,x7,x8):
     return mags
 
 class PeriodicStarMetric(BaseMetric):
-    """
-    At each slicePoint, run a Monte Carlo simulation to see how well a periodic source can be fit.
+    """ At each slicePoint, run a Monte Carlo simulation to see how well a periodic source can be fit.
     Assumes a simple sin-wave light-curve, and generates Gaussain noise based in the 5-sigma limiting depth
     of each observation.
     """

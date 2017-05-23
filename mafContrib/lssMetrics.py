@@ -8,8 +8,7 @@ __all__ = ['GalaxyCountsMetric']
 
 
 class GalaxyCountsMetric(BaseMetric):
-    """
-    Estimate the number of galaxies expected at a particular coadded depth.
+    """ Estimate the number of galaxies expected at a particular coadded depth.
     """
     def __init__(self, m5Col = 'fiveSigmaDepth', nside=128, metricName='GalaxyCounts', **kwargs):
         self.m5Col = m5Col

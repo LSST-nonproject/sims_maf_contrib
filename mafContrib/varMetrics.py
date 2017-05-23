@@ -11,8 +11,7 @@ __all__ = ['PeriodDeviationMetric']
 
 
 def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**5, verbose=False):
-    """
-    Find the period of a lightcurve using scipy's lombscargle method.
+    """Find the period of a lightcurve using scipy's lombscargle method.
     The parameters used here imply magnitudes but there is no reason this would not work if fluxes are passed.
 
     :param times: A list of times for the given observations
@@ -43,10 +42,9 @@ def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**5, verb
     # Return period of the bin with the max value in the periodogram
     return 1./f[idx]
 
+
 class PeriodDeviationMetric(BaseMetric):
-    """
-    Measure the percentage deviation of recovered periods for
-    pure sine wave variability (in magnitude).
+    """Measure the percentage deviation of recovered periods for pure sine wave variability (in magnitude).
     """
     def __init__(self, col='expMJD', periodMin=3., periodMax=35., nPeriods=5,
                  meanMag=21., amplitude=1., metricName='Period Deviation', periodCheck=None,

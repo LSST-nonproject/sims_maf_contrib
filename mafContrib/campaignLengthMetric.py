@@ -8,8 +8,8 @@ import numpy as np
 __all__ = ['CampaignLengthMetric']
 
 class CampaignLengthMetric(BaseMetric):
-    """
-    The campaign length, in seasons. In the main survey this is 
+    """The campaign length, in seasons. 
+    In the main survey this is 
     typically 10 or 11, depending on when the start of the survey 
     was relative to that sky position's season. For lensed quasar time
     delays we want the campaign to be as long as possible, although 
