@@ -8,14 +8,14 @@
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
 
-__all__ = ['PeriodMetric']
+__all__ = ['PeriodicMetric']
 
-class PeriodMetric(BaseMetric):
+class PeriodicMetric(BaseMetric):
    """From a set of observation times, uses code provided by Robert Siverd (LCOGT) to calculate the spectral window function.
    """
    def __init__(self, TimeCol='expMJD', **kwargs):
       self.TimeCol=TimeCol
-      super(PeriodMetric, self).__init__(col=[self.TimeCol], **kwargs)
+      super(PeriodicMetric, self).__init__(col=[self.TimeCol], **kwargs)
 
    def run(self, dataSlice, slicePoint=None):
       frq_pts = 30000.0
