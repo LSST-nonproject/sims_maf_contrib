@@ -38,3 +38,4 @@ from .almPlots import *
 from .coaddM5Analysis import *
 from .constantsForPipeline import *
 
+from .rotDitherStacker import *
