@@ -14,7 +14,6 @@ from .varDepthMetric import *
 from .transientAsciiMetric import *
 
 from .lssMetrics import *
-from .nFollowStacker import *
 
 from .photPrecMetrics import *
 from .StarCountMassMetric import *
@@ -38,4 +37,3 @@ from .almPlots import *
 from .coaddM5Analysis import *
 from .constantsForPipeline import *
 
-from .rotDitherStacker import *
