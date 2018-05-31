@@ -6,3 +6,4 @@ tmp.sqlite
 *.png
 *.pdf
 .ipynb_checkpoints
+baseline2018a.db
