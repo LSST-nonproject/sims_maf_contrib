@@ -136,7 +136,7 @@ class TransientAsciiMetric(BaseMetric):
             # Interpolate the lightcurve template to the times of the observations, in this filter.
             lc_ascii_filter = np.interp(time, np.array(self.lcv_template['ph'], float)[fMatch_ascii],
                                         np.array(self.lcv_template['mag'], float)[fMatch_ascii])
-            lcMags[filters == key] = lc_ascii_filter[filters == key]
+            lcMags[filters == key.decode("utf-8")] = lc_ascii_filter[filters == key.decode("utf-8")]
         lcMags += self.peakOffset
         return lcMags
 
@@ -213,7 +213,8 @@ class TransientAsciiMetric(BaseMetric):
             lcDetect = np.ones(len(ulcNumber), dtype=bool)
 
             # Loop through each lightcurve and check if it meets requirements.
-            for lcN, le, ri in zip(ulcNumber, lcLeft, lcRight):
+            for i,(lcN, le, ri) in enumerate(zip(ulcNumber, lcLeft, lcRight)):
+                lcN = i
                 # If there were no observations at all for this lightcurve:
                 if le == ri:
                     lcDetect[lcN] = False
@@ -258,7 +259,7 @@ class TransientAsciiMetric(BaseMetric):
             # but indicate which were 'detected'.
             lcDetectOut = np.ones(len(dataSlice), dtype=bool)
             for i, lcN in enumerate(lcNumber):
-                lcDetectOut[i] = lcDetect[lcN]
+                lcDetectOut[i] = lcDetect[int(lcN)]
             return {'lcNumber': lcNumber, 'expMJD': dataSlice[self.mjdCol], 'epoch': lcEpoch,
                     'filter': dataSlice[self.filterCol], 'lcMag': lcMags, 'SNR': lcSNR,
                     'detected': lcDetectOut}
