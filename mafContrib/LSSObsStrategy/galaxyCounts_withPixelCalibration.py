@@ -18,7 +18,7 @@ import numpy as np
 import healpy as hp
 import scipy
 import warnings
-from mafContrib.constantsForPipeline import powerLawConst_a, powerLawConst_b, normalizationConstant
+from mafContrib.LSSObsStrategy.constantsForPipeline import powerLawConst_a, powerLawConst_b, normalizationConstant
 
 __all__ = ['GalaxyCounts_withPixelCalibration']
 

@@ -25,13 +25,13 @@ import lsst.sims.maf.utils as mafUtils
 import lsst.sims.maf.maps as maps
 import lsst.sims.maf.stackers as mafStackers   # stackers in sims_maf
 
-from mafContrib import newDitherStackers as myStackers   # my stackers
-from mafContrib.maskingAlgorithmGeneralized import maskingAlgorithmGeneralized
-from mafContrib.plotBundleMaps import plotBundleMaps
-from mafContrib.almPlots import almPlots
-from mafContrib.saveBundleData_npzFormat import saveBundleData_npzFormat
+from mafContrib.LSSObsStrategy import newDitherStackers as myStackers   # my stackers
+from mafContrib.LSSObsStrategy.maskingAlgorithmGeneralized import maskingAlgorithmGeneralized
+from mafContrib.LSSObsStrategy.plotBundleMaps import plotBundleMaps
+from mafContrib.LSSObsStrategy.almPlots import almPlots
+from mafContrib.LSSObsStrategy.saveBundleData_npzFormat import saveBundleData_npzFormat
 
-from mafContrib.constantsForPipeline import plotColor
+from mafContrib.LSSObsStrategy.constantsForPipeline import plotColor
 
 __all__= ['coaddM5Analysis']
 

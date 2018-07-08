@@ -55,15 +55,15 @@ import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.utils as mafUtils
 import lsst.sims.maf.maps as maps
 
-from mafContrib import newDitherStackers as myStackers   # my stackers
-from mafContrib.galaxyCountsMetric_extended import GalaxyCountsMetric_extended as GalaxyCountsMetric
-from mafContrib.galaxyCounts_withPixelCalibration import GalaxyCounts_withPixelCalibration as GalaxyCounts_0ptErrors
-from mafContrib.maskingAlgorithmGeneralized import maskingAlgorithmGeneralized
-from mafContrib.plotBundleMaps import plotBundleMaps
-from mafContrib.numObsMetric import NumObsMetric
-from mafContrib.saveBundleData_npzFormat import saveBundleData_npzFormat
+from mafContrib.LSSObsStrategy import newDitherStackers as myStackers   # my stackers
+from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended as GalaxyCountsMetric
+from mafContrib.LSSObsStrategy.galaxyCounts_withPixelCalibration import GalaxyCounts_withPixelCalibration as GalaxyCounts_0ptErrors
+from mafContrib.LSSObsStrategy.maskingAlgorithmGeneralized import maskingAlgorithmGeneralized
+from mafContrib.LSSObsStrategy.plotBundleMaps import plotBundleMaps
+from mafContrib.LSSObsStrategy.numObsMetric import NumObsMetric
+from mafContrib.LSSObsStrategy.saveBundleData_npzFormat import saveBundleData_npzFormat
 
-from mafContrib.constantsForPipeline import powerLawConst_a, plotColor
+from mafContrib.LSSObsStrategy.constantsForPipeline import powerLawConst_a, plotColor
 
 __all__ = ['artificialStructureCalculation']
 

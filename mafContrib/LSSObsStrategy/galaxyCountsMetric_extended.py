@@ -21,7 +21,7 @@ import healpy as hp
 import scipy
 from lsst.sims.maf.metrics import BaseMetric, Coaddm5Metric, ExgalM5
 import lsst.sims.maf.maps as maps
-from mafContrib.constantsForPipeline import powerLawConst_a, powerLawConst_b, normalizationConstant
+from mafContrib.LSSObsStrategy.constantsForPipeline import powerLawConst_a, powerLawConst_b, normalizationConstant
 
 __all__ = ['GalaxyCountsMetric_extended']
 
