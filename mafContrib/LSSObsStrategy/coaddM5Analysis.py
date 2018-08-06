@@ -71,7 +71,7 @@ def coaddM5Analysis(path, dbfile, runName,
       * WFDandDDFs: boolean: set to True if want to consider both WFD survet and DDFs. Otherwise will only work
                              with WFD. Default: False
       * noDithOnly: boolean: set to True if only want to consider the undithered survey. Default: False
-      * bestDithOnly: boolean: set to True if only want to consider RepulsiveRandomDitherFieldPerVisit. 
+      * bestDithOnly: boolean: set to True if only want to consider RandomDitherFieldPerVisit.
                                Default: False
       * someDithOnly: boolean: set to True if only want to consider undithered and a few dithered surveys. 
                                Default: False
@@ -139,7 +139,7 @@ def coaddM5Analysis(path, dbfile, runName,
             sqlconstraint  =  'filter=="' + filterBand + '"'
     else:
         propIds, propTags = opsdb.fetchPropInfo()
-        wfdWhere = mafUtils.createSQLWhere('WFD', propTags)
+        wfdWhere = opsdb.createSQLWhere('WFD', propTags)
         if cutOffYear is not None:
             nightCutOff= (cutOffYear)*365.25
             sqlconstraint  = wfdWhere + ' and night <= ' + str(nightCutOff) + ' and filter=="' + filterBand + '"'
@@ -152,62 +152,95 @@ def coaddM5Analysis(path, dbfile, runName,
     stackerList= {}
     
     if bestDithOnly:
-        stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(randomSeed=1000)]
-        slicer['RepulsiveRandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerVisitRa', 
-                                                                            latCol='repulsiveRandomDitherFieldPerVisitDec', nside=nside, useCache=False)
+        stackerList['RandomDitherFieldPerVisit'] = [mafStackers.RandomDitherFieldPerVisitStacker(degrees=opsdb.raDecInDeg,
+                                                                                                 randomSeed=1000)]
+        slicer['RandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='randomDitherFieldPerVisitRa',
+                                                                   latCol='randomDitherFieldPerVisitDec',
+                                                                   latLonDeg=opsdb.raDecInDeg,
+                                                                   nside=nside, useCache=False)
     else:
-        slicer['NoDither']= slicers.HealpixSlicer(lonCol='fieldRA', latCol='fieldDec', nside=nside, useCache=False)
+        slicer['NoDither']= slicers.HealpixSlicer(lonCol='fieldRA', latCol='fieldDec', latLonDeg=opsdb.raDecInDeg,,
+                                                  nside=nside, useCache=False)
         if someDithOnly and not noDithOnly:
-            stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(randomSeed=1000)]
+            stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(degrees=opsdb.raDecInDeg,
+                                                                                                                      randomSeed=1000)]
             slicer['RepulsiveRandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerVisitRa', 
-                                                                                latCol='repulsiveRandomDitherFieldPerVisitDec', nside=nside, useCache=False)
+                                                                                latCol='repulsiveRandomDitherFieldPerVisitDec',
+                                                                                latLonDeg=opsdb.raDecInDeg, nside=nside,
+                                                                                useCache=False)
             slicer['SequentialHexDitherFieldPerNight']=  slicers.HealpixSlicer(lonCol='hexDitherFieldPerNightRa', 
-                                                                               latCol='hexDitherFieldPerNightDec', nside=nside, useCache=False)
-            slicer['PentagonDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', 
-                                                                     latCol='pentagonDitherPerSeasonDec', nside=nside, useCache=False)
+                                                                               latCol='hexDitherFieldPerNightDec',
+                                                                               latLonDeg=opsdb.raDecInDeg,
+                                                                               nside=nside, useCache=False)
+            slicer['PentagonDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', latCol='pentagonDitherPerSeasonDec',
+                                                                     latLonDeg=opsdb.raDecInDeg,
+                                                                     nside=nside, useCache=False)
         elif not noDithOnly:
-            stackerList['RandomDitherPerNight'] = [mafStackers.RandomDitherPerNightStacker(randomSeed=1000)]
-            stackerList['RandomDitherFieldPerNight'] = [mafStackers.RandomDitherFieldPerNightStacker(randomSeed=1000)]
-            stackerList['RandomDitherFieldPerVisit'] = [mafStackers.RandomDitherFieldPerVisitStacker(randomSeed=1000)]
+            # random dithers on different timescales
+            stackerList['RandomDitherPerNight'] = [mafStackers.RandomDitherPerNightStacker(degrees=opsdb.raDecInDeg, randomSeed=1000)]
+            stackerList['RandomDitherFieldPerNight'] = [mafStackers.RandomDitherFieldPerNightStacker(degrees=opsdb.raDecInDeg, randomSeed=1000)]
+            stackerList['RandomDitherFieldPerVisit'] = [mafStackers.RandomDitherFieldPerVisitStacker(degrees=opsdb.raDecInDeg, randomSeed=1000)]
             
-            stackerList['RepulsiveRandomDitherPerNight'] = [myStackers.RepulsiveRandomDitherPerNightStacker(randomSeed=1000)]
-            stackerList['RepulsiveRandomDitherFieldPerNight'] = [myStackers.RepulsiveRandomDitherFieldPerNightStacker(randomSeed=1000)]
-            stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(randomSeed=1000)]
-            
-            slicer['RandomDitherPerNight']= slicers.HealpixSlicer(lonCol='randomDitherPerNightRa', 
-                                                                  latCol='randomDitherPerNightDec', nside=nside, useCache=False)
-            slicer['RandomDitherFieldPerNight']= slicers.HealpixSlicer(lonCol='randomDitherFieldPerNightRa', 
-                                                                       latCol='randomDitherFieldPerNightDec', nside=nside, useCache=False)
+            # rep random dithers on different timescales
+            stackerList['RepulsiveRandomDitherPerNight'] = [myStackers.RepulsiveRandomDitherPerNightStacker(degrees=opsdb.raDecInDeg,
+                                                                                                            randomSeed=1000)]
+            stackerList['RepulsiveRandomDitherFieldPerNight'] = [myStackers.RepulsiveRandomDitherFieldPerNightStacker(degrees=opsdb.raDecInDeg,
+                                                                                                                      randomSeed=1000)]
+            stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(degrees=opsdb.raDecInDeg,
+                                                                                                                      randomSeed=1000)]
+            # set up slicers for different dithers
+            # random dithers on different timescales
+            slicer['RandomDitherPerNight']= slicers.HealpixSlicer(lonCol='randomDitherPerNightRa', latCol='randomDitherPerNightDec',
+                                                                  latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
+            slicer['RandomDitherFieldPerNight']= slicers.HealpixSlicer(lonCol='randomDitherFieldPerNightRa',
+                                                                       latCol='randomDitherFieldPerNightDec',
+                                                                       latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
             slicer['RandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='randomDitherFieldPerVisitRa',
-                                                                       latCol='randomDitherFieldPerVisitDec', nside=nside, useCache=False)
-            
+                                                                       latCol='randomDitherFieldPerVisitDec',
+                                                                       latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
+            # rep random dithers on different timescales
             slicer['RepulsiveRandomDitherPerNight']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherPerNightRa', 
-                                                                           latCol='repulsiveRandomDitherPerNightDec', nside=nside, useCache=False)
+                                                                           latCol='repulsiveRandomDitherPerNightDec',
+                                                                           latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
             slicer['RepulsiveRandomDitherFieldPerNight']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerNightRa', 
-                                                                                latCol='repulsiveRandomDitherFieldPerNightDec', nside=nside, useCache=False)
+                                                                                latCol='repulsiveRandomDitherFieldPerNightDec',
+                                                                                latLonDeg=opsdb.raDecInDeg, nside=nside,
+                                                                                useCache=False)
             slicer['RepulsiveRandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerVisitRa', 
-                                                                                latCol='repulsiveRandomDitherFieldPerVisitDec', nside=nside, useCache=False)
-            
+                                                                                latCol='repulsiveRandomDitherFieldPerVisitDec',
+                                                                                latLonDeg=opsdb.raDecInDeg, nside=nside,
+                                                                                useCache=False)
+            # spiral dithers on different timescales
             slicer['FermatSpiralDitherPerNight']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherPerNightRa', 
-                                                                         latCol='fermatSpiralDitherPerNightDec', nside=nside, useCache=False)
+                                                                         latCol='fermatSpiralDitherPerNightDec',
+                                                                         latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
             slicer['FermatSpiralDitherFieldPerNight']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherFieldPerNightRa', 
-                                                                              latCol='fermatSpiralDitherFieldPerNightDec', nside=nside, useCache=False)
+                                                                              latCol='fermatSpiralDitherFieldPerNightDec',
+                                                                              latLonDeg=opsdb.raDecInDeg, nside=nside,
+                                                                              useCache=False)
             slicer['FermatSpiralDitherFieldPerVisit']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherFieldPerVisitRa', 
-                                                                              latCol='fermatSpiralDitherFieldPerVisitDec', nside=nside, useCache=False)
-        
-            slicer['SequentialHexDitherPerNight']=  slicers.HealpixSlicer(lonCol='hexDitherPerNightRa', 
-                                                                          latCol='hexDitherPerNightDec', nside=nside, useCache=False)
+                                                                              latCol='fermatSpiralDitherFieldPerVisitDec',
+                                                                              latLonDeg=opsdb.raDecInDeg, nside=nside,
+                                                                              useCache=False)
+            # hex dithers on different timescales
+            slicer['SequentialHexDitherPerNight']=  slicers.HealpixSlicer(lonCol='hexDitherPerNightRa', latCol='hexDitherPerNightDec',
+                                                                          latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
             slicer['SequentialHexDitherFieldPerNight']=  slicers.HealpixSlicer(lonCol='hexDitherFieldPerNightRa', 
-                                                                               latCol='hexDitherFieldPerNightDec', nside=nside, useCache=False)
+                                                                               latCol='hexDitherFieldPerNightDec',
+                                                                               latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
             slicer['SequentialHexDitherFieldPerVisit']=  slicers.HealpixSlicer(lonCol='hexDitherFieldPerVisitRa', 
-                                                                               latCol='hexDitherFieldPerVisitDec', nside=nside, useCache=False)
-            
-            slicer['PentagonDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', 
-                                                                     latCol='pentagonDitherPerSeasonDec', nside=nside, useCache=False)
-            slicer['PentagonDiamondDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDiamondDitherPerSeasonRa', 
-                                                                            latCol='pentagonDiamondDitherPerSeasonDec', nside=nside, useCache= False)
+                                                                               latCol='hexDitherFieldPerVisitDec',
+                                                                               latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
+            # per season dithers
+            slicer['PentagonDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', latCol='pentagonDitherPerSeasonDec',
+                                                                     latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
+            slicer['PentagonDiamondDitherPerSeason']= slicers.HealpixSlicer(lonCol='pentagonDiamondDitherPerSeasonRa',
+                                                                            latCol='pentagonDiamondDitherPerSeasonDec',
+                                                                            latLonDeg=opsdb.raDecInDeg, nside=nside,
+                                                                            useCache= False)
             slicer['SpiralDitherPerSeason']= slicers.HealpixSlicer(lonCol='spiralDitherPerSeasonRa', 
-                                                                   latCol='spiralDitherPerSeasonDec', nside=nside, useCache= False)
+                                                                   latCol='spiralDitherPerSeasonDec',
+                                                                   latLonDeg=opsdb.raDecInDeg, nside=nside, useCache= False)
     os.chdir(path) 
     # set up the metric
     if includeDustExtinction:
