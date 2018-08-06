@@ -7,6 +7,8 @@ from builtins import str
 
 # Humna Awan: humna.awan@rutgers.edu
 #####################################################################################################
+import matplotlib
+matplotlib.use('Agg')
  
 import matplotlib.pyplot as plt
 import numpy as np
@@ -126,25 +128,28 @@ def coaddM5Analysis(path, dbfile, runName,
     if  WFDandDDFs:
         regionType= 'WFDandDDFs_'
         
-    outDir = 'coaddM5Analysis_' + regionType +'nside' + str(nside) + '_' + add2 + '_' + str(pixelRadiusForMasking) + 'pixelRadiusForMasking_' + filterBand + 'Band_' + runName + '_' + add + '_directory'
+    outDir = 'coaddM5Analysis_%snside%s_%s_%spixelRadiusForMasking_%sBand_%s_%s_directory'%(regionType, nside,add2,
+                                                                                            pixelRadiusForMasking,
+                                                                                           filterBand, runName, add)
     print('# outDir: ', outDir)
+    os.chdir(path)
     resultsDb = db.ResultsDb(outDir=outDir)
 
     # set up the sql constraint
     if  WFDandDDFs:
         if cutOffYear is not None:
             nightCutOff= (cutOffYear)*365.25
-            sqlconstraint  = 'night <= ' + str(nightCutOff) + ' and filter=="' + filterBand + '"'
+            sqlconstraint  = 'night<=%s and filter=="%s"'%(nightCutOff, filterBand)
         else:
-            sqlconstraint  =  'filter=="' + filterBand + '"'
+            sqlconstraint  =  'filter=="%s"'%filterBand #'filter=="' + filterBand + '"'
     else:
         propIds, propTags = opsdb.fetchPropInfo()
         wfdWhere = opsdb.createSQLWhere('WFD', propTags)
         if cutOffYear is not None:
             nightCutOff= (cutOffYear)*365.25
-            sqlconstraint  = wfdWhere + ' and night <= ' + str(nightCutOff) + ' and filter=="' + filterBand + '"'
+            sqlconstraint = '%s and night<=%s and filter=="%s"'%(wfdWhere, nightCutOff, filterBand)
         else:
-            sqlconstraint  = wfdWhere + ' and filter=="' + filterBand + '"'
+            sqlconstraint = '%s and filter=="%s"'%(wfdWhere, filterBand)
     print('# sqlconstraint: ', sqlconstraint)
 
     # setup all the slicers
@@ -159,7 +164,7 @@ def coaddM5Analysis(path, dbfile, runName,
                                                                    latLonDeg=opsdb.raDecInDeg,
                                                                    nside=nside, useCache=False)
     else:
-        slicer['NoDither']= slicers.HealpixSlicer(lonCol='fieldRA', latCol='fieldDec', latLonDeg=opsdb.raDecInDeg,,
+        slicer['NoDither']= slicers.HealpixSlicer(lonCol='fieldRA', latCol='fieldDec', latLonDeg=opsdb.raDecInDeg,
                                                   nside=nside, useCache=False)
         if someDithOnly and not noDithOnly:
             stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(degrees=opsdb.raDecInDeg,
@@ -269,8 +274,8 @@ def coaddM5Analysis(path, dbfile, runName,
 
     # plot and save the data
     plotBundleMaps(path, outDir, coaddBundle,
-                   dataLabel= '$' + filterBand + '$-band Coadded Depth', filterBand= filterBand,
-                   dataName= filterBand + '-band Coadded Depth',
+                   dataLabel= '$%s$-band Coadded Depth'%filterBand, filterBand= filterBand,
+                   dataName= '%s-band Coadded Depth'%filterBand,
                    skymap= plotSkymap, powerSpectrum= plotPowerSpectrum, cartview= plotCartview,
                    colorMin= unmaskedColorMin, colorMax= unmaskedColorMax,
                    nTicks= nTicks,
@@ -283,7 +288,7 @@ def coaddM5Analysis(path, dbfile, runName,
 
     print('# Number of pixels in the survey region (before masking the border):')
     for dither in coaddBundle:
-        print('  ' + dither + ': ' +  str(len(np.where(coaddBundle[dither].metricValues.mask == False)[0])))
+        print('  %s: %s'%(dither, len(np.where(coaddBundle[dither].metricValues.mask == False)[0])))
 
     # save the unmasked data?
     if saveunMaskedCoaddData:
@@ -297,22 +302,23 @@ def coaddM5Analysis(path, dbfile, runName,
     # mask the edges
     print('\n# Masking the edges for coadd ...')
     coaddBundle= maskingAlgorithmGeneralized(coaddBundle, plotHandler,
-                                             dataLabel= '$' + filterBand + '$-band Coadded Depth',
+                                             dataLabel= '$%s$-band Coadded Depth'%filterBand,
                                              nside= nside,
                                              pixelRadius= pixelRadiusForMasking,
                                              plotIntermediatePlots= False, 
                                              plotFinalPlots= False, printFinalInfo= True)
-    # plot and save the masked data
-    plotBundleMaps(path, outDir, coaddBundle,
-                   dataLabel= '$' + filterBand + '$-band Coadded Depth', filterBand= filterBand,
-                   dataName= filterBand + '-band Coadded Depth',
-                   skymap= plotSkymap, powerSpectrum= plotPowerSpectrum, cartview= plotCartview,
-                   colorMin= maskedColorMin, colorMax= maskedColorMax,
-                   nTicks=nTicks,
-                   showPlots= showPlots, saveFigs= saveFigs,
-                   outDirNameForSavedFigs= 'coaddM5Plots_maskedBorders')
-    print('\n# Done saving plots with border masking. \n')
-    os.chdir(path)
+    if (pixelRadiusForMasking>0):
+        # plot and save the masked data
+        plotBundleMaps(path, outDir, coaddBundle,
+                       dataLabel= '$%s$-band Coadded Depth'%filterBand, filterBand= filterBand,
+                       dataName= '%s-band Coadded Depth'%filterBand,
+                       skymap= plotSkymap, powerSpectrum= plotPowerSpectrum, cartview= plotCartview,
+                       colorMin= maskedColorMin, colorMax= maskedColorMax,
+                       nTicks=nTicks,
+                       showPlots= showPlots, saveFigs= saveFigs,
+                       outDirNameForSavedFigs= 'coaddM5Plots_maskedBorders')
+        print('\n# Done saving plots with border masking. \n')
+        os.chdir(path)
         
     # Calculate total power
     summarymetric = metrics.TotalPowerMetric()
@@ -329,7 +335,7 @@ def coaddM5Analysis(path, dbfile, runName,
                              showPlots= showPlots)
 
     # save the masked data?
-    if saveMaskedCoaddData:
+    if saveMaskedCoaddData and (pixelRadiusForMasking>0):
         os.chdir(path + outDir)
         outDir_new= 'maskedCoaddData'
         if not os.path.exists(outDir_new):
@@ -338,97 +344,99 @@ def coaddM5Analysis(path, dbfile, runName,
     os.chdir(path)
     
     #### plot comparison plots
-    # set up the directory
-    outDir_comp= 'coaddM5ComparisonPlots'
-    os.chdir(path + outDir)
-    if not os.path.exists(outDir_comp):
-        os.makedirs(outDir_comp)
-    os.chdir(path + outDir + '/' + outDir_comp)
-        
-    # plot for the power spectra
-    cl= {}
-    for dither in plotColor:
-        if dither in coaddBundle:
-            cl[dither] = hp.anafast(hp.remove_dipole(coaddBundle[dither].metricValues.filled(coaddBundle[dither].slicer.badval)), 
-                                    lmax=500)
-            ell = np.arange(np.size(cl[dither]))
-            plt.plot(ell, (cl[dither]*ell*(ell+1))/2.0/np.pi, color=plotColor[dither], linestyle='-', label=str(dither))
-    plt.xlabel(r'$\ell$', fontsize=16)
-    plt.ylabel(r'$\ell(\ell+1)C_\ell/(2\pi)$', fontsize=16)
-    plt.tick_params(axis='x', labelsize=14)
-    plt.tick_params(axis='y', labelsize=14)
-    plt.xlim(0,500)
-    fig = plt.gcf()
-    fig.set_size_inches(12.5, 10.5)
-    leg= plt.legend(fontsize='x-large', labelspacing=0.001)
-    for legobj in leg.legendHandles:
-        legobj.set_linewidth(4.0)
-    plt.savefig('powerspectrum_comparison_all.pdf',bbox_inches='tight',format= 'pdf')
-    plt.show()
+    if len(coaddBundle.keys())>1:  # more than one key
+        # set up the directory
+        outDir_comp= 'coaddM5ComparisonPlots'
+        os.chdir(path + outDir)
+        if not os.path.exists(outDir_comp):
+            os.makedirs(outDir_comp)
+        os.chdir(path + outDir + '/' + outDir_comp)
 
-    # create the histogram
-    scale = hp.nside2pixarea(nside, degrees=True)
-    def tickFormatter(y, pos):
-        return '%d' % (y * scale)    # convert pixel count to area
-    binsize= 0.01
-    for dither in plotColor:
-        if dither in coaddBundle:
-            ind= np.where(coaddBundle[dither].metricValues.mask == False)[0]
-            binAll= int((max(coaddBundle[dither].metricValues.data[ind])-min(coaddBundle[dither].metricValues.data[ind]))/binsize)
-            plt.hist(coaddBundle[dither].metricValues.data[ind],bins=binAll,label=str(dither),histtype='step',color=plotColor[dither])
-    ax = plt.gca()
-    ymin, ymax = ax.get_ylim()
-    nYticks= 10.
-    wantedYMax= ymax*scale
-    wantedYMax= 10.*np.ceil(float(wantedYMax)/10.)
-    increment= 5.*np.ceil(float(wantedYMax/nYticks)/5.)
-    wantedArray= np.arange(0, wantedYMax, increment)
-    ax.yaxis.set_ticks(wantedArray/scale)
-    ax.yaxis.set_major_formatter(FuncFormatter(tickFormatter))
-    plt.xlabel('$' + filterBand + '$-band Coadded Depth', fontsize= 18)
-    plt.ylabel('Area (deg$^2$)', fontsize= 18)
-    plt.tick_params(axis='x', labelsize=18)
-    plt.tick_params(axis='y', labelsize=18)
-    fig = plt.gcf()
-    fig.set_size_inches(12.5, 10.5)
-    leg= plt.legend(fontsize='x-large', labelspacing=0.001, loc= 2)
-    for legobj in leg.legendHandles:
-        legobj.set_linewidth(2.0)
-    plt.savefig('histogram_comparison.pdf',bbox_inches='tight', format= 'pdf')    
-    plt.show()
-
-    # plot power spectra for the separte panel
-    totKeys= len(list(coaddBundle.keys()))
-    if (totKeys>1):
-        plt.clf()
-        nCols= 2
-        nRows= int(np.ceil(float(totKeys)/nCols))
-        fig, ax = plt.subplots(nRows,nCols)
-        plotRow= 0
-        plotCol= 0
-        for dither in list(plotColor.keys()):
-            if dither in list(coaddBundle.keys()):
+        # plot for the power spectra
+        cl= {}
+        for dither in plotColor:
+            if dither in coaddBundle:
+                cl[dither] = hp.anafast(hp.remove_dipole(coaddBundle[dither].metricValues.filled(coaddBundle[dither].slicer.badval)),
+                                        lmax=500)
                 ell = np.arange(np.size(cl[dither]))
-                ax[plotRow, plotCol].plot(ell, (cl[dither]*ell*(ell+1))/2.0/np.pi,
-                                          color=plotColor[dither], label=str(dither))
-                if (plotRow==nRows-1):
-                    ax[plotRow, plotCol].set_xlabel(r'$\ell$', fontsize=20)
-                ax[plotRow, plotCol].set_ylabel(r'$\ell(\ell+1)C_\ell/(2\pi)$', fontsize=20)
-                ax[plotRow, plotCol].tick_params(axis='x', labelsize=16)
-                ax[plotRow, plotCol].tick_params(axis='y', labelsize=16)
-                ax[plotRow, plotCol].yaxis.set_major_locator(MaxNLocator(3))
-                if (dither != 'NoDither'):
-                    ax[plotRow, plotCol].set_ylim(0,0.0035)
-                ax[plotRow, plotCol].set_xlim(0,500)
-                ax[plotRow, plotCol].legend(fontsize= 'xx-large')
-                plotRow+= 1
-                if (plotRow > nRows-1): 
-                    plotRow= 0
-                    plotCol+= 1
-        fig.set_size_inches(20,int(nRows*30/7.))
-        plt.savefig('powerspectrum_sepPanels.pdf',bbox_inches='tight', format= 'pdf')
+                plt.plot(ell, (cl[dither]*ell*(ell+1))/2.0/np.pi, color=plotColor[dither], linestyle='-', label=str(dither))
+        plt.xlabel(r'$\ell$', fontsize=16)
+        plt.ylabel(r'$\ell(\ell+1)C_\ell/(2\pi)$', fontsize=16)
+        plt.tick_params(axis='x', labelsize=14)
+        plt.tick_params(axis='y', labelsize=14)
+        plt.xlim(0,500)
+        fig = plt.gcf()
+        fig.set_size_inches(12.5, 10.5)
+        leg= plt.legend(fontsize='x-large', labelspacing=0.001)
+        for legobj in leg.legendHandles:
+            legobj.set_linewidth(4.0)
+        plt.savefig('powerspectrum_comparison_all.pdf',bbox_inches='tight',format= 'pdf')
         plt.show()
 
-    os.chdir(path)
+        # create the histogram
+        scale = hp.nside2pixarea(nside, degrees=True)
+        def tickFormatter(y, pos):
+            return '%d' % (y * scale)    # convert pixel count to area
+        binsize= 0.01
+        for dither in plotColor:
+            if dither in coaddBundle:
+                ind= np.where(coaddBundle[dither].metricValues.mask == False)[0]
+                binAll= int((max(coaddBundle[dither].metricValues.data[ind])-min(coaddBundle[dither].metricValues.data[ind]))/binsize)
+                plt.hist(coaddBundle[dither].metricValues.data[ind],
+                         bins=binAll, label=str(dither), histtype='step', color=plotColor[dither])
+        ax = plt.gca()
+        ymin, ymax = ax.get_ylim()
+        nYticks= 10.
+        wantedYMax= ymax*scale
+        wantedYMax= 10.*np.ceil(float(wantedYMax)/10.)
+        increment= 5.*np.ceil(float(wantedYMax/nYticks)/5.)
+        wantedArray= np.arange(0, wantedYMax, increment)
+        ax.yaxis.set_ticks(wantedArray/scale)
+        ax.yaxis.set_major_formatter(FuncFormatter(tickFormatter))
+        plt.xlabel('$%s$-band Coadded Depth'%filterBand, fontsize= 18)
+        plt.ylabel('Area (deg$^2$)', fontsize= 18)
+        plt.tick_params(axis='x', labelsize=18)
+        plt.tick_params(axis='y', labelsize=18)
+        fig = plt.gcf()
+        fig.set_size_inches(12.5, 10.5)
+        leg= plt.legend(fontsize='x-large', labelspacing=0.001, loc= 2)
+        for legobj in leg.legendHandles:
+            legobj.set_linewidth(2.0)
+        plt.savefig('histogram_comparison.pdf',bbox_inches='tight', format= 'pdf')
+        plt.show()
+
+        # plot power spectra for the separte panel
+        totKeys= len(list(coaddBundle.keys()))
+        if (totKeys>1):
+            plt.clf()
+            nCols= 2
+            nRows= int(np.ceil(float(totKeys)/nCols))
+            fig, ax = plt.subplots(nRows,nCols)
+            plotRow= 0
+            plotCol= 0
+            for dither in list(plotColor.keys()):
+                if dither in list(coaddBundle.keys()):
+                    ell = np.arange(np.size(cl[dither]))
+                    ax[plotRow, plotCol].plot(ell, (cl[dither]*ell*(ell+1))/2.0/np.pi,
+                                              color=plotColor[dither], label=str(dither))
+                    if (plotRow==nRows-1):
+                        ax[plotRow, plotCol].set_xlabel(r'$\ell$', fontsize=20)
+                    ax[plotRow, plotCol].set_ylabel(r'$\ell(\ell+1)C_\ell/(2\pi)$', fontsize=20)
+                    ax[plotRow, plotCol].tick_params(axis='x', labelsize=16)
+                    ax[plotRow, plotCol].tick_params(axis='y', labelsize=16)
+                    ax[plotRow, plotCol].yaxis.set_major_locator(MaxNLocator(3))
+                    if (dither != 'NoDither'):
+                        ax[plotRow, plotCol].set_ylim(0,0.0035)
+                    ax[plotRow, plotCol].set_xlim(0,500)
+                    ax[plotRow, plotCol].legend(fontsize= 'xx-large')
+                    plotRow+= 1
+                    if (plotRow > nRows-1):
+                        plotRow= 0
+                        plotCol+= 1
+            fig.set_size_inches(20,int(nRows*30/7.))
+            plt.savefig('powerspectrum_sepPanels.pdf',bbox_inches='tight', format= 'pdf')
+            plt.show()
+
+        os.chdir(path)
     return coaddBundle, outDir
 
