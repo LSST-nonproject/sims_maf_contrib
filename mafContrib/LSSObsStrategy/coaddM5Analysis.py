@@ -40,6 +40,7 @@ __all__= ['coaddM5Analysis']
 def coaddM5Analysis(path, dbfile, runName,
                     WFDandDDFs= False,
                     noDithOnly= False, bestDithOnly= False, someDithOnly= False,
+                    specifiedDith = None,
                     nside= 128, filterBand= 'r',
                     includeDustExtinction= False,
                     saveunMaskedCoaddData= False,
@@ -77,6 +78,8 @@ def coaddM5Analysis(path, dbfile, runName,
                                Default: False
       * someDithOnly: boolean: set to True if only want to consider undithered and a few dithered surveys. 
                                Default: False
+      * specifiedDith: str: specific dither strategy to run.
+                            Default: None
       * nside: int: HEALpix resolution parameter. Default: 128
       * filterBand: str: any one of 'u', 'g', 'r', 'i', 'z', 'y'. Default: 'r'
      
@@ -156,6 +159,9 @@ def coaddM5Analysis(path, dbfile, runName,
     slicer= {}
     stackerList= {}
     
+    if specifiedDith is not None: # would like to add all the stackers first and then keep only the one that is specified
+        bestDithOnly, noDithOnly = False, False
+
     if bestDithOnly:
         stackerList['RandomDitherFieldPerVisit'] = [mafStackers.RandomDitherFieldPerVisitStacker(degrees=opsdb.raDecInDeg,
                                                                                                  randomSeed=1000)]
@@ -187,12 +193,12 @@ def coaddM5Analysis(path, dbfile, runName,
             stackerList['RandomDitherFieldPerVisit'] = [mafStackers.RandomDitherFieldPerVisitStacker(degrees=opsdb.raDecInDeg, randomSeed=1000)]
             
             # rep random dithers on different timescales
-            stackerList['RepulsiveRandomDitherPerNight'] = [myStackers.RepulsiveRandomDitherPerNightStacker(degrees=opsdb.raDecInDeg,
-                                                                                                            randomSeed=1000)]
-            stackerList['RepulsiveRandomDitherFieldPerNight'] = [myStackers.RepulsiveRandomDitherFieldPerNightStacker(degrees=opsdb.raDecInDeg,
-                                                                                                                      randomSeed=1000)]
-            stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(degrees=opsdb.raDecInDeg,
-                                                                                                                      randomSeed=1000)]
+            #stackerList['RepulsiveRandomDitherPerNight'] = [myStackers.RepulsiveRandomDitherPerNightStacker(degrees=opsdb.raDecInDeg,
+            #                                                                                                randomSeed=1000)]
+            #stackerList['RepulsiveRandomDitherFieldPerNight'] = [myStackers.RepulsiveRandomDitherFieldPerNightStacker(degrees=opsdb.raDecInDeg,
+            #                                                                                                          randomSeed=1000)]
+            #stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(degrees=opsdb.raDecInDeg,
+            #                                                                                                          randomSeed=1000)]
             # set up slicers for different dithers
             # random dithers on different timescales
             slicer['RandomDitherPerNight']= slicers.HealpixSlicer(lonCol='randomDitherPerNightRa', latCol='randomDitherPerNightDec',
@@ -204,17 +210,17 @@ def coaddM5Analysis(path, dbfile, runName,
                                                                        latCol='randomDitherFieldPerVisitDec',
                                                                        latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
             # rep random dithers on different timescales
-            slicer['RepulsiveRandomDitherPerNight']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherPerNightRa', 
-                                                                           latCol='repulsiveRandomDitherPerNightDec',
-                                                                           latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
-            slicer['RepulsiveRandomDitherFieldPerNight']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerNightRa', 
-                                                                                latCol='repulsiveRandomDitherFieldPerNightDec',
-                                                                                latLonDeg=opsdb.raDecInDeg, nside=nside,
-                                                                                useCache=False)
-            slicer['RepulsiveRandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerVisitRa', 
-                                                                                latCol='repulsiveRandomDitherFieldPerVisitDec',
-                                                                                latLonDeg=opsdb.raDecInDeg, nside=nside,
-                                                                                useCache=False)
+            #slicer['RepulsiveRandomDitherPerNight']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherPerNightRa',
+            #                                                               latCol='repulsiveRandomDitherPerNightDec',
+            #                                                               latLonDeg=opsdb.raDecInDeg, nside=nside, useCache=False)
+            #slicer['RepulsiveRandomDitherFieldPerNight']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerNightRa',
+            #                                                                    latCol='repulsiveRandomDitherFieldPerNightDec',
+            #                                                                    latLonDeg=opsdb.raDecInDeg, nside=nside,
+            #                                                                    useCache=False)
+            #slicer['RepulsiveRandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerVisitRa',
+            #                                                                    latCol='repulsiveRandomDitherFieldPerVisitDec',
+            #                                                                    latLonDeg=opsdb.raDecInDeg, nside=nside,
+            #                                                                    useCache=False)
             # spiral dithers on different timescales
             slicer['FermatSpiralDitherPerNight']=  slicers.HealpixSlicer(lonCol='fermatSpiralDitherPerNightRa', 
                                                                          latCol='fermatSpiralDitherPerNightDec',
@@ -246,6 +252,16 @@ def coaddM5Analysis(path, dbfile, runName,
             slicer['SpiralDitherPerSeason']= slicers.HealpixSlicer(lonCol='spiralDitherPerSeasonRa', 
                                                                    latCol='spiralDitherPerSeasonDec',
                                                                    latLonDeg=opsdb.raDecInDeg, nside=nside, useCache= False)
+    if specifiedDith is not None:
+        stackerList_, slicer_ = {}, {}
+        if specifiedDith in slicer.keys():
+            if specifiedDith.__contains__('Random'):   # only Random dithers have a stacker object for rand seed specification
+                stackerList_[specifiedDith] = stackerList[specifiedDith]
+            slicer_[specifiedDith] = slicer[specifiedDith]
+        else:
+            raise ValueError('Invalid value for specifiedDith: %s. Allowed values include one of the following:\n%s'%(specifiedDith, slicer.keys()))
+        stackerList, slicer = stackerList_, slicer_
+
     os.chdir(path) 
     # set up the metric
     if includeDustExtinction:
