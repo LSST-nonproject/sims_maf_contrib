@@ -105,7 +105,8 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                    
                                    plotDeltaNByN=True, showDeltaNByNPlots=False,
                                    saveDeltaNByNPlots=True, saveDeltaNByNData=True,
-                                   saveClsForDeltaNByN=True):
+                                   saveClsForDeltaNByN=True,
+                                   show_comp_plots=False, return_stuff=False):
     """
 
     Calculate artificial structure, i.e. fluctuations in galaxy counts dN/N, resulting due
@@ -203,6 +204,11 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                     Default: True
       * saveClsForDeltaNByN: boolean:  set to True to save the power spectrum data for the the fluctuations in
                                        the galaxy counts. Default: True
+      * show_comp_plots: boolean: set to True if want to display the comparison plots (only valid if have more
+                                  than one dither strategy); otherwise, the plots will be saved and not displayed.
+                                  Default: False
+      * return_stuff: boolean: set to True to get the metricBundle object, the outDir, and resultsDb object.
+                               Default: False
                                      
     """
     startTime = time.time()
@@ -908,7 +914,10 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         for legobj in leg.legendHandles:
             legobj.set_linewidth(2.0)
         plt.savefig('%s%s/%s/powerspectrum_comparison.png'%(path, outDir, outDir_new), format='png')
-        plt.show()
+        if show_comp_plots:
+            plt.show()
+        else:
+            plt.close('all')
         # ------------------------------------------------------------------------
         # create the histogram
         scale = hp.nside2pixarea(nside, degrees=True)
@@ -938,8 +947,15 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
             legobj.set_linewidth(2.0)
         plt.savefig('%s%s/%s/histogram_comparison.png'%(path, outDir, outDir_new),
                     bbox_inches='tight', format='png')
+        if show_comp_plots:
+            plt.show()
+        else:
+            plt.close('all')
 
-    if include0ptErrors:
-        return myBundles, outDir, resultsDb, zeroPtError
-    else:
-        return myBundles, outDir, resultsDb
+    print('\n## All done. Time since the start of the calculation: %.2f hrs'%((time.time()-startTime)/3600.))
+
+    if return_stuff:
+        if include0ptErrors:
+            return myBundles, outDir, resultsDb, zeroPtError
+        else:
+            return myBundles, outDir, resultsDb
