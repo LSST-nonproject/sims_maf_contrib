@@ -70,6 +70,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                    noDithOnly= False,
                                    bestDithOnly= False,
                                    someDithOnly= False,
+                                   specifiedDith = None,
                                    
                                    nside= 128, filterBand= 'i',
                                    cutOffYear= None, redshiftBin= 'all',
@@ -121,6 +122,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                Default: False
       * bestDithOnly: boolean: set to True if only want to consider RandomDitherFieldPerVisit.
                                Default: False
+      * specifiedDith: str: specific dither strategy to run. Default: None
       * nside: int: HEALpix resolution parameter. Default: 128
       * filterBand: str: any one of 'u', 'g', 'r', 'i', 'z', 'y'. Default: 'i'
       * cutOffYear: int: year cut to restrict analysis to only a subset of the survey. 
@@ -269,6 +271,9 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     slicer= {}
     stackerList= {}
 
+    if specifiedDith is not None: # would like to add all the stackers first and then keep only the one that is specified
+        bestDithOnly, noDithOnly = False, False
+
     if bestDithOnly:
         stackerList['RandomDitherFieldPerVisit'] = [mafStackers.RandomDitherFieldPerVisitStacker(degrees=raDecInDeg,
                                                                                                  randomSeed=1000)]
@@ -359,6 +364,17 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
             slicer['SpiralDitherPerSeason']= slicers.HealpixSlicer(lonCol='spiralDitherPerSeasonRa',
                                                                    latCol='spiralDitherPerSeasonDec',
                                                                    latLonDeg=raDecInDeg, nside=nside, useCache= False)
+    if specifiedDith is not None:
+        stackerList_, slicer_ = {}, {}
+        if specifiedDith in slicer.keys():
+            if specifiedDith.__contains__('Random'):   # only Random dithers have a stacker object for rand seed specification
+                stackerList_[specifiedDith] = stackerList[specifiedDith]
+            slicer_[specifiedDith] = slicer[specifiedDith]
+        else:
+            err = 'Invalid value for specifiedDith: %s.'%specifiedDith
+            err += 'Allowed values include one of the following:\n%s'%(slicer.keys())
+            raise ValueError(err)
+        stackerList, slicer = stackerList_, slicer_
 
     os.chdir(path + outDir)
     readMEfile= open('ReadMe.txt', 'a')
