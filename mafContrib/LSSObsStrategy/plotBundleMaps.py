@@ -89,7 +89,7 @@ def plotBundleMaps(path, outDir, bundle, dataLabel, filterBand,
             if saveFigs:
                 # save power spectrum
                 os.chdir(path + outDir + '/' + outDirNew + '/')
-                plt.savefig(str(dataName) + '_powerSpectrum_' + str(dither) + '.pdf',  bbox_inches='tight', format= 'pdf')
+                plt.savefig(str(dataName) + '_powerSpectrum_' + str(dither) + '.png',  bbox_inches='tight', format= 'png')
                 os.chdir(path + outDir)
             if showPlots:
                 plt.show()
@@ -127,7 +127,7 @@ def plotBundleMaps(path, outDir, bundle, dataLabel, filterBand,
             if saveFigs:
                 # save skymap
                 os.chdir(path + outDir + '/' + outDirNew + '/')
-                plt.savefig(str(dataName) + '_skymap_' + str(dither) + '.pdf',  bbox_inches='tight', format= 'pdf')
+                plt.savefig(str(dataName) + '_skymap_' + str(dither) + '.png',  bbox_inches='tight', format= 'png')
                 os.chdir(path + outDir)
             if showPlots:
                 plt.show()
@@ -167,7 +167,7 @@ def plotBundleMaps(path, outDir, bundle, dataLabel, filterBand,
             if saveFigs:
                 # save cartview plot
                 os.chdir(path + outDir + '/' + outDirNew + '/')
-                plt.savefig(str(dataName) + '_cartview_' + str(dither) + '.pdf',  bbox_inches='tight', format= 'pdf')
+                plt.savefig(str(dataName) + '_cartview_' + str(dither) + '.png',  bbox_inches='tight', format= 'png')
                 os.chdir(path + outDir)
             if showPlots:
                 plt.show()

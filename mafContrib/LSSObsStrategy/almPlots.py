@@ -109,7 +109,7 @@ def almPlots(path, outDir, bundle,
         plt.tick_params(axis='x', labelsize=16)
         plt.tick_params(axis='y', labelsize=16)
         os.chdir(path + outDir + '/' + outDir2)
-        plt.savefig('cls_' + str(dither) + '.pdf', format= 'pdf', bbox_inches='tight')
+        plt.savefig('cls_' + str(dither) + '.png', format= 'png', bbox_inches='tight')
         if showPlots:
             plt.show()
         else:
@@ -144,7 +144,7 @@ def almPlots(path, outDir, bundle,
         cb.set_label('$' + filterband + '$-band Coadded Depth', fontsize=cbLabelSize)
         cb.ax.tick_params(labelsize=cbarTickLabelSize) 
         os.chdir(path + outDir + '/' + outDir2 + '/' + outDir3)
-        plt.savefig('alm_FullMap_' + str(dither) + '.pdf', format= 'pdf',bbox_inches='tight')
+        plt.savefig('alm_FullMap_' + str(dither) + '.png', format= 'png',bbox_inches='tight')
 
         # full cartview
         hp.cartview(hp.alm2map(alm, nside=nside, lmax= lmax)+surveyMedian,
@@ -161,7 +161,7 @@ def almPlots(path, outDir, bundle,
         cb.set_label('$' + filterband + '$-band Coadded Depth', fontsize=cbLabelSize)
         cb.ax.tick_params(labelsize=cbarTickLabelSize) 
         os.chdir(path + outDir + '/' + outDir2 + '/' + outDir4)
-        plt.savefig('alm_Cartview_FullMap_' + str(dither) + '.pdf', format= 'pdf',bbox_inches='tight')
+        plt.savefig('alm_Cartview_FullMap_' + str(dither) + '.png', format= 'png',bbox_inches='tight')
          
         # prepare for the skymaps for l-range subsets
         colorMin=surveyMedian-0.1*surveyStd
@@ -197,7 +197,7 @@ def almPlots(path, outDir, bundle,
             cb.set_label('$' + filterband + '$-band Coadded Depth', fontsize=cbLabelSize)
             cb.ax.tick_params(labelsize=cbarTickLabelSize)
             os.chdir(path + outDir + '/' + outDir2 + '/' + outDir3)
-            plt.savefig('almSkymap_' + str(lowLim) + '<l<' + str(upLim) + '_' + str(dither) + '.pdf', format= 'pdf',bbox_inches='tight')
+            plt.savefig('almSkymap_' + str(lowLim) + '<l<' + str(upLim) + '_' + str(dither) + '.png', format= 'png',bbox_inches='tight')
 
             # plot cartview
             hp.cartview(hp.alm2map(alms1, nside=nside, lmax= lmax)+surveyMedian,
@@ -216,7 +216,7 @@ def almPlots(path, outDir, bundle,
 
             cb.ax.tick_params(labelsize=cbarTickLabelSize)
             os.chdir(path + outDir + '/' + outDir2 + '/' + outDir4)
-            plt.savefig('almCartview_' + str(lowLim) + '<l<' + str(upLim) + '_' + str(dither) + '.pdf', format= 'pdf',bbox_inches='tight')
+            plt.savefig('almCartview_' + str(lowLim) + '<l<' + str(upLim) + '_' + str(dither) + '.png', format= 'png',bbox_inches='tight')
 
         if showPlots:
             plt.show()

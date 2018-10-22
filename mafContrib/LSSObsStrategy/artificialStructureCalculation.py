@@ -642,8 +642,8 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                 plt.title('0pt error histogram; binSize= ' + str(binsize) + '; upperMagLimit = '  + str(upperMagLimit))
                 if save0ptPlots:
                     os.chdir(path + outDir + '/' + outDir_new)
-                    filename= '0ptHistogram_' + filterBand + '_' + dither + '.pdf'
-                    plt.savefig(filename, format= 'pdf')
+                    filename= '0ptHistogram_' + filterBand + '_' + dither + '.png'
+                    plt.savefig(filename, format= 'png')
                     os.chdir(path+outDir)
                 if show0ptPlots:
                     plt.show()
@@ -683,7 +683,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                           
                 if save0ptPlots:
                     os.chdir(path + outDir + '/' + outDir_new)
-                    plt.savefig('0ptSkymap_' + str(dither) + '.pdf', bbox_inches='tight',format= 'pdf')
+                    plt.savefig('0ptSkymap_' + str(dither) + '.png', bbox_inches='tight',format= 'png')
                     os.chdir(path + outDir)
                     
                 if show0ptPlots: plt.show()
@@ -707,7 +707,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                 if save0ptPlots:
                     # save power spectrum
                     os.chdir(path + outDir + '/' + outDir_new)
-                    plt.savefig('0ptPowerSpectrum_' + str(dither) + '.pdf',  bbox_inches='tight', format= 'pdf')
+                    plt.savefig('0ptPowerSpectrum_' + str(dither) + '.png',  bbox_inches='tight', format= 'png')
                     os.chdir(path + outDir)
                     
                 if show0ptPlots: plt.show()
@@ -920,7 +920,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     for legobj in leg.legendHandles:
         legobj.set_linewidth(2.0) 
     os.chdir(path + outDir + '/' + outDir2)
-    plt.savefig('powerspectrum_comparison.pdf',format= 'pdf')
+    plt.savefig('powerspectrum_comparison.png',format= 'png')
     plt.show()
 
     # create the histogram
@@ -953,7 +953,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     leg= plt.legend(fontsize='x-large', labelspacing=0.001, loc='center left', bbox_to_anchor=(1, 0.5))
     for legobj in leg.legendHandles:
         legobj.set_linewidth(2.0) 
-    plt.savefig('histogram_comparison.pdf',bbox_inches='tight', format= 'pdf')
+    plt.savefig('histogram_comparison.png',bbox_inches='tight', format= 'png')
 
     if include0ptErrors:
         return myBundles, outDir, resultsDb, zeroPtError

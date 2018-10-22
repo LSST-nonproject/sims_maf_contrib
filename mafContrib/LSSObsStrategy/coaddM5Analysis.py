@@ -423,7 +423,7 @@ def coaddM5Analysis(path, dbfile, runName, slair=False,
         leg= plt.legend(fontsize='x-large', labelspacing=0.001)
         for legobj in leg.legendHandles:
             legobj.set_linewidth(4.0)
-        plt.savefig('powerspectrum_comparison_all.pdf',bbox_inches='tight',format= 'pdf')
+        plt.savefig('powerspectrum_comparison_all.png',bbox_inches='tight',format= 'png')
         plt.show()
 
         # create the histogram
@@ -455,7 +455,7 @@ def coaddM5Analysis(path, dbfile, runName, slair=False,
         leg= plt.legend(fontsize='x-large', labelspacing=0.001, loc= 2)
         for legobj in leg.legendHandles:
             legobj.set_linewidth(2.0)
-        plt.savefig('histogram_comparison.pdf',bbox_inches='tight', format= 'pdf')
+        plt.savefig('histogram_comparison.png',bbox_inches='tight', format= 'png')
         plt.show()
         # ------------------------------------------------------------------------
         # plot power spectra for the separte panel
@@ -487,7 +487,7 @@ def coaddM5Analysis(path, dbfile, runName, slair=False,
                         plotRow= 0
                         plotCol+= 1
             fig.set_size_inches(20,int(nRows*30/7.))
-            plt.savefig('powerspectrum_sepPanels.pdf',bbox_inches='tight', format= 'pdf')
+            plt.savefig('powerspectrum_sepPanels.png',bbox_inches='tight', format= 'png')
             plt.show()
 
         os.chdir(path)
