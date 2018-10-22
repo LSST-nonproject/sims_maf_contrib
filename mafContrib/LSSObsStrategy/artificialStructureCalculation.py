@@ -78,7 +78,6 @@ __all__ = ['artificialStructureCalculation']
 def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                    noDithOnly=False,
                                    bestDithOnly=False,
-                                   someDithOnly=False,
                                    specifiedDith=None,
                                    
                                    nside=128, filterBand='i',
@@ -128,16 +127,15 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     Optional Parameters
     -------------------
       * noDithOnly: boolean: set to True if only want to consider the undithered survey. Default: False
-      * someDithOnly: boolean: set to True if only want to consider undithered and a few dithered survey. 
-                               Default: False
       * bestDithOnly: boolean: set to True if only want to consider RandomDitherFieldPerVisit.
                                Default: False
-      * specifiedDith: str: specific dither strategy to run. Default: None
+      * specifiedDith: str: specific dither strategy to run; could be a string or a list of strings.
+                            Default: None
       * nside: int: HEALpix resolution parameter. Default: 128
       * filterBand: str: any one of 'u', 'g', 'r', 'i', 'z', 'y'. Default: 'i'
       * cutOffYear: int: year cut to restrict analysis to only a subset of the survey. 
                          Must range from 1 to 9, or None for the full survey analysis (10 yrs).
-                        Default: None
+                         Default: None
       * redshiftBin: str: options include '0.<z<0.15', '0.15<z<0.37', '0.37<z<0.66, '0.66<z<1.0',
                           '1.0<z<1.5', '1.5<z<2.0', '2.0<z<2.5', '2.5<z<3.0','3.0<z<3.5', '3.5<z<4.0',
                           'all' for no redshift restriction (i.e. 0.<z<4.0)
@@ -309,21 +307,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     else:
         slicer['NoDither'] = slicers.HealpixSlicer(lonCol='fieldRA', latCol='fieldDec', latLonDeg=raDecInDeg,
                                                       nside=nside, useCache=False)
-        if someDithOnly and not noDithOnly:
-            #stackerList['RepulsiveRandomDitherFieldPerVisit'] = [myStackers.RepulsiveRandomDitherFieldPerVisitStacker(degrees=raDecInDeg,
-            #                                                                                                          randomSeed=1000)]
-            #slicer['RepulsiveRandomDitherFieldPerVisit']= slicers.HealpixSlicer(lonCol='repulsiveRandomDitherFieldPerVisitRa',
-            #                                                                    latCol='repulsiveRandomDitherFieldPerVisitDec',
-            #                                                                    latLonDeg=raDecInDeg, nside=nside,
-            #                                                                    useCache=False)
-            slicer['SequentialHexDitherFieldPerNight'] =  slicers.HealpixSlicer(lonCol='hexDitherFieldPerNightRa',
-                                                                               latCol='hexDitherFieldPerNightDec',
-                                                                               latLonDeg=raDecInDeg,
-                                                                               nside=nside, useCache=False)
-            slicer['PentagonDitherPerSeason'] = slicers.HealpixSlicer(lonCol='pentagonDitherPerSeasonRa', latCol='pentagonDitherPerSeasonDec',
-                                                                     latLonDeg=raDecInDeg,
-                                                                     nside=nside, useCache=False)
-        elif not noDithOnly:
+        if not noDithOnly:
             # random dithers on different timescales
             stackerList['RandomDitherPerNight'] = [mafStackers.RandomDitherPerNightStacker(degrees=raDecInDeg, randomSeed=1000)]
             stackerList['RandomDitherFieldPerNight'] = [mafStackers.RandomDitherFieldPerNightStacker(degrees=raDecInDeg, randomSeed=1000)]
@@ -392,15 +376,24 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     # ------------------------------------------------------------------------
     if specifiedDith is not None:
         stackerList_, slicer_ = {}, {}
-        if specifiedDith in slicer.keys():
-            if specifiedDith.__contains__('Random'):   # only Random dithers have a stacker object for rand seed specification
-                stackerList_[specifiedDith] = stackerList[specifiedDith]
-            slicer_[specifiedDith] = slicer[specifiedDith]
+        if isinstance(specifiedDith, str):
+            if specifiedDith in slicer.keys():
+                if specifiedDith.__contains__('Random'):   # only Random dithers have a stacker object for rand seed specification
+                    stackerList_[specifiedDith] = stackerList[specifiedDith]
+                slicer_[specifiedDith] = slicer[specifiedDith]
+        elif isinstance(specifiedDith, list):
+            for specific in specifiedDith:
+                if specific in slicer.keys():
+                    if specific.__contains__('Random'):   # only Random dithers have a stacker object for rand seed specification
+                        stackerList_[specific] = stackerList[specific]
+                    slicer_[specific] = slicer[specific]
         else:
             err = 'Invalid value for specifiedDith: %s.'%specifiedDith
             err += 'Allowed values include one of the following:\n%s'%(slicer.keys())
             raise ValueError(err)
         stackerList, slicer = stackerList_, slicer_
+
+    print('\nRunning the analysis for %s'%slicer.keys())
     # ------------------------------------------------------------------------
     readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
     readme.write('\nObserving strategies considered: %s\n'%(list(slicer.keys())))
