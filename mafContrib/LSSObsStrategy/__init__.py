@@ -9,5 +9,6 @@ __all__= [
         'artificialStructureCalculation',
         'almPlots',
         'coaddM5Analysis',
-        'constantsForPipeline'
+        'constantsForPipeline',
+        'os_bias_analysis'
 ]
