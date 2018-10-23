@@ -262,7 +262,11 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                                                                                          survey_tag, zbin_tag,
                                                                                                          counts_tag)
     print('# outDir: %s\n'%outDir)
-    resultsDb = db.ResultsDb(outDir='%s%s'%(path, outDir))
+    if not os.path.exists('%s%s'%(path, outDir)):
+        os.makedirs('%s%s'%(path, outDir))
+
+    results_dbname = 'resultsDb_%s.db'%np.random.randint(100)
+    resultsDb = db.ResultsDb(database=results_dbname, outDir='%s%s'%(path, outDir))
 
     # ------------------------------------------------------------------------
     # set up the sql constraint
@@ -962,6 +966,11 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         else:
             plt.close('all')
 
+    # now remove the results db object -- useless
+    os.remove('%s%s/%s'%(path, outDir, results_dbname))
+    print('Removed %s from outDir'%(results_dbname))
+
+    # all done. final update.
     update = '\n## All done. Time since the start of the calculation: %.2f hrs'%((time.time()-startTime)/3600.)
     print(update)
     readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
