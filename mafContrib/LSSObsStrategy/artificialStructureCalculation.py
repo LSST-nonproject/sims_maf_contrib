@@ -285,7 +285,19 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     update += '\nsqlconstraint: %s'%sqlconstraint
     update += '\nRunning with %s\n'%runName
     update += '\noutDir: %s\n'%outDir
-    readme = open('%s%s/ReadMe.txt'%(path, outDir), 'w')
+
+    # figure out the readme name
+    readme_name = 'ReadMe.txt'
+    readmes = [f for f in os.listdir('%s%s'%(path, outDir)) if any([f.endswith('.txt')])]
+    numFile = 0
+    for f in readmes:
+        if f.__contains__('%s_'%readme_name):
+            temp = f.split('.txt')[0]
+            numFile = max(numFile, int(temp.split('%s_'%readme_name)[1]))
+        else:
+            numFile = 1
+    readme_name = 'ReadMe_%s.txt'%(numFile+1)
+    readme = open('%s%s/%s'%(path, outDir, readme_name), 'w')
     readme.write(update)
     readme.close()
 
@@ -395,7 +407,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
 
     print('\nRunning the analysis for %s'%slicer.keys())
     # ------------------------------------------------------------------------
-    readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+    readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
     readme.write('\nObserving strategies considered: %s\n'%(list(slicer.keys())))
     readme.close()
     # ------------------------------------------------------------------------
@@ -438,7 +450,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         update += '\n %s'%printOut
         print(printOut)
     update += '\n'
-    readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+    readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
     readme.write(update)
     readme.close()
     print('\n## Time since the start of the calculation: %.2f hrs'%((time.time()-startTime)/3600.))
@@ -475,7 +487,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
             update += '\n %s'%printOut
         update += '\n'
 
-        readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+        readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
         readme.write(update)
         readme.close()
     print('\n## Time since the start of the calculation: %.2f hrs'%((time.time()-startTime)/3600.))
@@ -569,7 +581,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         print(printOut)
         
         # add to the readme
-        readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+        readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
         readme.write(printOut)
         readme.close()
         
@@ -590,7 +602,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
 
         # ------------------------------------------------------------------------
         # add to the readme
-        readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+        readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
         readme.write('\n\n0pt Information: ')
         readme.close()
             
@@ -607,7 +619,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
             zeroPtError[dither] = err
 
             # add to the readme
-            readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+            readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
             readme.write('\nDith strategy: %s'%dither)
             readme.close()
 
@@ -621,7 +633,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                 update += '\nk-value: %s\n'%kValue[dither]
                 print(update)
                 # add to the readme
-                readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+                readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
                 readme.write(update)
                 readme.close()
             # ------------------------------------------------------------------------
@@ -641,7 +653,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                 print(update)
                                  
                 # add to the readme
-                readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+                readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
                 readme.write(update)
                 readme.close()
                         
@@ -760,7 +772,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
             update += '\n %s'%printOut
             print(printOut)
         update += '\n'
-        readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+        readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
         readme.write(update)
         readme.close()
 
@@ -804,7 +816,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
             update += '\n %s'%printOut
             print(printOut)
         update += '\n'
-        readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+        readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
         readme.write(update)
         readme.close()
 
@@ -834,7 +846,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         print(printOut)       
         update += '%s\n'%printOut
     
-    readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+    readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
     readme.write(update)
     readme.close()
 
@@ -873,7 +885,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         update += '\n%s'%(printOut)
     update += '\n'
 
-    readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+    readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
     readme.write(update)
     readme.close()
     # ------------------------------------------------------------------------
@@ -952,7 +964,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
 
     update = '\n## All done. Time since the start of the calculation: %.2f hrs'%((time.time()-startTime)/3600.)
     print(update)
-    readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+    readme = open('%s%s/%s'%(path, outDir, readme_name), 'a')
     readme.write(update)
     readme.close()
 
