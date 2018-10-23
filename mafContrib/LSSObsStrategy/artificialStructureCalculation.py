@@ -262,7 +262,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                                                                                                          survey_tag, zbin_tag,
                                                                                                          counts_tag)
     print('# outDir: %s\n'%outDir)
-    resultsDb = db.ResultsDb(outDir=outDir)
+    resultsDb = db.ResultsDb(outDir='%s%s'%(path, outDir))
 
     # ------------------------------------------------------------------------
     # set up the sql constraint
@@ -271,7 +271,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     raDecInDeg = opsdb.raDecInDeg
     if cutOffYear is not None:
         nightCutOff = (cutOffYear)*365.25
-        sqlconstraint = '%snight<=%s and filter=="%s"'%(wfdWhere, nightCutOff, filterBand)
+        sqlconstraint = '%s and night<=%s and filter=="%s"'%(wfdWhere, nightCutOff, filterBand)
     else:
         sqlconstraint = '%s and filter=="%s"'%(wfdWhere, filterBand)
     print('# sqlconstraint: %s'%sqlconstraint)
@@ -281,7 +281,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     update = '%s\n'%(datetime.datetime.now())
     update += '\nArtificial structure calculation with %s, %s, and %s '%(zeropt_tag, dust_tag, poisson_tag)
     update += 'for %s for %s for %s<%s. '%(survey_tag, zbin_tag, filterBand, upperMagLimit)
-    update += 'With %s and PixelRadiusForMasking: %s.\n'%(counts_tag, pixelRadiusForMasking)
+    update += '\nWith %s and PixelRadiusForMasking: %s.\n'%(counts_tag, pixelRadiusForMasking)
     update += '\nsqlconstraint: %s'%sqlconstraint
     update += '\nRunning with %s\n'%runName
     update += '\noutDir: %s\n'%outDir
@@ -413,7 +413,8 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     # ------------------------------------------------------------------------
     # run the metric/slicer combination for galaxy counts (numGal)
     print('\n# Running myBundles ...')
-    bGroup = metricBundles.MetricBundleGroup(myBundles, opsdb, outDir=outDir, resultsDb=resultsDb, saveEarly=False)
+    bGroup = metricBundles.MetricBundleGroup(myBundles, opsdb, outDir='%s%s'%(path, outDir),
+                                             resultsDb=resultsDb, saveEarly=False)
     bGroup.runAll()
     # ------------------------------------------------------------------------
     # plot skymaps for 'raw' numGal
@@ -444,7 +445,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
 
     # ------------------------------------------------------------------------
     # mask the edges: the data in the masked pixels is not changed
-    plotHandler = plots.PlotHandler(outDir=outDir, resultsDb=resultsDb, thumbnail=False, savefig=False)
+    plotHandler = plots.PlotHandler(outDir='%s%s'%(path, outDir), resultsDb=resultsDb, thumbnail=False, savefig=False)
     print('\n# Masking the edges ...')
     myBundles, borderPixelsMasked = maskingAlgorithmGeneralized(myBundles, plotHandler, 'Number of Galaxies', nside=nside,
                                                                pixelRadius=pixelRadiusForMasking, plotIntermediatePlots=False,
@@ -521,15 +522,18 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                 coaddBundle[dither] = metricBundles.MetricBundle(coaddMetric, slicer[dither], sqlconstraint,
                                                                  runName=runName, metadata=dither, mapsList=[dustMap])
         print('\n# Running avgSeeingBundle ...')
-        aGroup = metricBundles.MetricBundleGroup(avgSeeingBundle, opsdb, outDir=outDir, resultsDb=resultsDb, saveEarly=False)
+        aGroup = metricBundles.MetricBundleGroup(avgSeeingBundle, opsdb, outDir='%s%s'%(path, outDir),
+                                                 resultsDb=resultsDb, saveEarly=False)
         aGroup.runAll()
 
         print('\n# Running nObsBundle ...')
-        nGroup = metricBundles.MetricBundleGroup(nObsBundle, opsdb, outDir=outDir, resultsDb=resultsDb, saveEarly=False)
+        nGroup = metricBundles.MetricBundleGroup(nObsBundle, opsdb, outDir='%s%s'%(path, outDir),
+                                                 resultsDb=resultsDb, saveEarly=False)
         nGroup.runAll()
 
         print('\n# Running coaddBundle ...')
-        cGroup = metricBundles.MetricBundleGroup(coaddBundle, opsdb, outDir=outDir, resultsDb=resultsDb, saveEarly=False)
+        cGroup = metricBundles.MetricBundleGroup(coaddBundle, opsdb, outDir='%s%s'%(path, outDir),
+                                                 resultsDb=resultsDb, saveEarly=False)
         cGroup.runAll()
 
         # ------------------------------------------------------------------------
@@ -557,7 +561,8 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         bundle['avgSeeingAcrossMap'] = metricBundles.MetricBundle(meanMetric, slicers.UniSlicer(),
                                                                   sqlconstraint,runName=runName,
                                                                   metadata='avgSeeingAcrossMap')
-        bundleGroup = metricBundles.MetricBundleGroup(bundle, opsdb, outDir=outDir, resultsDb=resultsDb, saveEarly=False)
+        bundleGroup = metricBundles.MetricBundleGroup(bundle, opsdb, outDir='%s%s'%(path, outDir),
+                                                      resultsDb=resultsDb, saveEarly=False)
         bundleGroup.runAll()
         avgSeeingAcrossMap = bundle['avgSeeingAcrossMap'].metricValues.data[0]
         printOut = '\n# Average seeing across map: %s' %(avgSeeingAcrossMap)
@@ -805,7 +810,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
 
     print('\n## Time since the start of the calculation: %.2f hrs'%((time.time()-startTime)/3600.))
     #########################################################################################################
-    plotHandler = plots.PlotHandler(outDir=outDir, resultsDb=resultsDb, thumbnail=False, savefig=False)
+    plotHandler = plots.PlotHandler(outDir='%s%s'%(path, outDir), resultsDb=resultsDb, thumbnail=False, savefig=False)
     print('\n# Calculating fluctuations in the galaxy counts ...')
     # Change numGal metric data to deltaN/N
     numGal= {}
@@ -825,7 +830,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         # in place calculation of the fluctuations
         myBundles[dither].metricValues.data[:] = 0.0
         myBundles[dither].metricValues.data[validPixel] = (numGal[dither][validPixel]-galaxyAverage)/galaxyAverage
-        printOut = '\n# Galaxy Average for %s: %s'%(dither, galaxyAverage)
+        printOut = '# Galaxy Average for %s: %s'%(dither, galaxyAverage)
         print(printOut)       
         update += '%s\n'%printOut
     
@@ -846,7 +851,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                            dataName='galCountFluctuations', colorMin=-0.10, colorMax=0.10,
                            skymap=True, powerSpectrum=True, showPlots=showDeltaNByNPlots,
                            saveFigs=False, outDirNameForSavedFigs='')
-    plotHandler = plots.PlotHandler(outDir=outDir, resultsDb=resultsDb, thumbnail=False, savefig=False)
+    plotHandler = plots.PlotHandler(outDir='%s%s'%(path, outDir), resultsDb=resultsDb, thumbnail=False, savefig=False)
 
     # ------------------------------------------------------------------------
     # save the deltaN/N data
@@ -945,7 +950,11 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         else:
             plt.close('all')
 
-    print('\n## All done. Time since the start of the calculation: %.2f hrs'%((time.time()-startTime)/3600.))
+    update = '\n## All done. Time since the start of the calculation: %.2f hrs'%((time.time()-startTime)/3600.)
+    print(update)
+    readme = open('%s%s/ReadMe.txt'%(path, outDir), 'a')
+    readme.write(update)
+    readme.close()
 
     if return_stuff:
         if include0ptErrors:
