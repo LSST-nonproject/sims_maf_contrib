@@ -1,24 +1,25 @@
 from builtins import str
-#####################################################################################################
+########################################################################################################################
 # Purpose: plots for the data in a metricBundle object without using MAF routines. Includes
 # functionality to plot skymaps, cartviews, and power spectra.
-
+#
 # Humna Awan: humna.awan@rutgers.edu
-# Last updated: 07/01/16
- #####################################################################################################
+#
+########################################################################################################################
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import healpy as hp
-import pylab
 fontsize = 18
-pylab.rcParams['figure.figsize'] = (10, 6)
-pylab.rcParams['axes.labelsize'] = fontsize
-pylab.rcParams['xtick.labelsize'] = fontsize-2
-pylab.rcParams['ytick.labelsize'] = fontsize-2
-pylab.rcParams['legend.fontsize'] = fontsize-2
-pylab.rcParams['axes.titlesize'] = fontsize
-pylab.rcParams['axes.linewidth'] = 2
+mpl.rcParams['figure.figsize'] = (10, 6)
+mpl.rcParams['axes.labelsize'] = fontsize
+mpl.rcParams['xtick.labelsize'] = fontsize-2
+mpl.rcParams['ytick.labelsize'] = fontsize-2
+mpl.rcParams['legend.fontsize'] = fontsize-2
+mpl.rcParams['axes.titlesize'] = fontsize
+mpl.rcParams['axes.linewidth'] = 2
+mpl.rcParams['axes.grid'] = True
 
 __all__ = ['plotBundleMaps']
 
