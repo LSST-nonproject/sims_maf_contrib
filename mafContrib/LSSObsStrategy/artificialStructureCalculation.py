@@ -503,10 +503,20 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     # and k is a constant such that var(del_i)= (0.01)^2. 0.01 for the 1% LSST goal.
     # k-constraint equation becomes: k^2*var(z_i/sqrt(nObs_i))= (0.01)^2    --- equation 1
     if include0ptErrors:
-        if (runName == 'enigma1189'):
-            meanMetric = metrics.MeanMetric(col='finSeeing')   # for avgSeeing per HEALpix pixel
-        else:
-            meanMetric = metrics.MeanMetric(col='FWHMeff')   # for avgSeeing per HEALpix pixel
+        tablename = 'SummaryAllProps'
+        if tablename in opsdb.tableNames:
+            colname = 'seeingFwhmEff'
+            if colname not in opsdb.columnNames[tablename]:
+                raise ValueError('Unclear which seeing column to use.')
+        elif 'Summary' in opsdb.tableNames:
+            tablename = 'Summary'
+            colname = 'finSeeing'
+            if colname not in opsdb.columnNames[tablename]:
+                colname = 'FWHMeff'
+                if colname not in opsdb.columnNames[tablename]:
+                    raise ValueError('Unclear which seeing column to use.')
+
+        meanMetric = metrics.MeanMetric(col=colname)   # for avgSeeing per HEALpix pixel
         
         nObsMetric = NumObsMetric(nside=nside)   # for numObs per HEALpix pixel
         if includeDustExtinction: coaddMetric = metrics.ExgalM5(lsstFilter=filterBand)
