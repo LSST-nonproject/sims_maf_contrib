@@ -291,7 +291,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     update += '\noutDir: %s\n'%outDir
 
     # figure out the readme name
-    readme_name = 'ReadMe.txt'
+    readme_name = 'ReadMe'
     readmes = [f for f in os.listdir('%s%s'%(path, outDir)) if any([f.endswith('.txt')])]
     numFile = 0
     for f in readmes:
@@ -623,7 +623,8 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
         for dither in avgSeeingBundle:
             z_i = avgSeeingBundle[dither].metricValues.data[:]-avgSeeingAcrossMap
             nObs_i = nObsBundle[dither].metricValues.data[:]
-            ind = np.where((nObs_i != 0.0) & (nObsBundle[dither].metricValues.mask == False))[0]  # make sure the uncertainty is valid; no division by 0
+            ind = np.where((nObsBundle[dither].metricValues.mask == False) & \
+                          (nObs_i != 0.0))[0]  # make sure the uncertainty is valid; no division by 0
             temp = np.var(z_i[ind]/np.sqrt(nObs_i[ind]))  # see equation 1
             kValue[dither] = solve(k**2*temp-0.01**2,k)[1]
 
