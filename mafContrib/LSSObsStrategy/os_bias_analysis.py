@@ -323,7 +323,7 @@ def os_bias_overplots(out_dir, data_paths, lim_mags_i, legend_labels, fsky_dith_
                       nside=256, pixel_radius=14, yr_cutoff=None,
                       zbin='0.66<z<1.0', poisson_noise=False, zero_pt=True,
                       plot_interms=False, color_dict=None,
-                      ylim_min=None, ylim_max=None, show_plot=False, suptitle=None):
+                      ylim_min=None, ylim_max=None, show_plot=False, suptitle=None, file_append=None):
     """
 
     Calculate/plot the OS bias uncertainty and the statistical floor for the specified redshift bin.
@@ -384,6 +384,7 @@ def os_bias_overplots(out_dir, data_paths, lim_mags_i, legend_labels, fsky_dith_
       * ylim_max: float: upper y-lim for the final plots. Defaut: None
       * show_plot: bool: set to True if want to display the plot (aside from saving it). Default: False
       * suptitle: str: title to plot. Default: None
+      * file_append: str: optional string to append to the saved plot
 
     """
     # check to make sure redshift bin is ok.
@@ -542,12 +543,16 @@ def os_bias_overplots(out_dir, data_paths, lim_mags_i, legend_labels, fsky_dith_
     date_tag = datetime.date.isoformat(datetime.date.today())
     bias_type_tag = ''.join(str(x) for x in filters)
     ell_tag = '_%s<ell<%s'%(ell_min, ell_max)
+    if file_append is None:
+        file_append = ''
+
     filename = '%s_OSbiaserr_%s_%s%s_'%(date_tag, bias_type_tag, run_name_filetag, dith_tag)
     if (totCases == 1):
         filename += '%s_'%(legend_labels[0])
     else:
         filename += '%s-magcuts_'%(totCases)
-    filename += 'th-r<%s_%s_%s_%s_%s%s.png'%(theory_lim_mag, zbin_tag, yr_tag, poisson_tag, zero_pt_tag, ell_tag)
+    filename += 'th-r<%s_%s_%s_%s_%s%s%s.png'%(theory_lim_mag, zbin_tag, yr_tag, poisson_tag,
+                                               zero_pt_tag, ell_tag, file_append)
     # save the plot
     plt.savefig('%s/%s/%s'%(out_dir, outdir, filename), format='png', bbox_inches='tight')
 
@@ -566,7 +571,7 @@ def os_bias_overplots_diff_dbs(out_dir, data_path, run_names, legend_labels, fsk
                                nside=256, pixel_radius=14, yr_cutoff=None,
                                zbin='0.66<z<1.0', poisson_noise=False, zero_pt=True,
                                plot_interms=False, color_dict=None,
-                               ylim_min=None, ylim_max=None, show_plot=False, suptitle=None):
+                               ylim_min=None, ylim_max=None, show_plot=False, suptitle=None, file_append=None):
     """
 
     Calculate/plot the OS bias uncertainty and the statistical floor for the specified redshift bin.
@@ -626,6 +631,7 @@ def os_bias_overplots_diff_dbs(out_dir, data_path, run_names, legend_labels, fsk
       * ylim_max: float: upper y-lim for the final plots. Defaut: None
       * show_plot: bool: set to True if want to display the plot (aside from saving it). Default: False
       * suptitle: str: title to the plot. Default: None
+      * file_append: str: optional string to append to the saved plot
 
     """
     # check to make sure redshift bin is ok.
@@ -781,12 +787,16 @@ def os_bias_overplots_diff_dbs(out_dir, data_path, run_names, legend_labels, fsk
     date_tag = datetime.date.isoformat(datetime.date.today())
     bias_type_tag = ''.join(str(x) for x in filters)
     ell_tag = '_%s<ell<%s'%(ell_min, ell_max)
+    if file_append is None:
+        file_append = ''
+
     filename = '%s_OSbiaserr_%s_%s_'%(date_tag, bias_type_tag, dith_tag)
     if (totCases == 1):
         filename += '%s_'%(run_names[0])
     else:
         filename += '%scadences_'%(totCases)
-    filename += 'th-r<%s_%s_%s_%s_%s%s.png'%(theory_lim_mag, zbin_tag, yr_tag, poisson_tag, zero_pt_tag, ell_tag)
+    filename += 'th-r<%s_%s_%s_%s_%s%s%s.png'%(theory_lim_mag, zbin_tag, yr_tag, poisson_tag,
+                                               zero_pt_tag, ell_tag, file_append)
     # save the plot
     plt.savefig('%s/%s/%s'%(out_dir, outdir, filename), format='png', bbox_inches='tight')
     print('\nSaved %s'%filename)
