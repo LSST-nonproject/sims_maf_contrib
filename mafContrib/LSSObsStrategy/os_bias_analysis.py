@@ -456,12 +456,12 @@ def os_bias_overplots(out_dir, data_paths, lim_mags_i, legend_labels, fsky_dith_
     else: colors = color_dict
 
     # figure out max how many panels to create
-    keys_to_consider = []
+    diths_to_consider = []
     if specified_dith_only is not None:
-        keys_to_consider = specified_dith_only
-        max_entries = len(keys_to_consider)
+        diths_to_consider = specified_dith_only
+        max_entries = len(diths_to_consider)
     else:
-        keys_to_consider = colors.keys()
+        diths_to_consider = colors.keys()
         max_entries = 0
         for identifier in legend_labels:
             max_entries = max(max_entries, len(list(osbias_err_all[identifier].keys())))
@@ -476,10 +476,13 @@ def os_bias_overplots(out_dir, data_paths, lim_mags_i, legend_labels, fsky_dith_
     fig.subplots_adjust(hspace=0.4)
     row, col = 0, 0
     # run over the keys
-    for dith in keys_to_consider:
+    for dith in diths_to_consider:
+        # ----------------------------------------------------------------------------------------
         for i in range(totCases):
+            # ----------------------------------------------------------------------------------------
             osbias_err = osbias_err_all[legend_labels[i]]
             if (dith in osbias_err.keys()):
+                # ----------------------------------------------------------------------------------------
                 if (nrows == 1):
                     if (ncols == 1): axis = ax
                     else: axis = ax[col]
@@ -513,7 +516,7 @@ def os_bias_overplots(out_dir, data_paths, lim_mags_i, legend_labels, fsky_dith_
                 splits = legend_labels[i].split("<")
                 axis.plot(l, osbias_err[dith], color=colors[legend_labels[i]],
                           label=r'%s$%s<%s$ ; FoM: %.6f'%(add_leg, splits[0], splits[1], FoM))
-
+                # ----------------------------------------------------------------------------------------
                 # set up the details of the plot
                 if ((ylim_min is not None) & (ylim_max is not None)):
                     axis.set_ylim(ylim_min, ylim_max)
@@ -533,7 +536,7 @@ def os_bias_overplots(out_dir, data_paths, lim_mags_i, legend_labels, fsky_dith_
         if (row > nrows-1):
             row = 0
             col += 1
-
+    # ----------------------------------------------------------------------------------------
     if suptitle is not None:
         plt.suptitle(suptitle)
     # turn stuff off if have odd number of panels
@@ -661,9 +664,9 @@ def os_bias_overplots_diff_dbs(out_dir, data_path, run_names, legend_labels, fsk
         outdir = {}
         for band in filters:
             out, yr_tag, zbin_tag, poisson_tag, zero_pt_tag = get_outdir_name(band, nside,
-                                                                                       pixel_radius, yr_cutoff,
-                                                                                       zbin, lim_mag_i,
-                                                                                       run_names[i], poisson_noise, zero_pt)
+                                                                              pixel_radius, yr_cutoff,
+                                                                              zbin, lim_mag_i,
+                                                                              run_names[i], poisson_noise, zero_pt)
             outdir[band] = '%s/cls_DeltaByN/'%out
         outdir_all[run_names[i]] = outdir
 
@@ -717,18 +720,21 @@ def os_bias_overplots_diff_dbs(out_dir, data_path, run_names, legend_labels, fsk
     fig, ax = plt.subplots(nrows, ncols)
     fig.subplots_adjust(hspace=0.4)
 
-    keys_to_consider = []
+    diths_to_consider = []
     if specified_dith_only is not None:
-        keys_to_consider = specified_dith_only
+        diths_to_consider = specified_dith_only
     else:
-        keys_to_consider = colors.keys()
+        diths_to_consider = colors.keys()
 
     for i in range(totCases):
+        # ----------------------------------------------------------------------------------------
         fsky = fsky_dict[run_names[i]]
         osbias_err = osbias_err_all[run_names[i]]
         row, col = 0, 0
-        for dith in keys_to_consider:
+        for dith in diths_to_consider:
+            # ----------------------------------------------------------------------------------------
             if (dith in osbias_err.keys()):
+                # ----------------------------------------------------------------------------------------
                 # look at the appropriate axis.
                 if (nrows == 1):
                     if (ncols == 1): axis = ax
@@ -761,6 +767,8 @@ def os_bias_overplots_diff_dbs(out_dir, data_path, run_names, legend_labels, fsk
                 # plot the osbias error
                 axis.plot(l, osbias_err[dith], color=colors[run_names[i]],
                           label=r'%s%s ; FoM: %.6f'%(add_leg, legend_labels[i], FoM))
+                # ----------------------------------------------------------------------------------------
+
                 # plot details
                 if ((ylim_min is not None) & (ylim_max is not None)):
                     axis.set_ylim(ylim_min, ylim_max)
@@ -776,7 +784,6 @@ def os_bias_overplots_diff_dbs(out_dir, data_path, run_names, legend_labels, fsk
                 axis.ticklabel_format(axis='y', style='sci', scilimits=(-2,2))
                 for legobj in leg.legendHandles:
                     legobj.set_linewidth(2.0)
-
                 col += 1
                 if (col > ncols-1):
                     col = 0
