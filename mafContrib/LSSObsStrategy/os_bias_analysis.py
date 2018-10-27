@@ -214,7 +214,7 @@ def get_outdir_name(band, nside, pixel_radius, yr_cutoff, zbin, mag_cut_i, run_n
 
 ###############################################################################################################################
 # create a function that returns cls for a given band, nside, pixel_radius
-def return_cls(path, outdir, band, consider_all_npy=True):
+def return_cls(path, outdir, band, specified_dith=None):
     """
 
     Get the cls from .npy files in path+outdir folder for a specified filter band.
@@ -228,23 +228,32 @@ def return_cls(path, outdir, band, consider_all_npy=True):
       * outdir: str: name of the directory where the cls are situated.
       * band: str: band to consider. Options: 'u', 'g', 'r', 'i', 'z', 'y'
 
-    OptionalParameters
+    Optional Parameters
     ------------------
-      * consider_all_npy: bool: set to False if only want to access the cls for
-                                    RepulsiveRandomDitherFieldPerVisit. Otherwise will access all the
-                                    .npy files. Default: True
+      * specified_dith: list of str: list of the names (strings) of the dither strategies to consider, e.g.
+                                    if want to plot only NoDither, specified_dith_only= ['NoDither']
     """
-    # print('\nReading files from %s.'%outdir)
+    if specified_dith is None:
+        consider_all_npy = True
+    else:
+        consider_all_npy = False
+    # get the filename
     filenames = [f for f in os.listdir('%s%s'%(path, outdir)) if any([f.endswith('npy')])]
+    # read in the cls
     c_ells = {}
     for filename in filenames:
         if consider_all_npy:
             dither_strategy = filename.split('%s_'%band)[1].split('.npy')[0]
             c_ells[dither_strategy] = np.load('%s%s/%s'%(path, outdir, filename))
         else:
-            if (filename.find('RepulsiveRandomDitherFieldPerVisit') != -1):
-                dither_strategy = filename.split('%s_'%band)[1].split('.npy')[0]
-                c_ells[dither_strategy] = np.load('%s%s/%s'%(path, outdir, filename))
+            for dith in specified_dith:
+                if filename.__contains__(dith):
+                    dither_strategy = filename.split('%s_'%band)[1].split('.npy')[0]
+                    c_ells[dither_strategy] = np.load('%s%s/%s'%(path, outdir, filename))
+    if specified_dith is not None:
+        for dith in specified_dith:
+            if dith not in c_ells:
+                raise ValueError('Cls for %s are not found in %s.'%(dith, outdir))
     return c_ells
 
 ###############################################################################################################################
@@ -418,7 +427,7 @@ def os_bias_overplots(out_dir, data_paths, lim_mags_i, legend_labels, fsky_dith_
 
         c_ells = {}
         for band in filters:
-            c_ells[band] = return_cls(data_paths[i], outdir[band], band, consider_all_npy=True)  # get the c_ells
+            c_ells[band] = return_cls(data_paths[i], outdir[band], band, specified_dith=specified_dith_only)  # get the c_ells
         osbias, osbias_err = calc_os_bias_err(c_ells)
         osbias_all[legend_labels[i]] = osbias
         osbias_err_all[legend_labels[i]] = osbias_err
@@ -664,7 +673,7 @@ def os_bias_overplots_diff_dbs(out_dir, data_path, run_names, legend_labels, fsk
         outdir = outdir_all[run_names[i]]
         c_ells = {}
         for band in filters:
-            c_ells[band] = return_cls(data_path, outdir[band], band, consider_all_npy=True)  # get the c_ells
+            c_ells[band] = return_cls(data_path, outdir[band], band, specified_dith=specified_dith_only)  # get the c_ells
         osbias, osbias_err = calc_os_bias_err(c_ells)
         osbias_all[run_names[i]] = osbias
         osbias_err_all[run_names[i]] = osbias_err
