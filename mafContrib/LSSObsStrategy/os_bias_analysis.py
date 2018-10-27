@@ -488,24 +488,27 @@ def os_bias_overplots(out_dir, data_paths, lim_mags_i, legend_labels, fsky_dith_
                     else: axis = ax[col]
                 else: axis = ax[row, col]
 
-                if i==0:
-                    if zbin not in wBAO_cls:
-                        raise ValueError('Invalid redshift bin: %s'%zbin)
-                    else:
-                        # get the floor with shot noise
-                        floor_with_eta = get_stat_floor(ell_arr=ell, zbin=zbin, wBAO_cls_zbin=wBAO_cls[zbin],
-                                                        surf_num_density_zbin=surf_num_density[zbin],
-                                                        dither_strategy=dith, fsky=fsky_dith_dict[dith], with_shot_noise=True)
-                        # get the "best" floor for the fom calculation
-                        floor_no_eta = get_stat_floor(ell_arr=ell, zbin=zbin, wBAO_cls_zbin=wBAO_cls[zbin],
-                                                      surf_num_density_zbin=surf_num_density[zbin],
-                                                      dither_strategy=dith, fsky=fsky_best, with_shot_noise=False)
-                        # plot the floor with shot noise
-                        axis.plot(ell, floor_with_eta, color='k', lw=2.0, label='$\Delta$C$_\ell$: $%s$'%zbin)
-
-                l = np.arange(np.size(osbias_err[dith]))
+                # ----------------------------------------------------------------------------------------
+                # calcuate the floors with and without shot noise
+                if zbin not in wBAO_cls:
+                    raise ValueError('Invalid redshift bin: %s'%zbin)
+                else:
+                    # get the floor with shot noise
+                    floor_with_eta = get_stat_floor(ell_arr=ell, zbin=zbin, wBAO_cls_zbin=wBAO_cls[zbin],
+                                                    surf_num_density_zbin=surf_num_density[zbin],
+                                                    dither_strategy=dith, fsky=fsky_dith_dict[dith],
+                                                    with_shot_noise=True)
+                    # get the "best" floor for the fom calculation
+                    floor_no_eta = get_stat_floor(ell_arr=ell, zbin=zbin, wBAO_cls_zbin=wBAO_cls[zbin],
+                                                  surf_num_density_zbin=surf_num_density[zbin],
+                                                  dither_strategy=dith, fsky=fsky_best, with_shot_noise=False)
                 # calculate the FoM
+                l = np.arange(np.size(osbias_err[dith]))
                 FoM = get_fom(ell_min, ell_max, l, osbias_err[dith], ell, floor_with_eta, floor_no_eta)
+                # ----------------------------------------------------------------------------------------
+                if i==0:
+                    # plot the floor with shot noise
+                    axis.plot(ell, floor_with_eta, color='k', lw=2.0, label='$\Delta$C$_\ell$: $%s$'%zbin)
 
                 # set up the legend
                 add_leg = ''
@@ -740,30 +743,32 @@ def os_bias_overplots_diff_dbs(out_dir, data_path, run_names, legend_labels, fsk
                     if (ncols == 1): axis = ax
                     else: axis = ax[col]
                 else: axis = ax[row, col]
-
-                if i==0:
-                    if zbin not in wBAO_cls:
-                        raise ValueError('Invalid redshift bin: %s'%zbin)
-                    else:
-                        # get the floor with shot noise
-                        floor_with_eta = get_stat_floor(ell_arr=ell, zbin=zbin, wBAO_cls_zbin=wBAO_cls[zbin],
-                                                        surf_num_density_zbin=surf_num_density[zbin],
-                                                        dither_strategy=dith, fsky=fsky[dith], with_shot_noise=True)
-                        # get the "best" floor for the fom calculation
-                        floor_no_eta = get_stat_floor(ell_arr=ell, zbin=zbin, wBAO_cls_zbin=wBAO_cls[zbin],
-                                                      surf_num_density_zbin=surf_num_density[zbin],
-                                                      dither_strategy=dith, fsky=fsky_best, with_shot_noise=False)
-                        # plot the floor with shot noise
-                        axis.plot(ell, floor_with_eta, color='k', lw=2.0, label='$\Delta$C$_\ell$: $%s$'%zbin)
-
-                l = np.arange(np.size(osbias_err[dith]))
+                # ----------------------------------------------------------------------------------------
+                # calcuate the floors with and without shot noise
+                if zbin not in wBAO_cls:
+                    raise ValueError('Invalid redshift bin: %s'%zbin)
+                else:
+                    # get the floor with shot noise
+                    floor_with_eta = get_stat_floor(ell_arr=ell, zbin=zbin, wBAO_cls_zbin=wBAO_cls[zbin],
+                                                    surf_num_density_zbin=surf_num_density[zbin],
+                                                    dither_strategy=dith, fsky=fsky[dith], with_shot_noise=True)
+                    # get the "best" floor for the fom calculation
+                    floor_no_eta = get_stat_floor(ell_arr=ell, zbin=zbin, wBAO_cls_zbin=wBAO_cls[zbin],
+                                                  surf_num_density_zbin=surf_num_density[zbin],
+                                                  dither_strategy=dith, fsky=fsky_best, with_shot_noise=False)
                 # calculate the FoM
+                l = np.arange(np.size(osbias_err[dith]))
                 FoM = get_fom(ell_min, ell_max, l, osbias_err[dith], ell, floor_with_eta, floor_no_eta)
+                # ----------------------------------------------------------------------------------------
+                if i==0:
+                    # plot the floor with shot noise
+                    axis.plot(ell, floor_with_eta, color='k', lw=2.0, label='$\Delta$C$_\ell$: $%s$'%zbin)
 
                 # set up the legend
                 add_leg = ''
                 if (i==0):  add_leg = "$\mathrm{\sigma_{C_{\ell,OS}}}$: "
                 else: add_leg = "         "
+
                 # plot the osbias error
                 axis.plot(l, osbias_err[dith], color=colors[run_names[i]],
                           label=r'%s%s ; FoM: %.6f'%(add_leg, legend_labels[i], FoM))
