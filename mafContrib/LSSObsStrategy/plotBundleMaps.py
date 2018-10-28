@@ -81,13 +81,14 @@ def plotBundleMaps(path, outDir, bundle, dataLabel, filterBand,
         # plot out the power spectrum
         for dither in bundle:
             plt.clf()
-            cl = hp.anafast(hp.remove_dipole(bundle[dither].metricValues.filled(bundle[dither].slicer.badval)), lmax=500)            
+            cl = hp.anafast(hp.remove_dipole(bundle[dither].metricValues.filled(bundle[dither].slicer.badval)),
+                            lmax=lmax)
             ell = np.arange(len(cl))
             plt.plot(ell, (cl*ell*(ell+1))/2.0/np.pi)
-            plt.title(dither)
+            plt.title('%s: %s'%(dataLabel, dither))
             plt.xlabel(r'$\ell$')
             plt.ylabel(r'$\ell(\ell+1)C_\ell/(2\pi)$')
-            plt.xlim(0,500)
+            plt.xlim(0, lmax)
 
             if saveFigs:
                 # save power spectrum
