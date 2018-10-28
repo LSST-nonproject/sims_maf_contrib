@@ -55,6 +55,7 @@ mpl.rcParams['axes.titlesize'] = fontsize
 mpl.rcParams['axes.linewidth'] = 2
 mpl.rcParams['axes.grid'] = True
 
+import lsst.sims.maf
 import lsst.sims.maf.db as db
 import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
@@ -289,6 +290,7 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
     update += '\nsqlconstraint: %s'%sqlconstraint
     update += '\nRunning with %s\n'%runName
     update += '\noutDir: %s\n'%outDir
+    update += '\nMAF version: %s\n'%lsst.sims.maf.__version__
 
     # figure out the readme name
     readme_name = 'ReadMe'
