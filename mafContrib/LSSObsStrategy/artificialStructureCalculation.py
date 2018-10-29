@@ -675,11 +675,10 @@ def artificialStructureCalculation(path, upperMagLimit, dbfile, runName,
                 readme.close()
                         
                 # plot histogram
-                binsize = 0.001
-                binAll = int((max(goodError)-min(goodError))/binsize)
+                binsize = 0.005
+                bins = np.arange(min(goodError)-5*binsize, max(goodError)+5*binsize, binsize)
                 plt.clf()
-                plt.hist(goodError,bins=binAll)
-                plt.xlim(np.median(goodError)-8*binsize, np.median(goodError)+8*binsize)
+                plt.hist(goodError, bins=bins)
                 plt.xlabel('Zeropoint Uncertainty')
                 plt.ylabel('Counts')
 
