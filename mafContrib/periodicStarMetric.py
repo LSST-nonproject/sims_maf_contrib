@@ -30,8 +30,8 @@ def periodicStar(t,x0,x1,x2,x3,x4,x5,x6,x7,x8):
     for f in filterNames:
         good = np.where(t['filter'] == f)
         mags[good] += x[filter2index[f]]
-
     return mags
+
 
 class PeriodicStarMetric(BaseMetric):
     """ At each slicePoint, run a Monte Carlo simulation to see how well a periodic source can be fit.
@@ -39,7 +39,7 @@ class PeriodicStarMetric(BaseMetric):
     of each observation.
     """
 
-    def __init__(self, metricName='PeriodicStarMetric', mjdCol='expMJD',
+    def __init__(self, metricName='PeriodicStarMetric', mjdCol='observationStartMJD',
                  m5Col='fiveSigmaDepth', filterCol='filter', period=10., amplitude=0.5,
                  phase=2.,
                  nMonte=1000, periodTol=0.05, ampTol=0.10, means=[20.,20.,20.,20.,20.,20.],
@@ -80,7 +80,7 @@ class PeriodicStarMetric(BaseMetric):
             return self.badval
 
         # Generate input for true light curve
-        t = np.empty(dataSlice.size, dtype=list(zip(['time','filter'],[float,'|S1'])))
+        t = np.empty(dataSlice.size, dtype=list(zip(['time','filter'],[float,'|U1'])))
         t['time'] = dataSlice[self.mjdCol]-dataSlice[self.mjdCol].min()
         t['filter'] = dataSlice[self.filterCol]
 
