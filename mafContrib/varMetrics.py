@@ -46,7 +46,7 @@ def find_period_LS(times, mags, minperiod=2., maxperiod=35., nbinmax=10**5, verb
 class PeriodDeviationMetric(BaseMetric):
     """Measure the percentage deviation of recovered periods for pure sine wave variability (in magnitude).
     """
-    def __init__(self, col='expMJD', periodMin=3., periodMax=35., nPeriods=5,
+    def __init__(self, col='observationStartMJD', periodMin=3., periodMax=35., nPeriods=5,
                  meanMag=21., amplitude=1., metricName='Period Deviation', periodCheck=None,
                  **kwargs):
         """
@@ -113,12 +113,12 @@ class PeriodDeviationMetric(BaseMetric):
         """
         At each slicepoint, return the period with the worst period deviation.
         """
-        worstP = metricVal['periods'][np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())[0]]
+        worstP = np.array(metricVal['periods'])[np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())[0]]
         return worstP
 
     def reduceWorstPDev(self, metricVal):
         """
         At each slicepoint, return the largest period deviation.
         """
-        worstPDev = metricVal['periodsdev'][np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())[0]]
+        worstPDev = np.array(metricVal['periodsdev'])[np.where(metricVal['periodsdev'] == metricVal['periodsdev'].max())[0]]
         return worstPDev
