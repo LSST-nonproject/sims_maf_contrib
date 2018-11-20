@@ -12,6 +12,8 @@ import numpy as np
 from astropy.time import Time
 from lsst.sims.maf.metrics import BaseMetric
 
+__all__ = ['IntervalsBetweenObs']
+
 class IntervalsBetweenObs (BaseMetric):
     
 
