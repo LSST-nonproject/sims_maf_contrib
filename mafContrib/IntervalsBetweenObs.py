@@ -3,17 +3,12 @@
 # Last edited : 11/20/2018
 # Calculates statistics (mean or median or standard deviation) of intervals between observations during simultaneous windows/Inter-seasonal gap of another survey.
 # SurveyIntervals is the list of the survey observing window/Inter-seasonal gap intervals. It should be in the format:
-# SurveyIntervals = [ [YYYY-MM-DD, YYYY-MM-DD] , [YYYY-MM-DD, YYYY-MM-DD] , ... , [YYYY-MM-DD, YYYY-MM-DD] ]"""
+# SurveyIntervals = [ [YYYY-MM-DD, YYYY-MM-DD] , [YYYY-MM-DD, YYYY-MM-DD] , ... , [YYYY-MM-DD, YYYY-MM-DD] ]
+# We are interested in calculating this metric in each of the LSST passbands.
 
 
 from __future__ import print_function
 import numpy as np 
-import matplotlib.pyplot as plt
-import lsst.sims.maf.db as db
-import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.metricBundles as metricBundles
-import lsst.sims.maf.plots as plots
 from astropy.time import Time
 from lsst.sims.maf.metrics import BaseMetric
 
@@ -41,7 +36,7 @@ class IntervalsBetweenObs (BaseMetric):
             start_interval = Time(interval[0]+' 00:00:00')
             end_interval = Time(interval[1]+' 00:00:00')
             index = dataSlice[self.TimeCol][np.where ((dataSlice[self.TimeCol]> start_interval.mjd) & (dataSlice[self.TimeCol]<end_interval.mjd))[0]]
-            obs_diff_per_interval = np.diff(index) #size = size(dataSlice)-1
+            obs_diff_per_interval = np.diff(index) 
             obs_diff = obs_diff + obs_diff_per_interval.tolist()
             
         if self.Stat == 'mean':
