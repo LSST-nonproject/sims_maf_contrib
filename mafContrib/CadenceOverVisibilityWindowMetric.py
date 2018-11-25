@@ -17,7 +17,22 @@ from sys import argv
 
 class CadenceOverVisibilityWindowMetric(BaseMetric):
     """Metric to compare the lightcurve cadence produced by LSST over the visibility window 
-    for a given position in the sky to the desired cadence"""
+    for a given position in the sky to the desired cadence.
+
+    This metric determines the number of
+    visits to a given field (RA,Dec) performed, including all exposures taken
+    with the given set of filters.  
+    
+    It compares the actual number of visits with the maximum possible visits, 
+    calculated from the visibility window of the field for the given start and 
+    end dates, and desired cadence.
+    
+    The returned result = ([sum_j (n_visits_actual / n_visits_desired)]/N_filters ) * 100 (%)
+    
+    For cadences less than 1 day, this is the sum over all anticipated visits
+    per night.  For cadences greater than 1 day, this is calculated as a fraction
+    of the anticipated number of visits during batches of nights. 
+    """
     
     def __init__(self, cols=['fieldRA','fieldDec','filter'], 
                        metricName='CadenceOverVisibilityWindowMetric',
@@ -105,7 +120,7 @@ class CadenceOverVisibilityWindowMetric(BaseMetric):
                         night_efficiency = n_visits_actual[j] / float(n_visits_desired[0][j])
                         
                         result += night_efficiency
-                                                
+                        
                 result = result / float(len(dates))
                 
             # Case 2: Required cadence is greater than 1 day, meaning we
