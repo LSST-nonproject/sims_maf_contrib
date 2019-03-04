@@ -68,7 +68,8 @@ class GalaxyCountsMetric_extended(BaseMetric):
         self.CFHTLSCounts= CFHTLSCounts
         self.normalizedMockCatalogCounts= normalizedMockCatalogCounts
         # insatiate the BaseMetric
-        super(GalaxyCountsMetric_extended, self).__init__(col=self.m5Col, metricName=metricName, **kwargs)
+        super(GalaxyCountsMetric_extended, self).__init__(col=self.m5Col, metricName=metricName, maps=maps,
+                                                          **kwargs)
         # Use the coadded depth metric to calculate the coadded depth at each point.
         # Specific band (e.g. r-band) will be provided by the sql constraint.
         if self.includeDustExtinction:
