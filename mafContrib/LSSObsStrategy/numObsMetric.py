@@ -15,13 +15,14 @@ class NumObsMetric(BaseMetric):
 
     Optional Parameters:
     --------------------
-    * fieldIDCol: str: Name of the fieldID column in the data. Default: 'fieldID'.
+    * nightCol: str: Name of the night column in the data; basically just need it to acccess
+                     the data for each visit. Default: 'night'.
     * nside: int: HEALpix resolution parameter. Default: 128
 
     """
-    def __init__(self, fieldIDCol = 'fieldID', nside=128, metricName='NumObsMetric', **kwargs):
-        self.fieldIDCol = fieldIDCol
-        super(NumObsMetric, self).__init__(col=self.fieldIDCol, metricName=metricName, **kwargs)
+    def __init__(self, nightCol='night', nside=128, metricName='NumObsMetric', **kwargs):
+        self.nightCol = nightCol
+        super(NumObsMetric, self).__init__(col=self.nightCol, metricName=metricName, **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         return len(dataSlice)
