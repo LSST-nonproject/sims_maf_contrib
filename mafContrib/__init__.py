@@ -26,4 +26,4 @@ from .GRBTransientMetric import *
 from transientAsciiSEDMetric import *
 from transientAsciiMetric import *
 from .LSSObsStrategy import *
-
+from .GW170817DetMetric import *
