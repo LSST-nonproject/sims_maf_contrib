@@ -6,8 +6,9 @@
 # Contact for this code:
 # christian.setzer@fysik.su.se
 from pathlib import Path
-from mafContrib import transientAsciiSEDMetric
+from .transientAsciiSEDMetric import transientAsciiSEDMetric
 
+__all__ = ["GW170817DetMetric"]
 base_path = Path(__file__).parent
 
 
@@ -48,20 +49,25 @@ class GW170817DetMetric(transientAsciiSEDMetric):
         by a phase-shift. Default 5.
     """
 
-    def __init__(self,
-                 ascii_file=(base_path / "../data/DECAMGemini_SED.txt").resolve(),
-                 metric_name="GW170817DetMetric",
-                 z=0.08,
-                 num_filters=2,
-                 filter_time=25.0,
-                 num_phases_to_run=5, **kwargs):
+    def __init__(
+        self,
+        ascii_file=(base_path / "../data/DECAMGemini_SED.txt").resolve(),
+        metric_name="GW170817DetMetric",
+        z=0.08,
+        num_filters=2,
+        filter_time=25.0,
+        num_phases_to_run=5,
+        **kwargs
+    ):
         """
 
         """
-        super(GW170817DetMetric, self).__init__(ascii_file=ascii_file,
-                                                metric_name=metric_name,
-                                                z=z,
-                                                num_filters=num_filters,
-                                                filter_time=filter_time,
-                                                num_phases_to_run=num_phases_to_run,
-                                                **kwargs)
+        super(GW170817DetMetric, self).__init__(
+            ascii_file=ascii_file,
+            metric_name=metric_name,
+            z=z,
+            num_filters=num_filters,
+            filter_time=filter_time,
+            num_phases_to_run=num_phases_to_run,
+            **kwargs
+        )
