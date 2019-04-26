@@ -103,7 +103,7 @@ class transientAsciiSEDMetric(BaseMetric):
         num_per_lightcurve=1,
         num_phases_to_run=1,
         output_data=False,
-        **kwargs
+        **kwargs,
     ):
         # Set all initial attributes of the metric.
         self.mjdCol = mjdCol
@@ -117,20 +117,16 @@ class transientAsciiSEDMetric(BaseMetric):
         # and thus needs an alternate definition of the output type and units
         # when calling the init of the base class.
         if self.output_data:
-            super(transientAsciiSEDMetric, self).__init__(
-                col=[self.mjdCol, self.m5Col, self.filterCol],
-                metricDtype="object",
-                units="",
-                metricName=metric_name,
-                **kwargs
-            )
+            super_dict = {"units": "", "metricDtype": "object"}
         else:
-            super(transientAsciiSEDMetric, self).__init__(
-                col=[self.mjdCol, self.m5Col, self.filterCol],
-                units="Fraction Detected",
-                metricName=metric_name,
-                **kwargs
-            )
+            super_dict = {"units": "Fraction Detected"}
+
+        super(transientAsciiSEDMetric, self).__init__(
+            col=[self.mjdCol, self.m5Col, self.filterCol],
+            metricName=metric_name,
+            **super_dict,
+            **kwargs,
+        )
         # Continue setting the initial attributes.
         self.survey_duration = survey_duration
         self.survey_start = survey_start
@@ -289,26 +285,40 @@ class transientAsciiSEDMetric(BaseMetric):
             zip(self.transient_start_index, self.transient_end_index)
         ):
             t_id = i
-            while self.transient_detected[t_id] == True:
-                # If there were no observations at all for this lightcurve:
-                if start_ind == end_ind:
-                    self.transient_detected[t_id] = False
+            # If there were no observations at all for this lightcurve:
+            if start_ind == end_ind:
+                self.transient_detected[t_id] = False
+                continue
 
-                self.observation_epoch_above_thresh = self.observation_epoch[
-                    start_ind:end_ind
-                ][np.where(self.obs_above_SNR_threshold[start_ind:end_ind])]
+            self.observation_epoch_above_thresh = self.observation_epoch[
+                start_ind:end_ind
+            ][np.where(self.obs_above_SNR_threshold[start_ind:end_ind])]
 
-                self.evaluate_pre_time_detection_criteria(t_id)
-                self.evaluate_phase_section_detection_criteria(t_id)
-                self.evaluate_number_filters_detection_criteria(
-                    dataSlice, start_ind, end_ind, t_id
-                )
-                self.evaluate_filter_in_time_detection_criteria(t_id)
-                # Finished with current set of conditions
+            self.evaluate_pre_time_detection_criteria(t_id)
+            # Check if previous condition passed. If not, move to next transient.
+            if not self.transient_detected[t_id]:
+                continue
 
-                # If detected is still true break while loop and continue to
-                # next transient
-                break
+            self.evaluate_phase_section_detection_criteria(t_id)
+            # Check if previous condition passed. If not, move to next transient.
+            if not self.transient_detected[t_id]:
+                continue
+
+            self.evaluate_number_filters_detection_criteria(
+                dataSlice, start_ind, end_ind, t_id
+            )
+            # Check if previous condition passed. If not, move to next transient.
+            if not self.transient_detected[t_id]:
+                continue
+
+            self.evaluate_filter_in_time_detection_criteria(t_id)
+            # Check if previous condition passed. If not, move to next transient.
+            # Note: this last if block is techinically unnecessary but if
+            # further criteria are added then the if block should be copied
+            # afterwards.
+            if not self.transient_detected[t_id]:
+                continue
+            # Finished with current set of conditions
 
         # Find the unique number of light curves that passed the required
         # number of conditions
@@ -510,12 +520,12 @@ class transientAsciiSEDMetric(BaseMetric):
         # Check that survey_duration is not larger than the time of
         # observations we obtained. If it is, then the max_num_transients will
         # not be accurate.
-        slicer_time_span = (
+        dataSlice_time_span = (
             dataSlice[self.mjdCol].max() - dataSlice[self.mjdCol].min()
         ) / 365.25
         # Take the maximum time delta, either specified or from the slicer, to
         # be the survey duration.
-        self.survey_duration = np.max([slicer_time_span, self.survey_duration])
+        self.survey_duration = np.max([dataSlice_time_span, self.survey_duration])
 
         # Set the survey start based on the slicer unless otherwise specified.
         if self.survey_start is None:
