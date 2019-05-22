@@ -12,7 +12,7 @@ from lsst.sims.maf.metrics import BaseMetric
 __all__ = ['numObsInSurveyTimeOverlap']
 
 
-class numObsInSurveyTimeOverlap (BaseMetric):
+class numObsInSurveyTimeOverlapMetric (BaseMetric):
     
     
     def __init__ (self, SurveyObsWin, TimeCol='observationStartMJD',metricName= 'numObsInSurveyTimeOverlap', **kwargs):
