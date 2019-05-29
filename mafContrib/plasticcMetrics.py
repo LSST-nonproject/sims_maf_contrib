@@ -5,7 +5,7 @@ import os
 import pickle
 import gzip
 
-__all__ = []
+__all__ = ["Plasticc_metric", "plasticc_slicer"]
 
 
 def load_plasticc_lc(model='SNIa-normal'):
@@ -98,7 +98,7 @@ def plasticc2mags(plc, mjds, filters, peak_time=0, zp=27.5):
     for filtername in np.unique(filters):
         infilt = np.where(filters == filtername)[0]
         lc_mjd = plc[filttrans[filtername]]['mjd'] - plc['header']['SIM_PEAKMJD'] + peak_time
-        result[infilt] = -2.5*np.log10(np.interp(mjds, lc_mjd, plc[filttrans[filtername]]['fluxcal'], left=-1, right=-1)) + zp
+        result[infilt] = -2.5*np.log10(np.interp(mjds[infilt], lc_mjd, plc[filttrans[filtername]]['fluxcal'], left=-1, right=-1)) + zp
     return result
 
 
@@ -108,16 +108,17 @@ def plasticc_slicer(model='SNIa-normal', seed=42, mjd0=59853.5, survey_length=36
 
     # Load plastic light curves
     plcs = load_plasticc_lc(model=model)
+    objids = list(plcs.keys())
 
-    npts = np.size(plcs)
+    npts = np.size(objids)
 
     # XXX, add an option to distribute around a DDF
     ra, dec = rand_on_sphere(npts, seed=seed)
     peak_mjds = np.random.rand(npts)*survey_length + mjd0
 
-    slicer = UserPointsSlicer(ra, dec, latLonDeg=False)
+    slicer = UserPointsSlicer(np.degrees(ra), np.degrees(dec), latLonDeg=True)
     slicer.slicePoints['peak_mjd'] = peak_mjds
-    slicer.slicePoints['plc'] = plcs.values()
+    slicer.slicePoints['plc'] = list(plcs.values())
     slicer.slicePoints['nslices'] = ra.size
 
     return slicer
@@ -125,10 +126,11 @@ def plasticc_slicer(model='SNIa-normal', seed=42, mjd0=59853.5, survey_length=36
 
 class Plasticc_metric(BaseMetric):
     def __init__(self, metricName='plasticc_transient', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
-                 filterCol='filter', **kwargs):
+                 filterCol='filter', unique_gap=0.5, **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
+        self.unique_gap = unique_gap
         super(Plasticc_metric, self).__init__(col=[self.mjdCol, self.m5Col, self.filterCol],
                                               metricName=metricName, **kwargs)
 
@@ -137,7 +139,7 @@ class Plasticc_metric(BaseMetric):
                              peak_time=slicePoint['peak_mjd'])
         # XXX--Should I apply dust here?
 
-        detected_points = np.where(mags > dataSlice[self.m5Col])[0]
+        detected_points = np.where(mags < dataSlice[self.m5Col])[0]
 
         metric_val = {}
 
@@ -148,18 +150,20 @@ class Plasticc_metric(BaseMetric):
             metric_val['detected'] = 0
 
         # Did we get a color before the peak
-        pre_peak = np.where((mags > dataSlice[self.m5Col]) & (dataSlice[self.mjdCol] < slicePoint['peak_mjd']))[0]
+        pre_peak = np.where((mags < dataSlice[self.m5Col]) & (dataSlice[self.mjdCol] < slicePoint['peak_mjd']))[0]
 
         if np.size(np.unique(dataSlice[self.filterCol][pre_peak])) >= 2:
             metric_val['pre-color'] = 1./slicePoint['nslices']
         else:
             metric_val['pre-color'] = 0
 
-        # Do we have 5 total points, 2 total filters, and 2 pre-peak points?
-
+        # Do we have 5 total points, 2 unique filters, and 2 pre-peak points?
         n_pre = np.size(pre_peak)
         n_filt = np.size(np.unique(dataSlice[detected_points]))
-        n_tot = np.size(detected_points)
+        # make sure mjds are spaced out
+        mjd_diff = np.diff(dataSlice[self.mjdCol][detected_points])
+        enough_gap = np.where(mjd_diff > self.unique_gap)[0]
+        n_tot = np.size(enough_gap)+1
 
         if (n_pre >= 2) & (n_filt >= 2) & (n_tot >= 5):
             metric_val['well-obs'] = 1./slicePoint['nslices']
@@ -169,7 +173,7 @@ class Plasticc_metric(BaseMetric):
         return metric_val
 
     def reduceDetected(self, metric_val):
-        return metric_val['detected_points']
+        return metric_val['detected']
 
     def reducePrePeak(self, metric_val):
         return metric_val['pre-color']
