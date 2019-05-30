@@ -4,6 +4,7 @@ from lsst.sims.maf.slicers import UserPointsSlicer
 import os
 import pickle
 import gzip
+import itertools
 
 __all__ = ["Plasticc_metric", "plasticc_slicer"]
 
@@ -126,15 +127,21 @@ def plasticc_slicer(model='SNIa-normal', seed=42, mjd0=59853.5, survey_length=36
 
 class Plasticc_metric(BaseMetric):
     """
-    In hacky fix, returns fraction of observations that meet criteria (so easy to use SumMetric to get total fraction)
+    Parameters
+    ----------
+    unique_gap : float (0.5)
+        The amount of time to demand between observations to consider them sampling different parts of a light curve (days)
+    color_gap : float (0.5)
+        Demand observations in different filters be this close together to count as measuring a tranisent color (days)
     """
 
     def __init__(self, metricName='plasticc_transient', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
-                 filterCol='filter', unique_gap=0.5, **kwargs):
+                 filterCol='filter', unique_gap=0.5, color_gap=0.5, **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
         self.unique_gap = unique_gap
+        self.color_gap = color_gap
         super(Plasticc_metric, self).__init__(col=[self.mjdCol, self.m5Col, self.filterCol],
                                               metricName=metricName, **kwargs)
 
@@ -149,15 +156,27 @@ class Plasticc_metric(BaseMetric):
 
         # What fraction of light curves got detected at all
         if np.size(detected_points) > 0:
-            metric_val['detected'] = 1./slicePoint['nslices']
+            metric_val['detected'] = 1.
         else:
             metric_val['detected'] = 0
 
-        # Did we get a color before the peak
+        # Did we get a color before the peak?
         pre_peak = np.where((mags < dataSlice[self.m5Col]) & (dataSlice[self.mjdCol] < slicePoint['peak_mjd']))[0]
-
-        if np.size(np.unique(dataSlice[self.filterCol][pre_peak])) >= 2:
-            metric_val['pre-color'] = 1./slicePoint['nslices']
+        pre_peak_filters = np.unique(dataSlice[self.filterCol][pre_peak])
+        early_color = False
+        if np.size(pre_peak_filters) > 1:
+            # The possible filter combinations
+            filter_combos = [x[0]+x[1] for x in itertools.combinations(pre_peak_filters, 2)]
+            for filter_combo in filter_combos:
+                mjds_f1 = dataSlice[self.mjdCol][pre_peak][np.where(dataSlice[pre_peak][self.filterCol] == filter_combo[0])]
+                mjds_f2 = dataSlice[self.mjdCol][pre_peak][np.where(dataSlice[pre_peak][self.filterCol] == filter_combo[1])]
+                diff = np.abs(mjds_f1 - mjds_f2[:, np.newaxis])
+                if np.min(diff) < self.color_gap:
+                    early_color = True
+                    break
+        # if np.size(np.unique(dataSlice[self.filterCol][pre_peak])) >= 2:
+        if early_color:
+            metric_val['pre-color'] = 1.
         else:
             metric_val['pre-color'] = 0
 
@@ -169,8 +188,11 @@ class Plasticc_metric(BaseMetric):
         enough_gap = np.where(mjd_diff > self.unique_gap)[0]
         n_tot = np.size(enough_gap)+1
 
+        # Maybe I should demand sections of the light curve get observed? Like, divide into 
+        # fifths and say there needs to be an observation in each section? 
+
         if (n_pre >= 2) & (n_filt >= 2) & (n_tot >= 5):
-            metric_val['well-obs'] = 1./slicePoint['nslices']
+            metric_val['well-obs'] = 1.
         else:
             metric_val['well-obs'] = 0
 
