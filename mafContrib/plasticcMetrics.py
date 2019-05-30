@@ -125,6 +125,10 @@ def plasticc_slicer(model='SNIa-normal', seed=42, mjd0=59853.5, survey_length=36
 
 
 class Plasticc_metric(BaseMetric):
+    """
+    In hacky fix, returns fraction of observations that meet criteria (so easy to use SumMetric to get total fraction)
+    """
+
     def __init__(self, metricName='plasticc_transient', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
                  filterCol='filter', unique_gap=0.5, **kwargs):
         self.mjdCol = mjdCol
