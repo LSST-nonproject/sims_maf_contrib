@@ -133,15 +133,18 @@ class Plasticc_metric(BaseMetric):
         The amount of time to demand between observations to consider them sampling different parts of a light curve (days)
     color_gap : float (0.5)
         Demand observations in different filters be this close together to count as measuring a tranisent color (days)
+    pre_slope_range : float (0.7)
+        How many mags of rise to demand before saying a pre-peak rise slope has been well-observed
     """
 
     def __init__(self, metricName='plasticc_transient', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
-                 filterCol='filter', unique_gap=0.5, color_gap=0.5, **kwargs):
+                 filterCol='filter', unique_gap=0.5, color_gap=0.5, pre_slope_range=0.7, **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
         self.unique_gap = unique_gap
         self.color_gap = color_gap
+        self.pre_slope_range = pre_slope_range
         super(Plasticc_metric, self).__init__(col=[self.mjdCol, self.m5Col, self.filterCol],
                                               metricName=metricName, **kwargs)
 
@@ -174,8 +177,18 @@ class Plasticc_metric(BaseMetric):
                 if np.min(diff) < self.color_gap:
                     early_color = True
                     break
+        # Can we measure the rise slope?
+        rise_slope = False
+        for filtername in pre_peak_filters:
+            good = np.where(dataSlice[pre_peak][self.filterCol] == filtername)[0]
+            pre_mags = mags[pre_peak][good]
+            mag_range = pre_mags.max() - pre_mags.min()
+            if mag_range >= self.pre_slope_range:
+                rise_slope = True
+                break
+
         # if np.size(np.unique(dataSlice[self.filterCol][pre_peak])) >= 2:
-        if early_color:
+        if early_color & rise_slope:
             metric_val['pre-color'] = 1.
         else:
             metric_val['pre-color'] = 0
