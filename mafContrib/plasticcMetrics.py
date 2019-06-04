@@ -138,7 +138,7 @@ class Plasticc_metric(BaseMetric):
     """
 
     def __init__(self, metricName='plasticc_transient', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
-                 filterCol='filter', unique_gap=0.5, color_gap=0.5, pre_slope_range=0.7, **kwargs):
+                 filterCol='filter', unique_gap=0.5, color_gap=0.5, pre_slope_range=0.3, **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
