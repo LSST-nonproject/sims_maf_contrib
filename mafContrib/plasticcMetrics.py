@@ -103,7 +103,7 @@ def plasticc2mags(plc, mjds, filters, peak_time=0, zp=27.5):
     return result
 
 
-def plasticc_slicer(model='SNIa-normal', seed=42, mjd0=59853.5, survey_length=365.25*10):
+def plasticc_slicer(model='SNIa-normal', seed=42, mjd0=59853.5, survey_length=365.25*10, badval=0):
     """Make a UserPointSlicer with all the lightcurve stuff in there
     """
 
@@ -117,7 +117,7 @@ def plasticc_slicer(model='SNIa-normal', seed=42, mjd0=59853.5, survey_length=36
     ra, dec = rand_on_sphere(npts, seed=seed)
     peak_mjds = np.random.rand(npts)*survey_length + mjd0
 
-    slicer = UserPointsSlicer(np.degrees(ra), np.degrees(dec), latLonDeg=True)
+    slicer = UserPointsSlicer(np.degrees(ra), np.degrees(dec), latLonDeg=True, badval=badval)
     slicer.slicePoints['peak_mjd'] = peak_mjds
     slicer.slicePoints['plc'] = list(plcs.values())
     slicer.slicePoints['nslices'] = ra.size
@@ -135,16 +135,30 @@ class Plasticc_metric(BaseMetric):
         Demand observations in different filters be this close together to count as measuring a tranisent color (days)
     pre_slope_range : float (0.7)
         How many mags of rise to demand before saying a pre-peak rise slope has been well-observed
+    days_around_peak : float (200)
+        How many days around the peak of the light curve to sample to find the LC duration
+    r_mag_limit : floar (28)
+        The r-band magnitude limit to demand light curves be brighter than when finding the full duration
+    nbins : int (10)
+        The number of evenly spaced bins to divide a light curve into when deciding if it is "wellSampled"
+    nsamples : int (5)
+        The number of unique bins that must have observations to consider a light curve well sampled.
+        Should be less or equal to nbins
     """
 
     def __init__(self, metricName='plasticc_transient', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
-                 filterCol='filter', unique_gap=0.5, color_gap=0.5, pre_slope_range=0.3, **kwargs):
+                 filterCol='filter', unique_gap=0.5, color_gap=0.5, pre_slope_range=0.3,
+                 days_around_peak=200, r_mag_limit=28, nbins=10, nsamples=5, **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
         self.unique_gap = unique_gap
         self.color_gap = color_gap
         self.pre_slope_range = pre_slope_range
+        self.days_around_peak = days_around_peak
+        self.rmag_limit = r_mag_limit
+        self.nbins = nbins
+        self.nsamples = nsamples
         super(Plasticc_metric, self).__init__(col=[self.mjdCol, self.m5Col, self.filterCol],
                                               metricName=metricName, **kwargs)
 
@@ -193,21 +207,23 @@ class Plasticc_metric(BaseMetric):
         else:
             metric_val['pre-color'] = 0
 
-        # Do we have 5 total points, 2 unique filters, and 2 pre-peak points?
-        n_pre = np.size(pre_peak)
-        n_filt = np.size(np.unique(dataSlice[detected_points]))
-        # make sure mjds are spaced out
-        mjd_diff = np.diff(dataSlice[self.mjdCol][detected_points])
-        enough_gap = np.where(mjd_diff > self.unique_gap)[0]
-        n_tot = np.size(enough_gap)+1
+        # Let's find some approximate duration of the LC
+        mjd_around = np.arange(-self.days_around_peak, self.days_around_peak+1, 0.5) + slicePoint['peak_mjd']
+        full_lc = plasticc2mags(slicePoint['plc'], mjd_around, 'r', peak_time=slicePoint['peak_mjd'])
+        above_limit = np.where(full_lc < self.rmag_limit)
+        mjd_start = np.min(mjd_around[above_limit])
+        mjd_end = np.max(mjd_around[above_limit])
 
-        # Maybe I should demand sections of the light curve get observed? Like, divide into 
-        # fifths and say there needs to be an observation in each section? 
+        hist, bin_edges = np.histogram(dataSlice[self.mjdCol][detected_points], bins=self.nbins,
+                                       range=(mjd_start, mjd_end))
+        bins_sampled = np.size(np.where(hist > 0)[0])
 
-        if (n_pre >= 2) & (n_filt >= 2) & (n_tot >= 5):
-            metric_val['well-obs'] = 1.
+        well_sampled = bins_sampled >= self.nsamples
+
+        if well_sampled:
+            metric_val['well-sampled'] = 1.
         else:
-            metric_val['well-obs'] = 0
+            metric_val['well-sampled'] = 0
 
         return metric_val
 
@@ -217,7 +233,7 @@ class Plasticc_metric(BaseMetric):
     def reducePrePeak(self, metric_val):
         return metric_val['pre-color']
 
-    def reduceWellFit(self, metric_val):
-        return metric_val['well-obs']
+    def reduceWellSampled(self, metric_val):
+        return metric_val['well-sampled']
 
 
