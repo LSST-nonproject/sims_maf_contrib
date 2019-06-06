@@ -5,6 +5,7 @@ import os
 import pickle
 import gzip
 import itertools
+from lsst.sims.photUtils import Sed
 
 __all__ = ["Plasticc_metric", "plasticc_slicer"]
 
@@ -144,11 +145,14 @@ class Plasticc_metric(BaseMetric):
     nsamples : int (5)
         The number of unique bins that must have observations to consider a light curve well sampled.
         Should be less or equal to nbins
+    apply_dust : bool (True)
+        Apply dust extinction to the light curve magnitudes.
     """
 
     def __init__(self, metricName='plasticc_transient', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
                  filterCol='filter', unique_gap=0.5, color_gap=0.5, pre_slope_range=0.3,
-                 days_around_peak=200, r_mag_limit=28, nbins=10, nsamples=5, **kwargs):
+                 days_around_peak=200, r_mag_limit=28, nbins=10, nsamples=5, maps=['DustMap'], apply_dust=True,
+                 units='fraction', **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
@@ -159,13 +163,31 @@ class Plasticc_metric(BaseMetric):
         self.rmag_limit = r_mag_limit
         self.nbins = nbins
         self.nsamples = nsamples
+        self.apply_dust = apply_dust
         super(Plasticc_metric, self).__init__(col=[self.mjdCol, self.m5Col, self.filterCol],
-                                              metricName=metricName, **kwargs)
+                                              metricName=metricName, maps=maps, units=units, **kwargs)
+
+        # Let's set up the dust stuff
+        waveMins = {'u': 330., 'g': 403., 'r': 552., 'i': 691., 'z': 818., 'y': 950.}
+        waveMaxes = {'u': 403., 'g': 552., 'r': 691., 'i': 818., 'z': 922., 'y': 1070.}
+
+        self.a_extinc = {}
+        self.b_extinc = {}
+        for filtername in waveMins:
+            testsed = Sed()
+            testsed.setFlatSED(wavelen_min=waveMins[filtername],
+                               wavelen_max=waveMaxes[filtername], wavelen_step=1)
+            self.a_extinc[filtername], self.b_extinc[filtername] = testsed.setupCCM_ab()
+        self.R_v = 3.1
 
     def run(self, dataSlice, slicePoint=None):
         mags = plasticc2mags(slicePoint['plc'], dataSlice[self.mjdCol], dataSlice[self.filterCol],
                              peak_time=slicePoint['peak_mjd'])
-        # XXX--Should I apply dust here?
+        if self.apply_dust:
+            for filtername in np.unique(dataSlice[self.filterCol]):
+                in_filt = np.where(dataSlice[self.filterCol] == filtername)
+                A_x = (self.a_extinc[filtername][0]+self.b_extinc[filtername][0]/self.R_v)*(self.R_v*slicePoint['ebv'])
+                mags[in_filt] = mags[in_filt] + A_x
 
         detected_points = np.where(mags < dataSlice[self.m5Col])[0]
 
