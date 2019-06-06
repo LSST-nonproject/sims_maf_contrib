@@ -7,7 +7,7 @@ import gzip
 import itertools
 from lsst.sims.photUtils import Sed
 
-__all__ = ["Plasticc_metric", "plasticc_slicer"]
+__all__ = ["Plasticc_metric", "plasticc_slicer", "load_plasticc_lc"]
 
 
 def load_plasticc_lc(model='SNIa-normal'):
@@ -44,6 +44,8 @@ def rand_on_sphere(npts, seed=42):
 
 def rand_around_point(ra, dec, dist_max, npts, seed=42):
     """Generate random point within some distance of a point on a sphere
+
+    Everything in radians
     """
     np.random.seed(seed)
     r = dist_max*np.sqrt(np.random.rand(npts))
@@ -104,23 +106,34 @@ def plasticc2mags(plc, mjds, filters, peak_time=0, zp=27.5):
     return result
 
 
-def plasticc_slicer(model='SNIa-normal', seed=42, mjd0=59853.5, survey_length=365.25*10, badval=0):
+def plasticc_slicer(plcs=None, model='SNIa-normal', seed=42, mjd0=59853.5,
+                    survey_length=365.25*10, badval=0, ra_cen=None, dec_cen=None, radius=np.radians(3.),
+                    useCamera=False):
     """Make a UserPointSlicer with all the lightcurve stuff in there
+
+    plcs : list of plasticc light curve objects (None)
+        A way to pass in plastic light curves so they don't have to be coppied for every slicer
+    ra_cen : float (None)
+        The RA of the ppint to distribute points around (radians)
     """
 
     # Load plastic light curves
-    plcs = load_plasticc_lc(model=model)
-    objids = list(plcs.keys())
+    if plcs is None:
+        plcs = load_plasticc_lc(model=model)
+        plcs = list(plcs.values())
 
-    npts = np.size(objids)
+    npts = np.size(plcs)
 
-    # XXX, add an option to distribute around a DDF
-    ra, dec = rand_on_sphere(npts, seed=seed)
+    if ra_cen is None:
+        ra, dec = rand_on_sphere(npts, seed=seed)
+    else:
+        ra, dec = rand_around_point(ra_cen, dec_cen, radius, npts, seed=seed)
     peak_mjds = np.random.rand(npts)*survey_length + mjd0
 
-    slicer = UserPointsSlicer(np.degrees(ra), np.degrees(dec), latLonDeg=True, badval=badval)
+    slicer = UserPointsSlicer(np.degrees(ra), np.degrees(dec), latLonDeg=True, badval=badval,
+                              useCamera=useCamera)
     slicer.slicePoints['peak_mjd'] = peak_mjds
-    slicer.slicePoints['plc'] = list(plcs.values())
+    slicer.slicePoints['plc'] = plcs
     slicer.slicePoints['nslices'] = ra.size
 
     return slicer
