@@ -143,8 +143,6 @@ class Plasticc_metric(BaseMetric):
     """
     Parameters
     ----------
-    unique_gap : float (0.5)
-        The amount of time to demand between observations to consider them sampling different parts of a light curve (days)
     color_gap : float (0.5)
         Demand observations in different filters be this close together to count as measuring a tranisent color (days)
     pre_slope_range : float (0.7)
@@ -163,13 +161,12 @@ class Plasticc_metric(BaseMetric):
     """
 
     def __init__(self, metricName='plasticc_transient', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
-                 filterCol='filter', unique_gap=0.5, color_gap=0.5, pre_slope_range=0.3,
+                 filterCol='filter', color_gap=0.5, pre_slope_range=0.3,
                  days_around_peak=200, r_mag_limit=28, nbins=10, nsamples=5, maps=['DustMap'], apply_dust=True,
                  units='fraction', **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
-        self.unique_gap = unique_gap
         self.color_gap = color_gap
         self.pre_slope_range = pre_slope_range
         self.days_around_peak = days_around_peak
@@ -260,15 +257,28 @@ class Plasticc_metric(BaseMetric):
         else:
             metric_val['well-sampled'] = 0
 
+        metric_val['nobs'] = np.size(detected_points)
+
         return metric_val
 
     def reduceDetected(self, metric_val):
+        """Was the transient above the 5-sigma limiting depth in any filter at any time.
+        1=yes, 0=no
+        """
         return metric_val['detected']
 
     def reducePrePeak(self, metric_val):
+        """Was the transient observed pre-peak, in at least two filters, and such that
+        the rise slope could be estimated. 1=yes, 0=no
+        """
         return metric_val['pre-color']
 
     def reduceWellSampled(self, metric_val):
+        """Was the light curve well-sampled, e.g., observations covering over half the light curve.
+        """
         return metric_val['well-sampled']
 
-
+    def reduceNobs(self, metric_val):
+        """The total number of observations of the light curve.
+        """
+        return metric_val['nobs']
