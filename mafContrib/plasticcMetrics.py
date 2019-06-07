@@ -1,13 +1,33 @@
 import numpy as np
 from lsst.sims.maf.metrics import BaseMetric
 from lsst.sims.maf.slicers import UserPointsSlicer
+from lsst.sims.maf.utils import m52snr
 import os
 import pickle
 import gzip
 import itertools
 from lsst.sims.photUtils import Sed
+from scipy.optimize import curve_fit
 
 __all__ = ["Plasticc_metric", "plasticc_slicer", "load_plasticc_lc"]
+
+
+class Light_curve_fitter(object):
+    def __init__(self, plc, filters, peak_time):
+        self.plc = plc
+        self.filters = filters
+        self.peak_time = peak_time
+
+    def __call__(self, mjds, delta_t, u_off, g_off, r_off, i_off, z_off, y_off):
+        filters = {'u': u_off, 'g': g_off, 'r': r_off, 'i': i_off, 'z': z_off, 'y': y_off}
+        flux = plasticc2mags(self.plc, mjds+delta_t, self.filters, peak_time=self.peak_time, zp=27.5, flux=True)
+
+        for filtername in filters:
+            infilt = np.where(filters == filtername)[0]
+            flux[infilt] = flux[infilt]*filters[filtername]
+
+        return flux
+
 
 
 def load_plasticc_lc(model='SNIa-normal'):
@@ -81,7 +101,7 @@ def destination(ra1, dec1, bearing, ang_dist):
     return ra_out, dec_out
 
 
-def plasticc2mags(plc, mjds, filters, peak_time=0, zp=27.5):
+def plasticc2mags(plc, mjds, filters, peak_time=0, zp=27.5, flux=False):
     """take a plasticc lightcurve dict and return interpolated mags
 
     plc : unpickled plasticc light curve
@@ -94,6 +114,8 @@ def plasticc2mags(plc, mjds, filters, peak_time=0, zp=27.5):
         The MJD to have the peak of the light curve
     zp : float (27.5)
         The zeropoint of the plc
+    flux : bool (Flase)
+        return the flux rather than mags
     """
 
     # Need a dictionary to translate y to Y. Hopefully those aren't actually different filters?
@@ -102,7 +124,9 @@ def plasticc2mags(plc, mjds, filters, peak_time=0, zp=27.5):
     for filtername in np.unique(filters):
         infilt = np.where(filters == filtername)[0]
         lc_mjd = plc[filttrans[filtername]]['mjd'] - plc['header']['SIM_PEAKMJD'] + peak_time
-        result[infilt] = -2.5*np.log10(np.interp(mjds[infilt], lc_mjd, plc[filttrans[filtername]]['fluxcal'], left=-1, right=-1)) + zp
+        result[infilt] = np.interp(mjds[infilt], lc_mjd, plc[filttrans[filtername]]['fluxcal'], left=-1, right=-1)
+        if not flux:
+            result[infilt] = -2.5*np.log10(result[infilt]) + zp
     return result
 
 
@@ -200,6 +224,18 @@ class Plasticc_metric(BaseMetric):
                 mags[in_filt] = mags[in_filt] + A_x
 
         detected_points = np.where(mags < dataSlice[self.m5Col])[0]
+
+        # Trying to figure out the uncertainties on transient shape fit.
+        if False:
+            snr_detected = m52snr(mags[detected_points], dataSlice[self.m5Col][detected_points])
+            flux = plasticc2mags(slicePoint['plc'], dataSlice[self.mjdCol][detected_points],
+                                 dataSlice[self.filterCol][detected_points],
+                                 peak_time=slicePoint['peak_mjd'], flux=True)
+            flux_sigma = flux / snr_detected
+            p0 = np.array([0., 1, 1, 1, 1, 1, 1])
+            light_curve_fitter = Light_curve_fitter(slicePoint['plc'], dataSlice[self.filterCol][detected_points], slicePoint['peak_mjd'])
+            fit_result = curve_fit(light_curve_fitter, dataSlice[self.mjdCol][detected_points], flux, p0=p0, sigma=flux_sigma)
+
 
         metric_val = {}
 
