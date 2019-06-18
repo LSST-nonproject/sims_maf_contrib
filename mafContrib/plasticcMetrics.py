@@ -12,24 +12,6 @@ from scipy.optimize import curve_fit
 __all__ = ["Plasticc_metric", "plasticc_slicer", "load_plasticc_lc"]
 
 
-class Light_curve_fitter(object):
-    def __init__(self, plc, filters, peak_time):
-        self.plc = plc
-        self.filters = filters
-        self.peak_time = peak_time
-
-    def __call__(self, mjds, delta_t, u_off, g_off, r_off, i_off, z_off, y_off):
-        filters = {'u': u_off, 'g': g_off, 'r': r_off, 'i': i_off, 'z': z_off, 'y': y_off}
-        flux = plasticc2mags(self.plc, mjds+delta_t, self.filters, peak_time=self.peak_time, zp=27.5, flux=True)
-
-        for filtername in filters:
-            infilt = np.where(filters == filtername)[0]
-            flux[infilt] = flux[infilt]*filters[filtername]
-
-        return flux
-
-
-
 def load_plasticc_lc(model='SNIa-normal'):
     """Load up a plastic model.
 
@@ -37,7 +19,6 @@ def load_plasticc_lc(model='SNIa-normal'):
     ----------
     model : str or int ('SNIa-normal')
         The model light curve to load
-
     """
 
     if isinstance(model, str):
@@ -224,18 +205,6 @@ class Plasticc_metric(BaseMetric):
                 mags[in_filt] = mags[in_filt] + A_x
 
         detected_points = np.where(mags < dataSlice[self.m5Col])[0]
-
-        # Trying to figure out the uncertainties on transient shape fit.
-        if False:
-            snr_detected = m52snr(mags[detected_points], dataSlice[self.m5Col][detected_points])
-            flux = plasticc2mags(slicePoint['plc'], dataSlice[self.mjdCol][detected_points],
-                                 dataSlice[self.filterCol][detected_points],
-                                 peak_time=slicePoint['peak_mjd'], flux=True)
-            flux_sigma = flux / snr_detected
-            p0 = np.array([0., 1, 1, 1, 1, 1, 1])
-            light_curve_fitter = Light_curve_fitter(slicePoint['plc'], dataSlice[self.filterCol][detected_points], slicePoint['peak_mjd'])
-            fit_result = curve_fit(light_curve_fitter, dataSlice[self.mjdCol][detected_points], flux, p0=p0, sigma=flux_sigma)
-
 
         metric_val = {}
 
