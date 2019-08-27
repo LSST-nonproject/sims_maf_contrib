@@ -20,7 +20,7 @@ class SeasonLengthMetric(BaseMetric):
     Units: months
     Used by: LensedQuasarTimeDelays, ...
     """
-    def __init__(self, seasonCol='season', expMJDCol='expMJD', **kwargs):
+    def __init__(self, seasonCol='season', expMJDCol='observationStartMJD', **kwargs):
         """
         seasonCol = the name of the column defining the season number
         expMJDCol = the name of the column defining the visit date

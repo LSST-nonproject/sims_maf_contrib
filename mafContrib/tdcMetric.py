@@ -14,7 +14,7 @@ __all__ = ['TdcMetric']
 class TdcMetric(BaseMetric):
     """Combine campaign length, season length, and mean night speartion into a single metric.
     """
-    def __init__(self, seasonCol='season', expMJDCol='expMJD', nightCol='night',
+    def __init__(self, seasonCol='season', expMJDCol='observationStartMJD', nightCol='night',
                  metricName = 'TDC', cadNorm=3., seaNorm=4., campNorm=5., badval=99, **kwargs):
         # Save the normalization values.
         self.cadNorm = cadNorm
