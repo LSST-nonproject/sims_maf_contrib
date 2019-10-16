@@ -63,7 +63,7 @@ class CalcExpectedVisitsMetric(BaseMetric):
 
         super(CalcExpectedVisitsMetric,self).__init__(col=cols, metricName=metricName)
 
-    def run():
+    def run(self, dataSlice, slicePoint=None, verbose=False):
         n_visits = []
         hrs_visibility = []
 
@@ -77,9 +77,9 @@ class CalcExpectedVisitsMetric(BaseMetric):
             if verbose:
                 print(' -> RA '+str(ra)+', Dec '+str(dec))
 
-            (total_time_visible, hrs_visible_per_night) = calculate_lsst_field_visibility_astropy.calculate_lsst_field_visibility(ra,dec,start_date,end_date,verbose=False)
+            (total_time_visible, hrs_visible_per_night) = calculate_lsst_field_visibility_astropy.calculate_lsst_field_visibility(ra,dec,self.start_date,self.end_date,verbose=False)
 
-            n_visits.append( (np.array(hrs_visible_per_night) / cadence).astype(int) )
+            n_visits.append( (np.array(hrs_visible_per_night) / self.cadence).astype(int) )
             hrs_visibility.append( np.array(hrs_visible_per_night) )
 
         return n_visits,hrs_visibility
