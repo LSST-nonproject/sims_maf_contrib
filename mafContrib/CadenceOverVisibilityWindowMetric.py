@@ -34,12 +34,12 @@ class CadenceOverVisibilityWindowMetric(BaseMetric):
     of the anticipated number of visits during batches of nights.
     """
 
-    def __init__(self, metricName='CadenceOverVisibilityWindowMetric',
-                       filters, cadence, start_date, end_date,
+    def __init__(self, filters, cadence, start_date, end_date,
+                       metricName='CadenceOverVisibilityWindowMetric',
                        ra_col='fieldRA', dec_col='fieldDec',
                        exp_col='visitExposureTime', n_exp_col='numExposures',
-                       filterCol = 'filter', obstime_col = 'observationStartMJD',
-                       visittime_col = 'visitTime',
+                       filter_col = 'filter', obstime_col = 'observationStartMJD',
+                       visittime_col = 'visitTime', verbose=False,
                        **kwargs):
         """Arguments:
         filters  list Filterset over which to compute the metric
@@ -53,17 +53,26 @@ class CadenceOverVisibilityWindowMetric(BaseMetric):
         self.cadence = cadence
         self.start_date = start_date
         self.end_date = end_date
+        self.ra_col = ra_col
+        self.dec_col = dec_col
+        self.exp_col = exp_col
+        self.n_exp_col = n_exp_col
+        self.obstime_col = obstime_col
+        self.visittime_col = visittime_col
+        self.filter_col = filter_col
+        self.verbose = verbose
 
         if len(self.filters) != len(self.cadence):
             raise ValueError('ERROR: The list of filters requested must correspond to the list of required cadences')
             exit()
 
-        cols = [ ra_col, dec_col, exp_col, n_exp_col,
-                obstime_col, visittime_col, filterCol ]
+        columns = [ self.ra_col, self.dec_col, self.exp_col, self.n_exp_col,
+                    self.obstime_col, self.visittime_col, self.filter_col ]
 
-        super(CadenceOverVisibilityWindowMetric,self).__init__(col=cols, metricName=metricName)
+        super(CadenceOverVisibilityWindowMetric,self).__init__(col=columns,
+                                                                metricName=metricName)
 
-    def run(self, dataSlice, slicePoint=None, verbose=False):
+    def run(self, dataSlice, slicePoint=None):
 
         t = np.empty(dataSlice.size, dtype=list(zip(['time','filter'],[float,'|S1'])))
         t['time'] = dataSlice[self.obstime_col]
@@ -75,24 +84,32 @@ class CadenceOverVisibilityWindowMetric(BaseMetric):
                 TimeDelta(i,format='jd',scale=None) for i in range(0,n_days,1)])
 
         result = 0.0
-
+        
         for i,f in enumerate(self.filters):
 
-            if verbose:
+            if self.verbose:
                 print('Calculating the expected visits in filter '+f+\
                     ' given required cadence '+str(self.cadence[i]))
 
             # Returns a list of the number of visits per night for each pointing
             pointing = [(dataSlice[self.ra_col][0],dataSlice[self.dec_col][0])]
-            (n_visits_desired, hrs_visibility) = calc_expected_visits.calc_expected_visits(pointing,
-                                                                         self.cadence[i],
-                                                                         self.start_date,self.end_date)
+
+            visit = calc_expected_visits.CalcExpectedVisitsMetric(pointing,
+                                                                  self.cadence[i],
+                                                                  self.start_date,
+                                                                  self.end_date,
+                                                                  self.filters[i],
+                                                                  self.ra_col,
+                                                                  self.dec_col,
+                                                                  verbose=self.verbose)
+
+            (n_visits_desired, hrs_visibility) = visit.run(dataSlice)
 
             n_visits_actual = []
 
             for j,d in enumerate(dates):
 
-                idx = np.where(dataSlice[self.filterCol] == f)
+                idx = np.where(dataSlice[self.filter_col] == f)
 
                 actual_visits_per_filter = dataSlice[idx]
 
@@ -134,7 +151,7 @@ class CadenceOverVisibilityWindowMetric(BaseMetric):
 
         result = (result / float( len(self.filters) ))*100.0
 
-        if verbose:
+        if self.verbose:
             print('METRIC RESULT: Observing cadence percentage = '+str(result) )
 
         return result
@@ -144,19 +161,19 @@ def compute_metric(params):
     """Function to execute the metric calculation when code is called from
     the commandline"""
 
-    obsdb = db.OpsimDatabase('../../tutorials/baseline2018a.db')
+    obsdb = db.OpsimDatabase('/home/docmaf/my_repoes/data/baseline2018a.db')
     outputDir = '/home/docmaf/'
     resultsDb = db.ResultsDb(outDir=outputDir)
 
     (propids, proptags) = obsdb.fetchPropInfo()
     surveyWhere = obsdb.createSQLWhere(params['survey'],proptags)
 
-    obs_params = {'filters': params['filters'],
-              'cadence': params['cadence'],
-              'start_date': params['start_date'],
-              'end_date': params['end_date']}
+    obs_params = { 'verbose': params['verbose'] }
 
-    metric = CadenceOverVisibilityWindowMetric(**obs_params)
+    metric = CadenceOverVisibilityWindowMetric(params['filters'], params['cadence'],
+                                                params['start_date'], params['end_date'],
+                                                **obs_params)
+
     slicer = slicers.HealpixSlicer(nside=64)
     sqlconstraint = surveyWhere
     bundle = metricBundles.MetricBundle(metric, slicer, sqlconstraint)
@@ -177,7 +194,7 @@ if __name__ == '__main__':
         print('  survey indicates which survey to select data from.  Options are {WFD, DD, NES}')
 
     else:
-        params = {}
+        params = { 'verbose': False }
 
         for arg in argv:
 
@@ -205,5 +222,9 @@ if __name__ == '__main__':
 
             except ValueError:
                 pass
+
+            if 'verbose' in arg:
+
+                params['verbose'] = True
 
         compute_metric(params)

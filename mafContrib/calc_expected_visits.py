@@ -33,8 +33,9 @@ class CalcExpectedVisitsMetric(BaseMetric):
                                           for each pointing
     """
 
-    def __init__(self, metricName='CalcExpectedVisitsMetric',
-                pointings,cadence,start_date,end_date,verbose=False):
+    def __init__(self, pointings,cadence,start_date,end_date,filter_id,
+                 ra_col='fieldRA', dec_col='fieldDec',
+                 metricName='CalcExpectedVisitsMetric',verbose=False):
         """Input:
             :param array ra:            RAs, J2000.0, sexigesimal format
             :param array dec:           Decs, J2000.0, sexigesimal format
@@ -54,27 +55,29 @@ class CalcExpectedVisitsMetric(BaseMetric):
         self.cadence = cadence
         self.start_date = start_date
         self.end_date = end_date
+        self.filter_id = filter_id
+        self.ra_col = ra_col
+        self.dec_col = dec_col
+        self.verbose = verbose
 
-        if len(self.filters) != len(self.cadence):
-            raise ValueError('ERROR: The list of filters requested must correspond to the list of required cadences')
-            exit()
+        columns = [ self.ra_col, self.dec_col ]
 
-        cols = [ ra_col, dec_col, visittime_col, filterCol ]
+        super(CalcExpectedVisitsMetric,self).__init__(col=columns, metricName=metricName)
 
-        super(CalcExpectedVisitsMetric,self).__init__(col=cols, metricName=metricName)
-
-    def run(self, dataSlice, slicePoint=None, verbose=False):
+    def run(self, dataSlice, slicePoint=None):
         n_visits = []
         hrs_visibility = []
 
-        if verbose:
+        if self.verbose:
             print('Calculating visbility for '+str(len(self.pointings))+' fields')
 
         for i in range(0,len(self.pointings),1):
 
-            (ra, dec) = pointings[i]
+            #(ra, dec) = pointings[i]
+            ra = dataSlice[self.ra_col][0]
+            dec = dataSlice[self.dec_col][0]
 
-            if verbose:
+            if self.verbose:
                 print(' -> RA '+str(ra)+', Dec '+str(dec))
 
             (total_time_visible, hrs_visible_per_night) = calculate_lsst_field_visibility_astropy.calculate_lsst_field_visibility(ra,dec,self.start_date,self.end_date,verbose=False)
