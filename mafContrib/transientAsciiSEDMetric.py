@@ -9,10 +9,14 @@
 # christian.setzer@fysik.su.se
 
 import os
+import warnings
 from builtins import zip
 from copy import deepcopy
 import numpy as np
-from sncosmo import read_griddata_ascii, TimeSeriesSource, Model
+try:
+    from sncosmo import read_griddata_ascii, TimeSeriesSource, Model
+except ImportError as error:
+    warnings.warn('sncosmo not installed')
 from astropy.cosmology import Planck15 as cosmo
 from lsst.sims.maf.metrics import BaseMetric
 from lsst.sims.maf.utils import m52snr

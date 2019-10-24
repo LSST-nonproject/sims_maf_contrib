@@ -12,6 +12,7 @@ from .varMetrics import *
 from .varDepthMetric import *
 
 from .transientAsciiMetric import *
+from .TDEsAsciiMetric import *
 
 from .lssMetrics import *
 

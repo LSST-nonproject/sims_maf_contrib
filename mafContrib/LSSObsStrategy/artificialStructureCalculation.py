@@ -38,8 +38,12 @@ import numpy as np
 import os
 import healpy as hp
 import scipy
-from sympy.solvers import solve
-from sympy import Symbol
+import warnings
+try:
+    from sympy.solvers import solve
+    from sympy import Symbol
+except ImportError as error:
+    warnings.warn('sympy not installed')
 import copy
 import time
 import sys
