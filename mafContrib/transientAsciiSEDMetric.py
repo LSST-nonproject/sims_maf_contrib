@@ -99,13 +99,13 @@ class transientAsciiSEDMetric(BaseMetric):
         survey_duration=10.0,
         survey_start=None,
         detect_SNR={"u": 5, "g": 5, "r": 5, "i": 5, "z": 5, "y": 5},
-        z=0.1,
-        num_pre_time=0,
-        pre_time=5.0,
-        num_filters=1,
+        z=0.075,
+        num_pre_time=2,
+        pre_time=25.0,
+        num_filters=2,
         filter_time=None,
         num_per_lightcurve=1,
-        num_phases_to_run=1,
+        num_phases_to_run=5,
         output_data=False,
         **kwargs,
     ):
@@ -123,7 +123,7 @@ class transientAsciiSEDMetric(BaseMetric):
         if self.output_data:
             super_dict = {"units": "", "metricDtype": "object"}
         else:
-            super_dict = {"units": "Fraction Detected"}
+            super_dict = {"units": "Number Detected"}
 
         super(transientAsciiSEDMetric, self).__init__(
             col=[self.mjdCol, self.m5Col, self.filterCol],
@@ -673,4 +673,4 @@ class transientAsciiSEDMetric(BaseMetric):
                 "detected": self.transient_detected,
             }
         else:
-            return float(self.num_detected) / self.max_num_transients
+            return float(self.num_detected)
