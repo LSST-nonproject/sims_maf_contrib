@@ -5,6 +5,7 @@ import os
 import numpy as np
 from lsst.sims.maf.metrics import BaseMetric
 import lsst.sims.maf.utils as utils
+from lsst.utils import getPackageDir
 
 __all__ = ['TDEsAsciiMetric']
 
@@ -21,10 +22,11 @@ class TDEsAsciiMetric(BaseMetric):
 
     Parameters
     ----------
-    asciifile : str
+    asciifile : str (None)
         The ascii file containing the inputs for the lightcurve (per filter):
         File should contain three columns - ['ph', 'mag', 'flt'] -
         of phase/epoch (in days), magnitude (in a particular filter), and filter.
+        If none, will load default from /data dir in repo
     
     detectSNR : dict, optional
         An observation will be counted toward the discovery criteria if the light curve SNR
@@ -87,8 +89,8 @@ class TDEsAsciiMetric(BaseMetric):
 
     """
 
-    def __init__(self, asciifile, metricName = 'TDEsAsciiMetric', 
-    			 mjdCol = 'expMJD', m5Col = 'fiveSigmaDepth', filterCol = 'filter', 
+    def __init__(self, asciifile=None, metricName = 'TDEsAsciiMetric', 
+    			 mjdCol = 'observationStartMJD', m5Col = 'fiveSigmaDepth', filterCol = 'filter', 
                  detectSNR = {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}, 
                  epochStart = -20, peakEpoch = 0, nearPeakT=5, postPeakT=10, nPhaseCheck = 1, 
                  nObsTotal = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}, 
@@ -97,7 +99,10 @@ class TDEsAsciiMetric(BaseMetric):
                  nFiltersNearPeak = 0, 
                  nObsPostPeak = 0, nFiltersPostPeak = 0, 
                  dataout=False, **kwargs):
-        
+
+        if asciifile is None:
+            asciifile = os.path.join(getPackageDir('sims_maf_contrib'), 'data/tde/TDEfaintfast_z0.1.dat')
+
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
