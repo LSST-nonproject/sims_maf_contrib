@@ -58,7 +58,7 @@ class TDEsAsciiMetric(BaseMetric):
     --------------
     nObsTotal: dict
         Minimum required total number of observations in each band.
-        Default {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
+        Default None (becomes) {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
 
     nObsPrePeak: float
         Number of observations before peak.
@@ -66,7 +66,7 @@ class TDEsAsciiMetric(BaseMetric):
 
     nObsNearPeak: dict
         Minimum required number of observations in each band near peak.
-        Default {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0},
+        Default None (becomes) {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0},
     
     nFiltersNearPeak: float
         Number of filters near peak.
@@ -91,17 +91,23 @@ class TDEsAsciiMetric(BaseMetric):
 
     def __init__(self, asciifile=None, metricName = 'TDEsAsciiMetric', 
     			 mjdCol = 'observationStartMJD', m5Col = 'fiveSigmaDepth', filterCol = 'filter', 
-                 detectSNR = {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}, 
+                 detectSNR = None,
                  epochStart = -20, peakEpoch = 0, nearPeakT=5, postPeakT=10, nPhaseCheck = 1, 
-                 nObsTotal = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}, 
+                 nObsTotal = None,
                  nObsPrePeak = 0,
-                 nObsNearPeak = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0},
+                 nObsNearPeak = None,
                  nFiltersNearPeak = 0, 
                  nObsPostPeak = 0, nFiltersPostPeak = 0, 
                  dataout=False, **kwargs):
 
         if asciifile is None:
             asciifile = os.path.join(getPackageDir('sims_maf_contrib'), 'data/tde/TDEfaintfast_z0.1.dat')
+        if detectSNR is None:
+            detectSNR = {'u': 5, 'g': 5, 'r': 5, 'i': 5, 'z': 5, 'y': 5}
+        if nObsTotal is None:
+            nObsTotal = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
+        if nObsNearPeak is None:
+            nObsNearPeak = {'u': 0, 'g': 0, 'r': 0, 'i': 0, 'z': 0, 'y': 0}
 
         self.mjdCol = mjdCol
         self.m5Col = m5Col
@@ -133,31 +139,34 @@ class TDEsAsciiMetric(BaseMetric):
             super(TDEsAsciiMetric, self).__init__(col=[self.mjdCol, self.m5Col, self.filterCol],
                                                        units='Fraction Detected', 
                                                        metricName='TDEsAsciiMetric', **kwargs)
-        self.read_lightCurve(asciifile)
-    
-        print('Finish initializing metric')
 
-    def read_lightCurve(self, asciifile):
+        # Read the light curve template from disk.
+        self._read_lightCurve(asciifile)
+
+        # Calculate some properties of the lightcurve that don't vary from slicepoint to slicepoint
+        self.transDuration = self.lcv_template['ph'].max() - self.lcv_template['ph'].min()  # days
+        # tshifts tracks the timeoffsets for each 'shifted' lightcurve
+        self.tshifts = np.arange(self.nPhaseCheck) * self.transDuration / float(self.nPhaseCheck)
+        # Separate the lightcurve into filters, so we don't have to do that each time.
+        self.lc = {}
+        lc_filters = set(self.lcv_template['flt'])
+        for f in lc_filters:
+            self.lc[f] = self.lcv_template[self.lcv_template['flt'] == f]
+
+    def _read_lightCurve(self, asciifile):
         # read lightcurve template from an ascii file.
         if not os.path.isfile(asciifile):
             raise IOError('Could not find lightcurve ascii file %s' % (asciifile))
+        # Lightcurve template should consist of rows of time (in days), mag, and filter.
+        self.lcv_template = np.genfromtxt(asciifile, dtype=[('ph', 'f8'), ('mag', 'f8'), ('flt', 'U1')])
 
-        self.lcv_template = np.genfromtxt(asciifile, dtype=[('ph', 'f8'), ('mag', 'f8'), ('flt', 'S1')])
-
-    def make_lightCurve(self, time, filters):
-        # create light curve
-        lcv_template = self.lcv_template
-        
+    def sample_lightCurve(self, time, filters):
+        # sample light curve template at time and in filters of observations (time and filters)
         lcMags = np.zeros(time.size, dtype=float)
-        
-        for f in set(lcv_template['flt']):
-            fMatch_ascii = np.where(np.array(lcv_template['flt']) == f)[0]
-            
-            # Interpolate the lightcurve template to the times of the observations, in this filter.
-            lc_ascii_filter = np.interp(time, np.array(lcv_template['ph'], float)[fMatch_ascii],
-                                            np.array(lcv_template['mag'], float)[fMatch_ascii])
-            lcMags[filters == f.decode("utf-8")] = lc_ascii_filter[filters == f.decode("utf-8")]
-        
+        for f in set(filters):
+            matches = np.where(filters == f)
+            # Generate magnitudes at the appropriate times
+            lcMags[matches] = np.interp(time[matches], self.lc[f]['ph'], self.lc[f]['mag'])
         return lcMags
 
     def snr2std(self, snr):
@@ -175,7 +184,6 @@ class TDEsAsciiMetric(BaseMetric):
         ----------
         dataSlice : numpy.array
             Numpy structured array containing the data related to the visits provided by the slicer.
-        
         slicePoint : dict, optional
             Dictionary containing information about the slicepoint currently active in the slicer.
 
@@ -184,36 +192,31 @@ class TDEsAsciiMetric(BaseMetric):
         float or a list of dicts
             The total number of transients that could be detected. (if dataout is False)
             Each dictionary with arrays of 'tshift', 'expMJD', 'm5', 'filters', 'lcNumber', 'lcEpoch', 
-            'prePeakCheck' 'nearPeakCheck', 'postPeakCheck', 'lcMags', 'lcSNR', 'lcMagsStd', 'lcAboveThresh', 'detected'
-
+            'prePeakCheck' 'nearPeakCheck', 'postPeakCheck', 'lcMags', 'lcSNR',
+            'lcMagsStd', 'lcAboveThresh', 'detected'
         """
-
-        # Sort the entire dataSlice in order of time.  
+        # Sort the entire dataSlice in order of time.
         dataSlice.sort(order=self.mjdCol)
         tSpan = (dataSlice[self.mjdCol].max() - dataSlice[self.mjdCol].min()) # in days
-        
-        lcv_template = self.lcv_template
-        transDuration = lcv_template['ph'].max() - lcv_template['ph'].min() # in days
 
-        # phase check
-        tshifts = np.arange(self.nPhaseCheck) * transDuration / float(self.nPhaseCheck)
-
-        lcNumber = np.floor((dataSlice[self.mjdCol] - dataSlice[self.mjdCol].min()) / transDuration)
+        # Lightcurve number indicates how many repetitions this dataSlice will contain
+        lcNumber = np.floor((dataSlice[self.mjdCol] - dataSlice[self.mjdCol].min()) / self.transDuration)
         ulcNumber = np.unique(lcNumber)
 
         nTransMax = 0
         nDetected = 0
         dataout_dict_list = []
-        for tshift in tshifts:
-            #print('check tshift ', tshift)
-            lcEpoch = np.fmod(dataSlice[self.mjdCol] - dataSlice[self.mjdCol].min() + tshift, transDuration) + self.epochStart
+        for tshift in self.tshifts:
+            # lcEpoch are the translated time (in days) for the times of each observation
+            lcEpoch = np.fmod(dataSlice[self.mjdCol] - dataSlice[self.mjdCol].min() + tshift,
+                              self.transDuration) + self.epochStart
      
             # total number of transients possibly detected
-            nTransMax += np.ceil(tSpan/transDuration)
+            nTransMax += np.ceil(tSpan/self.transDuration)
 
             # generate the actual light curve
             lcFilters = dataSlice[self.filterCol]
-            lcMags = self.make_lightCurve(lcEpoch, lcFilters)
+            lcMags = self.sample_lightCurve(lcEpoch, lcFilters)
             lcSNR = utils.m52snr(lcMags, dataSlice[self.m5Col])
 
             # Identify detections above SNR for each filter
@@ -229,7 +232,6 @@ class TDEsAsciiMetric(BaseMetric):
 
                 lcN_idx = np.where(lcNumber == lcN)
                 lcEpoch_i = lcEpoch[lcN_idx]
-                lcMags_i = lcMags[lcN_idx]
                 lcFilters_i = lcFilters[lcN_idx]
                 lcAboveThresh_i = lcAboveThresh[lcN_idx]
                 
@@ -248,7 +250,8 @@ class TDEsAsciiMetric(BaseMetric):
                     lcDetectOut[lcN_idx] = False
 
                 # check number of observations near peak for each band
-                nearPeakCheck = (lcEpoch_i >= self.peakEpoch - self.nearPeakT/2) & (lcEpoch_i <= self.peakEpoch + self.nearPeakT/2) 
+                nearPeakCheck = (lcEpoch_i >= self.peakEpoch - self.nearPeakT/2) & \
+                                (lcEpoch_i <= self.peakEpoch + self.nearPeakT/2)
                 nearPeakIdx = np.where(nearPeakCheck==True)
                 
                 for f in np.unique(lcFilters_i):
@@ -265,7 +268,8 @@ class TDEsAsciiMetric(BaseMetric):
 
                 ## check number of observations post peak
                 # postPeakCheck 
-                postPeakCheck = (lcEpoch_i >= self.peakEpoch + self.nearPeakT/2) & (lcEpoch_i <= self.peakEpoch + self.nearPeakT/2 + self.postPeakT )
+                postPeakCheck = (lcEpoch_i >= self.peakEpoch + self.nearPeakT/2) & \
+                                (lcEpoch_i <= self.peakEpoch + self.nearPeakT/2 + self.postPeakT )
                 postPeakIdx = np.where(postPeakCheck == True)
                 if len( np.where(lcAboveThresh_i[postPeakIdx])[0] ) < self.nObsPostPeak:
                     lcDetect[i] = False
@@ -280,26 +284,29 @@ class TDEsAsciiMetric(BaseMetric):
             # return values   
             nDetected += len(np.where(lcDetect == True)[0])
             prePeakCheck = (lcEpoch <= self.peakEpoch - self.nearPeakT/2) 
-            nearPeakCheck = (lcEpoch >= (self.peakEpoch - self.nearPeakT/2)) & (lcEpoch <= (self.peakEpoch + self.nearPeakT/2) )
-            postPeakCheck = (lcEpoch >= (self.peakEpoch + self.nearPeakT/2)) & (lcEpoch <= (self.peakEpoch + self.nearPeakT/2 + self.postPeakT) )
+            nearPeakCheck = (lcEpoch >= (self.peakEpoch - self.nearPeakT/2)) & \
+                            (lcEpoch <= (self.peakEpoch + self.nearPeakT/2) )
+            postPeakCheck = (lcEpoch >= (self.peakEpoch + self.nearPeakT/2)) & \
+                            (lcEpoch <= (self.peakEpoch + self.nearPeakT/2 + self.postPeakT) )
 
             # create a dict for each tshift
-            dataout_dict_tshift = {'tshift': np.repeat(tshift, len(lcEpoch)), 
-                        'expMJD' : dataSlice[self.mjdCol],
-                        'm5' : dataSlice[self.m5Col],
-                        'filters': dataSlice[self.filterCol],
-                        'lcNumber': lcNumber,
-                        'lcEpoch': lcEpoch,
-                        'prePeakCheck': prePeakCheck,
-                        'nearPeakCheck': nearPeakCheck,
-                        'postPeakCheck': postPeakCheck,
-                        'lcMags': lcMags,
-                        'lcSNR': lcSNR, 
-                        'lcMagsStd': self.snr2std(lcSNR),
-                        'lcAboveThresh': lcAboveThresh,
-                        'detected': lcDetectOut}
+            if self.dataout:
+                dataout_dict_tshift = {'tshift': np.repeat(tshift, len(lcEpoch)),
+                                       'timeMJD': dataSlice[self.mjdCol],
+                                       'm5': dataSlice[self.m5Col],
+                                       'filters': dataSlice[self.filterCol],
+                                       'lcNumber': lcNumber,
+                                       'lcEpoch': lcEpoch,
+                                       'prePeakCheck': prePeakCheck,
+                                       'nearPeakCheck': nearPeakCheck,
+                                       'postPeakCheck': postPeakCheck,
+                                       'lcMags': lcMags,
+                                       'lcSNR': lcSNR,
+                                       'lcMagsStd': self.snr2std(lcSNR),
+                                       'lcAboveThresh': lcAboveThresh,
+                                       'detected': lcDetectOut}
 
-            dataout_dict_list.append(dataout_dict_tshift)
+                dataout_dict_list.append(dataout_dict_tshift)
 
         if self.dataout:
             # the output is a list of dicts which contain parameters for each phase 
