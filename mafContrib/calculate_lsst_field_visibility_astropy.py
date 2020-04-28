@@ -6,9 +6,9 @@ Created on Tue Sep 18 13:35:41 2018
 """
 from sys import argv
 import numpy as np
-import matplotlib.pyplot as plt
-from astropy.visualization import astropy_mpl_style
-plt.style.use(astropy_mpl_style)
+import matplotlib.pylab as plt
+# from astropy.visualization import astropy_mpl_style
+# plt.style.use(astropy_mpl_style)
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz

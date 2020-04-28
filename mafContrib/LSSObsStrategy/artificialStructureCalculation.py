@@ -32,7 +32,6 @@ from builtins import range
 # Humna Awan: humna.awan@rutgers.edu
 #####################################################################################################
 import matplotlib as mpl
-mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -49,15 +48,6 @@ import time
 import sys
 from matplotlib.ticker import FuncFormatter
 import datetime
-fontsize = 18
-mpl.rcParams['figure.figsize'] = (10, 6)
-mpl.rcParams['axes.labelsize'] = fontsize
-mpl.rcParams['xtick.labelsize'] = fontsize-2
-mpl.rcParams['ytick.labelsize'] = fontsize-2
-mpl.rcParams['legend.fontsize'] = fontsize-2
-mpl.rcParams['axes.titlesize'] = fontsize
-mpl.rcParams['axes.linewidth'] = 2
-mpl.rcParams['axes.grid'] = True
 
 import lsst.sims.maf
 import lsst.sims.maf.db as db
