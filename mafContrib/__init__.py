@@ -34,3 +34,4 @@ from .LSSObsStrategy import *
 from .GW170817DetMetric import *
 from .plasticcMetrics import *
 from .microlensingMetric import *
+from .TDEsPopMetric import *
