@@ -14,6 +14,11 @@ __all__ = ['tde_lc', 'TDEsPopMetric', 'TDEsPopSlicer']
 class tde_lc(object):
     """
     Read in some TDE lightcurves
+
+    Parameters
+    ----------
+    file_list : list of str (None)
+        List of file paths to load. If None, loads up all the files from data/tde/
     """
 
     def __init__(self, file_list=None):
@@ -37,6 +42,14 @@ class tde_lc(object):
             self.data.append(new_dict)
 
     def interp(self, t, filtername, lc_indx=0):
+        """
+        t : array of floats
+            The times to interpolate the light curve to.
+        filtername : str
+            The filter. one of ugrizy
+        lc_index : int (0)
+            Which file to use.
+        """
 
         result = np.interp(t, self.data[lc_indx][filtername]['ph'],
                            self.data[lc_indx][filtername]['mag'],
