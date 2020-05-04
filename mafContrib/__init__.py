@@ -2,8 +2,6 @@
 # stackers or slicers.
 #
 
-from .TDEsMonteMetric import *
-
 from .seasonLengthMetric import *
 from .campaignLengthMetric import *
 from .meanNightSeparationMetric import *
