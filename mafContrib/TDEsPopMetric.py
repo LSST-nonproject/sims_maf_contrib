@@ -8,10 +8,10 @@ import glob
 from lsst.sims.photUtils import Sed
 
 
-__all__ = ['tde_lc', 'TDEsPopMetric', 'TDEsPopSlicer']
+__all__ = ['Tde_lc', 'TdePopMetric', 'generateTdePopSlicer']
 
 
-class tde_lc(object):
+class Tde_lc(object):
     """
     Read in some TDE lightcurves
 
@@ -57,7 +57,7 @@ class tde_lc(object):
         return result
 
 
-class TDEsPopMetric(metrics.BaseMetric):
+class TdePopMetric(metrics.BaseMetric):
     def __init__(self, metricName='TDEsPopMetric', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
                  filterCol='filter', nightCol='night', ptsNeeded=2, file_list=None, mjd0=59853.5,
                  **kwargs):
@@ -68,7 +68,7 @@ class TDEsPopMetric(metrics.BaseMetric):
         self.nightCol = nightCol
         self.ptsNeeded = ptsNeeded
 
-        self.lightcurves = tde_lc(file_list=file_list)
+        self.lightcurves = Tde_lc(file_list=file_list)
         self.mjd0 = mjd0
 
         waveMins = {'u': 330., 'g': 403., 'r': 552., 'i': 691., 'z': 818., 'y': 950.}
@@ -85,9 +85,9 @@ class TDEsPopMetric(metrics.BaseMetric):
         self.R_v = 3.1
 
         cols = [self.mjdCol, self.m5Col, self.filterCol, self.nightCol]
-        super(TDEsPopMetric, self).__init__(col=cols, units='Detected, 0 or 1',
-                                            metricName=metricName, maps=maps,
-                                            **kwargs)
+        super(TdePopMetric, self).__init__(col=cols, units='Detected, 0 or 1',
+                                           metricName=metricName, maps=maps,
+                                           **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
         result = 0
@@ -111,7 +111,22 @@ class TDEsPopMetric(metrics.BaseMetric):
         return result
 
 
-def TDEsPopSlicer(t_start=1, t_end=3652, n_events=10000, seed=42, n_files=7):
+def generateTdePopSlicer(t_start=1, t_end=3652, n_events=10000, seed=42, n_files=7):
+    """ Generate a population of TDE events, and put the info about them into a UserPointSlicer object
+
+    Parameters
+    ----------
+    t_start : float (1)
+        The night to start tde events on (days)
+    t_end : float (3652)
+        The final night of TDE events
+    n_events : int (10000)
+        The number of TDE events to generate
+    seed : float
+        The seed passed to np.random
+    n_files : int (7)
+        The number of different TDE lightcurves to use
+    """
 
     ra, dec = uniformSphere(n_events, seed=seed)
     peak_times = np.random.uniform(low=t_start, high=t_end, size=n_events)

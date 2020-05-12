@@ -114,8 +114,8 @@ class MicrolensingMetric(metrics.BaseMetric):
             return 0
 
 
-def microlensingSlicer(min_crossing_time=1, max_crossing_time=10, t_start=1,
-                       t_end=3652, n_events=10000, seed=42, nside=128, filtername='r'):
+def generateMicrolensingSlicer(min_crossing_time=1, max_crossing_time=10, t_start=1,
+                               t_end=3652, n_events=10000, seed=42, nside=128, filtername='r'):
     """
     Generate a UserPointSlicer with a population of microlensing events. To be used with
     MicrolensingMetric
