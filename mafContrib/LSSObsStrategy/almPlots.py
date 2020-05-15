@@ -10,14 +10,7 @@ import numpy as np
 import os
 import healpy as hp
 import pylab
-fontsize = 18
-pylab.rcParams['figure.figsize'] = (10, 6)
-pylab.rcParams['axes.labelsize'] = fontsize
-pylab.rcParams['xtick.labelsize'] = fontsize-2
-pylab.rcParams['ytick.labelsize'] = fontsize-2
-pylab.rcParams['legend.fontsize'] = fontsize-2
-pylab.rcParams['axes.titlesize'] = fontsize
-pylab.rcParams['axes.linewidth'] = 2
+
 
 __all__= ['almPlots']
     

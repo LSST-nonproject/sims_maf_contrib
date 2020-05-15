@@ -6,16 +6,6 @@
 ###############################################################################################################################
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-fontsize = 18
-mpl.rcParams['figure.figsize'] = (10, 6)
-mpl.rcParams['figure.titlesize'] = fontsize+2
-mpl.rcParams['axes.labelsize'] = fontsize
-mpl.rcParams['xtick.labelsize'] = fontsize-2
-mpl.rcParams['ytick.labelsize'] = fontsize-2
-mpl.rcParams['legend.fontsize'] = fontsize-2
-mpl.rcParams['axes.titlesize'] = fontsize
-mpl.rcParams['axes.linewidth'] = 2
-mpl.rcParams['axes.grid'] = True
 import numpy as np
 import os
 import healpy as hp
