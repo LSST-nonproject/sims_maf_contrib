@@ -20,7 +20,7 @@ class depthLimitedNumGalMetric(metrics.BaseMetric):
                             'all' for no redshift restriction (so consider 0.<z<4.0)
                             Default: 'all'
         * nfilters_needed: int: number of filters in which to require coverage. Default: 6
-        * lim_mag_i: float: limiting mag for the i-band coadded dust-corrected depth. Default: 26.0
+        * lim_mag_i_ptsrc: float: point-source limiting mag for the i-band coadded dust-corrected depth. Default: 26.0
         * lim_ebv: float: limiting EBV value. Default: 0.2
 
     Returns
@@ -30,7 +30,7 @@ class depthLimitedNumGalMetric(metrics.BaseMetric):
     """
     def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter',
                  maps=['DustMap'], nside=128, filterBand='i', redshiftBin='all',
-                 nfilters_needed=6, lim_mag_i=26.0, lim_ebv=0.2, **kwargs):
+                 nfilters_needed=6, lim_mag_i_ptsrc=26.0, lim_ebv=0.2, **kwargs):
         self.m5Col = m5Col
         self.filterCol = filterCol
         self.filterBand = filterBand
@@ -45,7 +45,7 @@ class depthLimitedNumGalMetric(metrics.BaseMetric):
         # set up the metric for extragalactic footprint
         self.eg_metric = egFootprintMetric(m5Col=self.m5Col, filterCol=self.filterCol, maps=maps,
                                            nfilters_needed=nfilters_needed,
-                                           lim_mag_i=lim_mag_i, lim_ebv=lim_ebv, return_coadd_band=None)
+                                           lim_mag_i_ptsrc=lim_mag_i_ptsrc, lim_ebv=lim_ebv, return_coadd_band=None)
         # insantiate the parent object
         super(depthLimitedNumGalMetric, self).__init__(col=[self.m5Col, self.filterCol],
                                                        maps=maps, **kwargs)

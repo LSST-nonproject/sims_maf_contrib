@@ -22,7 +22,7 @@ class egFootprintMetric(metrics.BaseMetric):
         * filterCol: str: name of column for filter in the data. Default: 'filter'
         * maps: arr: array of map names. Default: ['DustMap']
         * nfilters_needed: int: number of filters in which to require coverage. Default: 6
-        * lim_mag_i: float: limiting mag for the i-band coadded dust-corrected depth. Default: 26.0
+        * lim_mag_i_ptsrc: float: point-source limiting mag for the i-band coadded dust-corrected depth. Default: 26.0
         * lim_ebv: float: limiting EBV value. Default: 0.2
         * return_coadd_band: None or one of 'u', 'g', 'r', 'i', 'z', 'y'. Use to specify whether
                              want coadded depth value returned for the good pixels. Default: None.
@@ -36,11 +36,11 @@ class egFootprintMetric(metrics.BaseMetric):
 
     """
     def __init__(self, m5Col='fiveSigmaDepth',  filterCol='filter', maps=['DustMap'],
-                 nfilters_needed=6, lim_mag_i=26.0, lim_ebv=0.2, return_coadd_band=None, **kwargs):
+                 nfilters_needed=6, lim_mag_i_ptsrc=26.0, lim_ebv=0.2, return_coadd_band=None, **kwargs):
         self.m5Col = m5Col
         self.filterCol = filterCol
         self.nfilters_needed = int(nfilters_needed)
-        self.lim_mag_i = lim_mag_i
+        self.lim_mag_i_ptsrc = lim_mag_i_ptsrc
         self.lim_ebv = lim_ebv
         self.filters = ['u', 'g', 'r', 'i', 'z', 'y']
         if (return_coadd_band is not None) and (return_coadd_band not in self.filters):
@@ -80,7 +80,7 @@ class egFootprintMetric(metrics.BaseMetric):
         ebv = slicePoint['ebv']
 
         # now incorporate depth + ebv cuts
-        keep_condition = keep_condition and (ebv < self.lim_ebv) and (ext_iband_coadd > self.lim_mag_i)
+        keep_condition = keep_condition and (ebv < self.lim_ebv) and (ext_iband_coadd > self.lim_mag_i_ptsrc)
 
         # mask the slice pt if keep_condition is false
         if keep_condition:
