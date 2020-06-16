@@ -34,9 +34,14 @@ class depthLimitedNumGalMetric(metrics.BaseMetric):
         self.m5Col = m5Col
         self.filterCol = filterCol
         self.filterBand = filterBand
+        # set up the extended source limiting mag
+        # galaxies are x2 as seeing: seeing is generally 0.7arcsec and a typical galaxies is 1arcsec
+        # => for extended source limiting mag of x, we'd need x + 0.7 as the point-source limiting mag; 0.7 comes from
+        # $\sqrt{1/2}$; basically have x2 difference in magnitudes between point source and extended source.
+        lim_mag_i_extsrc = lim_mag_i_ptsrc - 0.7
         # set up the metric for galaxy counts
         self.galmetric = GalaxyCountsMetric(m5Col=self.m5Col, nside=nside,
-                                            upperMagLimit=32.0,
+                                            upperMagLimit=lim_mag_i_extsrc,
                                             includeDustExtinction=True,
                                             filterBand=self.filterBand, redshiftBin=redshiftBin,
                                             CFHTLSCounts=False,
