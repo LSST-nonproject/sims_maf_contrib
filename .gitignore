@@ -7,3 +7,5 @@ tmp.sqlite
 *.pdf
 .ipynb_checkpoints
 baseline2018a.db
+data/plasticc
+tutorials/lc*dat
