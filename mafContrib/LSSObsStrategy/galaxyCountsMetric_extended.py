@@ -15,10 +15,8 @@ from __future__ import print_function
 # Humna Awan: humna.awan@rutgers.edu
 #####################################################################################################
 import numpy as np
-import healpy as hp
 import scipy
 from lsst.sims.maf.metrics import BaseMetric, Coaddm5Metric, ExgalM5
-import lsst.sims.maf.maps as maps
 from mafContrib.LSSObsStrategy.constantsForPipeline import powerLawConst_a, powerLawConst_b, normalizationConstant
 
 __all__ = ['GalaxyCountsMetric_extended']
@@ -91,11 +89,10 @@ class GalaxyCountsMetric_extended(BaseMetric):
         self.powerLawConst_b = powerLawConst_b
 
     # ------------------------------------------------------------------------
-    # set up the integrand to calcaulte galaxy counts
+    # set up the integrand to calculate galaxy counts
     def _galCount(self, apparent_mag, coaddm5):
         # calculate the change in the power law constant based on the band
         # colors assumed here: (u-g)=(g-r)=(r-i)=(i-z)= (z-y)=0.4
-        bandCorrection = -100
         if (self.filterBand=='u'):   # dimmer than i: u-g= 0.4 => g= u-0.4 => i= u-0.4*3
             bandCorrection = -0.4*3.
         elif (self.filterBand=='g'):   # dimmer than i: g-r= 0.4 => r= g-0.4 => i= g-0.4*2
