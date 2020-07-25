@@ -1,5 +1,3 @@
-from __future__ import print_function
-from builtins import str
 from builtins import range
 #####################################################################################################
 # Purpose: change the values/mask of a metricBundle in the pixels with a certain value/mask.

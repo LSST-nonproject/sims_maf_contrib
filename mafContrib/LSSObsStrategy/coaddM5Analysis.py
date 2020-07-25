@@ -1,5 +1,3 @@
-from __future__ import print_function
-from builtins import str
 #####################################################################################################
 # Purpose: calculate the coadded 5-sigma depth from various survey strategies. Incudes functionality
 # to consider various survey strategies, mask shallow borders, create/save/show relevant plots, do
@@ -7,8 +5,8 @@ from builtins import str
 
 # Humna Awan: humna.awan@rutgers.edu
 #####################################################################################################
-import matplotlib as mpl
-mpl.use('Agg')
+#import matplotlib as mpl
+#mpl.use('Agg')
 import numpy as np
 import os
 import healpy as hp
@@ -23,7 +21,6 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as metricBundles
-import lsst.sims.maf.utils as mafUtils
 import lsst.sims.maf.maps as maps
 import lsst.sims.maf.stackers as mafStackers   # stackers in sims_maf
 

@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import healpy as hp
-import pylab
-
 
 __all__= ['almPlots']
     
