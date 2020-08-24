@@ -1,5 +1,6 @@
 import numpy as np
 import lsst.sims.maf.metrics as metrics
+from lsst.sims.photUtils import Sed
 
 
 class BaseLightCurve(object):
@@ -8,7 +9,7 @@ class BaseLightCurve(object):
     def __init__(self, **kwargs):
         pass
 
-    def __call__(self, t, filtername, slicePoint=None, **kwargs):
+    def __call__(self, t, filtername, **kwargs):
         """
         Parameters
         ----------
@@ -23,12 +24,13 @@ class BaseLightCurve(object):
         """
         pass
 
+
 class BaseDetectionMetric(metrics.BaseMetric):
     """Base class for making a detection criteria for a transient object
     """
     def __init__(self, mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
                  filterCol='filter', nightCol='night', ptsNeeded=2, lightcurve_obj=BaseLightCurve, mjd0=59853.5,
-                 dust=True, units='Detected, 0 or 1', **kwargs):
+                 dust=True, units='Detected, 0 or 1', metricName='BaseDetectMetric', **kwargs):
 
         maps = []
         self.mjdCol = mjdCol
@@ -37,7 +39,7 @@ class BaseDetectionMetric(metrics.BaseMetric):
         self.nightCol = nightCol
         self.ptsNeeded = ptsNeeded
 
-        self.lightcurves = Tde_lc(file_list=file_list)
+        self.lightcurves = lightcurve_obj
         self.mjd0 = mjd0
 
         self.dust = dust
@@ -63,17 +65,17 @@ class BaseDetectionMetric(metrics.BaseMetric):
                                                   **kwargs)
 
         def _pre_peak_detect(self, dataSlice, slicePoint, mags, t):
-        """
-        Simple detection criteria. 
-        """
-        result = 0
-        # Simple alert criteria. Could make more in depth, or use reduce functions
-        # to have multiple criteria checked.
-        pre_peak_detected = np.where((t < 0) & (mags < dataSlice[self.m5Col]))[0]
+            """
+            Simple detection criteria.
+            """
+            result = 0
+            # Simple alert criteria. Could make more in depth, or use reduce functions
+            # to have multiple criteria checked.
+            pre_peak_detected = np.where((t < 0) & (mags < dataSlice[self.m5Col]))[0]
 
-        if pre_peak_detected.size > self.ptsNeeded:
-            result = 1
-        return result
+            if pre_peak_detected.size > self.ptsNeeded:
+                result = 1
+            return result
 
     def _some_color_detect(self, dataSlice, slicePoint, mags, t):
         result = 1
@@ -118,27 +120,37 @@ class BaseDetectionMetric(metrics.BaseMetric):
 
         return result
 
-        def run(self, dataSlice, slicePoint=None):
-            result = {}
-            t = dataSlice[self.mjdCol] - self.mjd0 - slicePoint['peak_time']
-            mags = np.zeros(t.size, dtype=float)
+    def _calc_mags(self, dataSlice, slicePoint):
 
-            for filtername in np.unique(dataSlice[self.filterCol]):
-                infilt = np.where(dataSlice[self.filterCol] == filtername)
-                mags[infilt] = self.lightcurves(t[infilt], filtername, slicePoint=slicePoint)
-                # Apply dust extinction on the light curve
-                if self.dust:
-                    A_x = (self.a[filtername][0]+self.b[filtername][0]/self.R_v)*(self.R_v*slicePoint['ebv'])
-                    mags[infilt] -= A_x
+        t = dataSlice[self.mjdCol] - self.mjd0 - slicePoint['peak_time']
+        mags = np.zeros(t.size, dtype=float)
 
-            result['pre_peak'] = self._pre_peak_detect(dataSlice, slicePoint, mags, t)
-            result['some_color'] = self._some_color_detect(dataSlice, slicePoint, mags, t)
-            result['some_color_pu'] = self._some_color_pu_detect(dataSlice, slicePoint, mags, t)
+        for filtername in np.unique(dataSlice[self.filterCol]):
+            infilt = np.where(dataSlice[self.filterCol] == filtername)
+            mags[infilt] = self.lightcurves(t[infilt], filtername, **slicePoint)
+            # Apply dust extinction on the light curve
+            if self.dust:
+                A_x = (self.a[filtername][0]+self.b[filtername][0]/self.R_v)*(self.R_v*slicePoint['ebv'])
+                mags[infilt] -= A_x
+        return mags
 
-            return result
+    def run(self, dataSlice, slicePoint=None):
+        result = {}
 
-    
+        return result
+
+
 def BaseMontewReduceMetric(BaseDetectionMetric):
+
+    def run(self, dataSlice, slicePoint=None):
+        mags = self._calc_mags(dataSlice, slicePoint)
+        t = dataSlice[self.mjdCol] - self.mjd0 - slicePoint['peak_time']
+        result = {}
+        result['pre_peak'] = self._pre_peak_detect(dataSlice, slicePoint, mags, t)
+        result['some_color'] = self._some_color_detect(dataSlice, slicePoint, mags, t)
+        result['some_color_pu'] = self._some_color_pu_detect(dataSlice, slicePoint, mags, t)
+
+        return result
 
     def reduce_prepeak(self, metric):
         return metric['pre_peak']
