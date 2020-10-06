@@ -3,7 +3,7 @@ import numpy as np
 from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended as GalaxyCountsMetric
 from mafContrib.lssmetrics.egFootprintMetric import egFootprintMetric
 
-class depthLimitedNumGalMetric(metrics.BaseMetric):
+class DepthLimitedNumGalMetric(metrics.BaseMetric):
     """
 
     This metric calculates the number of galaxies while accounting for the extragalactic footprint.
@@ -52,7 +52,7 @@ class depthLimitedNumGalMetric(metrics.BaseMetric):
                                            nfilters_needed=nfilters_needed,
                                            lim_mag_i_ptsrc=lim_mag_i_ptsrc, lim_ebv=lim_ebv, return_coadd_band=None)
         # insantiate the parent object
-        super(depthLimitedNumGalMetric, self).__init__(col=[self.m5Col, self.filterCol],
+        super(DepthLimitedNumGalMetric, self).__init__(col=[self.m5Col, self.filterCol],
                                                        maps=maps, **kwargs)
         self.metricDtype = 'object'
 
