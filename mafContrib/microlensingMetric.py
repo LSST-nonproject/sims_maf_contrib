@@ -38,6 +38,15 @@ class MicrolensingMetric(metrics.BaseMetric):
     ptsNeeded : int
         Number of an object's lightcurve points required to be above the 5-sigma limiting depth
         before it is considered detected.
+        
+    time_before_peak: int
+        Number of days before lightcurve peak to qualify event as triggered.
+        Default is 0.
+    
+    detect: bool
+        By default we trigger which only looks at points before the peak of the lightcurve.
+        When detect = True, observations on either side of the lightcurve are considered.
+        Default is False.
 
     Notes
     -----
@@ -48,13 +57,15 @@ class MicrolensingMetric(metrics.BaseMetric):
 
     """
     def __init__(self, metricName='MicrolensingMetric', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
-                 filterCol='filter', nightCol='night', ptsNeeded=2, rmag=20, detect_sigma=3., **kwargs):
+                 filterCol='filter', nightCol='night', ptsNeeded=2, rmag=20, detect_sigma=3., time_before_peak=0, detect = False, **kwargs):
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
         self.nightCol = nightCol
         self.ptsNeeded = ptsNeeded
         self.detect_sigma = detect_sigma
+        self.time_before_peak = time_before_peak
+        self.detect = detect
         # For now, let's just have a flat SED
         # XXX--update to a stellar type
         filters = 'ugrizy'
@@ -69,6 +80,8 @@ class MicrolensingMetric(metrics.BaseMetric):
                                                  **kwargs)
 
     def run(self, dataSlice, slicePoint=None):
+        if self.detect == True and self.time_before_peak > 0:
+            raise Exception("When detect = True, time_before_peak must be zero")
         # Generate the lightcurve for this object
         # make t a kind of simple way
         t = dataSlice[self.mjdCol] - np.min(dataSlice[self.nightCol])
@@ -91,27 +104,42 @@ class MicrolensingMetric(metrics.BaseMetric):
         mag_uncert = 2.5*np.log10(1+1./snr)
 
         n_pre = []
+        n_post = []
         for filtername in filters:
             # observations pre-peak and in the given filter
-            infilt = np.where((dataSlice[self.filterCol] == filtername) & (t < slicePoint['peak_time']))[0]
+            infilt = np.where((dataSlice[self.filterCol] == filtername) & (t < (slicePoint['peak_time'] - self.time_before_peak)))[0]
+            # observations post-peak and in the given filter
+            outfilt = np.where((dataSlice[self.filterCol] == filtername) & (t > slicePoint['peak_time']))[0]
             # Broadcast to calc the mag_i - mag_j
             diffs = amplified_mags[infilt] - amplified_mags[infilt][:, np.newaxis]
             diffs_uncert = np.sqrt(mag_uncert[infilt]**2 + mag_uncert[infilt][:, np.newaxis]**2)
+            diffs_post = amplified_mags[outfilt] - amplified_mags[outfilt][:, np.newaxis]
+            diffs_post_uncert = np.sqrt(mag_uncert[outfilt]**2 + mag_uncert[outfilt][:, np.newaxis]**2)
 
             # Calculating this as a catalog-level detection. In theory,
             # we could have a high SNR template image, so there would be
             # little to no additional uncertianty from the subtraction.
 
             sigma_above = np.abs(diffs)/diffs_uncert
+            sigma_above_post = np.abs(diffs_post)/diffs_post_uncert
             # divide by 2 because array has i,j and j,i
             n_above = np.size(np.where(sigma_above > self.detect_sigma)[0])/2
             n_pre.append(n_above)
+            n_above_post = np.size(np.where(sigma_above_post > self.detect_sigma)[0])/2
+            n_post.append(n_above_post)
 
         npts = np.sum(n_pre)
-        if npts >= self.ptsNeeded:
-            return 1
+        npts_post = np.sum(n_post)
+        if self.detect == True:
+            if npts >= self.ptsNeeded and npts_post >=self.ptsNeeded:
+                return 1
+            else:
+                return 0
         else:
-            return 0
+            if npts >= self.ptsNeeded:
+                return 1
+            else:
+                return 0
 
 
 def generateMicrolensingSlicer(min_crossing_time=1, max_crossing_time=10, t_start=1,
