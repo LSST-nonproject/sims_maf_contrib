@@ -1,6 +1,6 @@
 # Example for IntervalsBetweenObsMetric
 # Somayeh Khakpash - Lehigh University
-# Last edited : 11/20/2018
+# Last edited : 10/21/2020
 # Calculates statistics (mean or median or standard deviation) of intervals between observations during simultaneous windows/Inter-seasonal gap of another survey.
 # SurveyIntervals is the list of the survey observing window/Inter-seasonal gap intervals. It should be in the format:
 # SurveyIntervals = [ [YYYY-MM-DD, YYYY-MM-DD] , [YYYY-MM-DD, YYYY-MM-DD] , ... , [YYYY-MM-DD, YYYY-MM-DD] ]
@@ -15,19 +15,19 @@ import numpy as np
 from astropy.time import Time
 from lsst.sims.maf.metrics import BaseMetric
 
-__all__ = ['IntervalsBetweenObs']
+__all__ = ['IntervalsBetweenObsMetric']
 
 class IntervalsBetweenObsMetric (BaseMetric):
     
 
     
-    def __init__ (self,SurveyIntervals,Stat, metricName= 'IntervalsBetweenObs', TimeCol='observationStartMJD', **kwargs):
+    def __init__ (self,SurveyIntervals,Stat, metricName= 'IntervalsBetweenObsMetric', TimeCol='observationStartMJD', **kwargs):
         
         self.TimeCol = TimeCol
         self.metricName = metricName
         self.SurveyIntervals = SurveyIntervals
         self.Stat = Stat
-        super(IntervalsBetweenObs, self).__init__(col= TimeCol, metricName=metricName, **kwargs)
+        super(IntervalsBetweenObsMetric, self).__init__(col= TimeCol, metricName=metricName, **kwargs)
 
 
     def run (self, dataSlice, slicePoint=None):

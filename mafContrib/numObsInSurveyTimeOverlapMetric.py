@@ -1,6 +1,6 @@
 # Example for numObsInSurveyTimeOverlap
 # Somayeh Khakpash - Lehigh University
-# Last edited : 11/20/2018
+# Last edited : 10/21/2020
 # Calculates number of observations during simultaneous windows of another survey.
 # SurveyObsWin is the list of the survey observing window/inter-seasonal gap intervals. It should be in the format:
 # SurveyObsWin = [ [YYYY-MM-DD, YYYY-MM-DD] , [YYYY-MM-DD, YYYY-MM-DD] , ... , [YYYY-MM-DD, YYYY-MM-DD] ]
@@ -9,18 +9,18 @@ import numpy as np
 from astropy.time import Time
 from lsst.sims.maf.metrics import BaseMetric
 
-__all__ = ['numObsInSurveyTimeOverlap']
+__all__ = ['numObsInSurveyTimeOverlapMetric']
 
 
 class numObsInSurveyTimeOverlapMetric (BaseMetric):
     
     
-    def __init__ (self, SurveyObsWin, TimeCol='observationStartMJD',metricName= 'numObsInSurveyTimeOverlap', **kwargs):
+    def __init__ (self, SurveyObsWin, TimeCol='observationStartMJD',metricName= 'numObsInSurveyTimeOverlapMetric', **kwargs):
         
         self.TimeCol = TimeCol
         self.metricName = metricName
         self.SurveyObsWin = SurveyObsWin
-        super(numObsInSurveyTimeOverlap, self).__init__(col= TimeCol, metricName=metricName, **kwargs)
+        super(numObsInSurveyTimeOverlapMetric, self).__init__(col= TimeCol, metricName=metricName, **kwargs)
         
     def run (self, dataSlice, slicePoint=None):
         N_Obs = 0
