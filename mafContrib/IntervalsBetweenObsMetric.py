@@ -1,6 +1,6 @@
 # Example for IntervalsBetweenObsMetric
 # Somayeh Khakpash - Lehigh University
-# Last edited : 11/20/2018
+# Last edited : 10/21/2020
 # Calculates statistics (mean or median or standard deviation) of intervals between observations during simultaneous windows/Inter-seasonal gap of another survey.
 # SurveyIntervals is the list of the survey observing window/Inter-seasonal gap intervals. It should be in the format:
 # SurveyIntervals = [ [YYYY-MM-DD, YYYY-MM-DD] , [YYYY-MM-DD, YYYY-MM-DD] , ... , [YYYY-MM-DD, YYYY-MM-DD] ]
