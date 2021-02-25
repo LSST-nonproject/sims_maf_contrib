@@ -9,3 +9,5 @@ tmp.sqlite
 data/plasticc/*
 data/SNe_data
 baseline2018a.db
+data/plasticc
+tutorials/lc*dat

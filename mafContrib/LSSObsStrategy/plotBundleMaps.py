@@ -1,4 +1,3 @@
-from builtins import str
 ########################################################################################################################
 # Purpose: plots for the data in a metricBundle object without using MAF routines. Includes
 # functionality to plot skymaps, cartviews, and power spectra.
