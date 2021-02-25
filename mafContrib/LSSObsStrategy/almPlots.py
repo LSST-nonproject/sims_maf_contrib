@@ -1,5 +1,3 @@
-from builtins import str
-from builtins import range
 #####################################################################################################
 # Purpose: plot skymaps/cartview plots corresponding to alms with specfied l-range (s).
 #
@@ -9,8 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import healpy as hp
-import pylab
-
 
 __all__= ['almPlots']
     

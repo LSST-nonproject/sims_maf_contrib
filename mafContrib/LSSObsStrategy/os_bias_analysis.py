@@ -4,17 +4,13 @@
 # Humna Awan: humna.awan@rutgers.edu
 #
 ###############################################################################################################################
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import healpy as hp
-import copy
-from matplotlib import ticker
 import datetime
 from collections import OrderedDict
-import numpy.ma as ma
-from mafContrib.LSSObsStrategy.constantsForPipeline import plotColor, powerLawConst_a
+from mafContrib.LSSObsStrategy.constantsForPipeline import powerLawConst_a
 
 __all__= ['get_fsky','get_theory_spectra', 'get_outdir_name',
           'return_cls' ,'calc_os_bias_err', 'get_fom',
