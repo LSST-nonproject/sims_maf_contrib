@@ -1,5 +1,3 @@
-from builtins import str
-from builtins import range
 #####################################################################################################
 # Purpose: plot skymaps/cartview plots corresponding to alms with specfied l-range (s).
 #

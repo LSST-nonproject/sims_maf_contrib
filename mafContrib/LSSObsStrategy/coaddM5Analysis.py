@@ -5,8 +5,6 @@
 
 # Humna Awan: humna.awan@rutgers.edu
 #####################################################################################################
-#import matplotlib as mpl
-#mpl.use('Agg')
 import numpy as np
 import os
 import healpy as hp
@@ -24,7 +22,6 @@ import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.maps as maps
 import lsst.sims.maf.stackers as mafStackers   # stackers in sims_maf
 
-from mafContrib.LSSObsStrategy import newDitherStackers as myStackers   # my stackers
 from mafContrib.LSSObsStrategy.maskingAlgorithmGeneralized import maskingAlgorithmGeneralized
 from mafContrib.LSSObsStrategy.plotBundleMaps import plotBundleMaps
 from mafContrib.LSSObsStrategy.almPlots import almPlots

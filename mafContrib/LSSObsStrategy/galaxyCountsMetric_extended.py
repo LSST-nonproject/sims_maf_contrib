@@ -16,7 +16,8 @@
 import numpy as np
 import scipy
 from lsst.sims.maf.metrics import BaseMetric, Coaddm5Metric, ExgalM5
-from mafContrib.LSSObsStrategy.constantsForPipeline import powerLawConst_a, powerLawConst_b, normalizationConstant
+from mafContrib.LSSObsStrategy.constantsForPipeline import powerLawConst_a, powerLawConst_b,\
+    normalizationConstant
 
 __all__ = ['GalaxyCountsMetric_extended']
 
