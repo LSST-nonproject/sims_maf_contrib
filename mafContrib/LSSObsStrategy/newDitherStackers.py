@@ -13,7 +13,7 @@
 import numpy as np
 from lsst.sims.maf.stackers import (wrapRADec, polygonCoords)
 from lsst.sims.maf.stackers import (BaseStacker, SpiralDitherFieldPerVisitStacker)
-from lsst.sims.maf.metrics import calcSeasons
+from lsst.sims.maf.metrics import calcSeason
 
 __all__ = ['RepulsiveRandomDitherFieldPerVisitStacker',
            'RepulsiveRandomDitherFieldPerNightStacker',
@@ -562,7 +562,7 @@ class PentagonDitherFieldPerSeasonStacker(BaseStacker):
 
     def _run(self, simData):
         # find the seasons associated with each visit.
-        seasons = calcSeasons(simData[self.raCol], simdata[self.expMJDCol])
+        seasons = calcSeason(simData[self.raCol], simdata[self.expMJDCol])
         # check how many entries in the >10 season
         ind= np.where(seasons > 9)[0]
         # should be only 1 extra seasons ..
@@ -640,7 +640,7 @@ class PentagonDiamondDitherFieldPerSeasonStacker(BaseStacker):
 
     def _run(self, simData):
         # find the seasons associated with each visit.
-        seasons = calcSeasons(simData[self.raCol], simData[self.expMJDCol])
+        seasons = calcSeason(simData[self.raCol], simData[self.expMJDCol])
 
         # check how many entries in the >10 season
         ind= np.where(seasons > 9)[0]
@@ -702,7 +702,7 @@ class PentagonDitherPerSeasonStacker(PentagonDitherFieldPerSeasonStacker):
    
     def _run(self, simData):      
         # find the seasons associated with each visit.
-        seasons = calcSeasons(simData[self.raCol], simData[self.expMJDCol])
+        seasons = calcSeason(simData[self.raCol], simData[self.expMJDCol])
         years = simData[self.nightCol] % 365.25
 
          # check how many entries in the >10 season
@@ -774,7 +774,7 @@ class PentagonDiamondDitherPerSeasonStacker(PentagonDiamondDitherFieldPerSeasonS
    
     def _run(self, simData):           
         # find the seasons associated with each visit.
-        seasons = calcSeasons(simData[self.raCol], simData[self.expMJDCol])
+        seasons = calcSeason(simData[self.raCol], simData[self.expMJDCol])
 
         # check how many entries in the >10 season
         ind= np.where(seasons > 9)[0]
@@ -839,7 +839,7 @@ class SpiralDitherPerSeasonStacker(SpiralDitherFieldPerVisitStacker):
         
     def _run(self, simData):            
         # find the seasons associated with each visit.
-        seasons = calcSeasons(simData[self.raCol], simData[self.expMJDCol])
+        seasons = calcSeason(simData[self.raCol], simData[self.expMJDCol])
 
         # check how many entries in the >10 season
         ind= np.where(seasons > 9)[0]
