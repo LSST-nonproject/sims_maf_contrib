@@ -3,7 +3,6 @@
 
 # Humna Awan: humna.awan@rutgers.edu
 #####################################################################################################
-import os
 
 __all__ = ['saveBundleData_npzFormat']
 

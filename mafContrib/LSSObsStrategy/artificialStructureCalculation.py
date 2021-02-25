@@ -1,6 +1,3 @@
-from __future__ import print_function
-from builtins import str
-from builtins import range
 #####################################################################################################
 # Purpose: calculate artificial structure, i.e. fluctuations in galaxy counts, resulting from
 # imperfect observing strategy (OS). Includes the functionality to account for dust extinction,
@@ -31,12 +28,10 @@ from builtins import range
 #
 # Humna Awan: humna.awan@rutgers.edu
 #####################################################################################################
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import healpy as hp
-import scipy
 import warnings
 try:
     from sympy.solvers import solve
@@ -45,7 +40,6 @@ except ImportError as error:
     warnings.warn('sympy not installed')
 import copy
 import time
-import sys
 from matplotlib.ticker import FuncFormatter
 import datetime
 
@@ -58,9 +52,10 @@ import lsst.sims.maf.plots as plots
 import lsst.sims.maf.metricBundles as metricBundles
 import lsst.sims.maf.maps as maps
 
-from mafContrib.LSSObsStrategy import newDitherStackers as myStackers   # my stackers
-from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended as GalaxyCountsMetric
-from mafContrib.LSSObsStrategy.galaxyCounts_withPixelCalibration import GalaxyCounts_withPixelCalibration as GalaxyCounts_0ptErrors
+from mafContrib.LSSObsStrategy.galaxyCountsMetric_extended import GalaxyCountsMetric_extended \
+    as GalaxyCountsMetric
+from mafContrib.LSSObsStrategy.galaxyCounts_withPixelCalibration import GalaxyCounts_withPixelCalibration \
+    as GalaxyCounts_0ptErrors
 from mafContrib.LSSObsStrategy.maskingAlgorithmGeneralized import maskingAlgorithmGeneralized
 from mafContrib.LSSObsStrategy.plotBundleMaps import plotBundleMaps
 from mafContrib.LSSObsStrategy.numObsMetric import NumObsMetric

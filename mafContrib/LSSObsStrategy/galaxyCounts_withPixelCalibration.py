@@ -1,4 +1,3 @@
-from __future__ import print_function
 #####################################################################################################
 # Purpose: Calculate the galaxy counts for each Healpix pixel directly.
 # Necessary when accounting for pixel-specific calibration errors (as they modify the magnitude limit
@@ -13,7 +12,6 @@ from __future__ import print_function
 # Humna Awan: humna.awan@rutgers.edu
 #####################################################################################################
 import numpy as np
-import healpy as hp
 import scipy
 import warnings
 from mafContrib.LSSObsStrategy.constantsForPipeline import powerLawConst_a, powerLawConst_b, normalizationConstant
