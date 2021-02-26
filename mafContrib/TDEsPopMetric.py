@@ -5,7 +5,7 @@ import os
 from lsst.sims.utils import uniformSphere
 import lsst.sims.maf.slicers as slicers
 import glob
-from lsst.sims.photUtils import Sed
+from lsst.sims.photUtils import Dust_values
 
 
 __all__ = ['Tde_lc', 'TdePopMetric', 'generateTdePopSlicer']
@@ -71,20 +71,8 @@ class TdePopMetric(metrics.BaseMetric):
         self.lightcurves = Tde_lc(file_list=file_list)
         self.mjd0 = mjd0
 
-
-        # XXX--should replace with a MAF utility that return a,b for all the filters.
-        waveMins = {'u': 330., 'g': 403., 'r': 552., 'i': 691., 'z': 818., 'y': 950.}
-        waveMaxes = {'u': 403., 'g': 552., 'r': 691., 'i': 818., 'z': 922., 'y': 1070.}
-
-        self.a = {}
-        self.b = {}
-        for filtername in waveMins.keys():
-            testsed = Sed()
-            testsed.setFlatSED(wavelen_min=waveMins[filtername],
-                               wavelen_max=waveMaxes[filtername],
-                               wavelen_step=1)
-            self.a[filtername], self.b[filtername] = testsed.setupCCM_ab()
-        self.R_v = 3.1
+        dust_properties = Dust_values()
+        self.Ax1 = dust_properties.Ax1
 
         cols = [self.mjdCol, self.m5Col, self.filterCol, self.nightCol]
         super(TdePopMetric, self).__init__(col=cols, units='Detected, 0 or 1',
@@ -156,8 +144,7 @@ class TdePopMetric(metrics.BaseMetric):
             infilt = np.where(dataSlice[self.filterCol] == filtername)
             mags[infilt] = self.lightcurves.interp(t[infilt], filtername, lc_indx=slicePoint['file_indx'])
             # Apply dust extinction on the light curve
-            A_x = (self.a[filtername][0]+self.b[filtername][0]/self.R_v)*(self.R_v*slicePoint['ebv'])
-            mags[infilt] -= A_x
+            mags[infilt] -= self.Ax1[filtername]*slicePoint['ebv']
 
         result['pre_peak'] = self._pre_peak_detect(dataSlice, slicePoint, mags, t)
         result['some_color'] = self._some_color_detect(dataSlice, slicePoint, mags, t)
