@@ -8,29 +8,33 @@ import warnings
 __all__ = ['periodicStar', 'PeriodicStarMetric']
 
 
-def periodicStar(t,x0,x1,x2,x3,x4,x5,x6,x7,x8):
-    """ Approximate a periodic star as a simple sin wave.
-    t: array with "time" in days, and "filter" dtype names.
-    x0: Period (days)
-    x1: Phase (days)
-    x2: Amplitude (mag)
-    x3: mean u mag
-    x4: mean g mag
-    x5: mean r mag
-    x6: mean i mag
-    x7: mean z mag
-    x8: mean y mag
-    """
-    filter2index = {'u':3, 'g':4, 'r':5, 'i':6,
-                    'z':7,'y':8}
-    filterNames = np.unique(t['filter'])
-    mags = np.zeros(t.size,dtype=float)
-    mags = x2*np.sin((t['time']+x1)/x0*2.*np.pi )
-    x=[x0,x1,x2,x3,x4,x5,x6,x7,x8]
-    for f in filterNames:
-        good = np.where(t['filter'] == f)
-        mags[good] += x[filter2index[f]]
-    return mags
+class periodicStar(object):
+    def __init__(self, filternames):
+        self.filternames = filternames
+
+    def __call__(self, t,x0,x1,x2,x3,x4,x5,x6,x7,x8):
+        """ Approximate a periodic star as a simple sin wave.
+        t: array with "time" in days, and "filter" dtype names.
+        x0: Period (days)
+        x1: Phase (days)
+        x2: Amplitude (mag)
+        x3: mean u mag
+        x4: mean g mag
+        x5: mean r mag
+        x6: mean i mag
+        x7: mean z mag
+        x8: mean y mag
+        """
+        filter2index = {'u':3, 'g':4, 'r':5, 'i':6,
+                        'z':7,'y':8}
+        filterNames = np.unique(self.filternames)
+        mags = np.zeros(t.size,dtype=float)
+        mags = x2*np.sin((t+x1)/x0*2.*np.pi)
+        x=[x0,x1,x2,x3,x4,x5,x6,x7,x8]
+        for f in filterNames:
+            good = np.where(self.filternames == f)
+            mags[good] += x[filter2index[f]]
+        return mags
 
 
 class PeriodicStarMetric(BaseMetric):
@@ -84,13 +88,15 @@ class PeriodicStarMetric(BaseMetric):
         t['time'] = dataSlice[self.mjdCol]-dataSlice[self.mjdCol].min()
         t['filter'] = dataSlice[self.filterCol]
 
+
         # If we are adding a distance modulus to the magnitudes
         if 'distMod' in list(slicePoint.keys()):
             mags = self.means + slicePoint['distMod']
         else:
             mags = self.means
         trueParams = np.append(np.array([self.period, self.phase, self.amplitude]), mags)
-        trueLC = periodicStar(t, *trueParams)
+        true_obj = periodicStar(t['filter'])
+        trueLC = true_obj(t['time'], *trueParams)
 
         # Array to hold the fit results
         fits = np.zeros((self.nMonte,trueParams.size),dtype=float)
@@ -99,13 +105,15 @@ class PeriodicStarMetric(BaseMetric):
             dmag = 2.5*np.log10(1.+1./snr)
             noise = np.random.randn(trueLC.size)*dmag
             # Suppress warnings about failing on covariance
+            fit_obj = periodicStar(t['filter'])
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 # If it fails to converge, save values that should fail later
                 try:
-                    parmVals, pcov = curve_fit(periodicStar, t, trueLC+noise, p0=trueParams, sigma=dmag)
+                    parmVals, pcov = curve_fit(fit_obj, t['time'], trueLC+noise, p0=trueParams,
+                                               sigma=dmag)
                 except:
-                    parmVals = trueParams*0-666
+                    parmVals = trueParams*0+np.inf
             fits[i,:] = parmVals
 
         # Throw out any magnitude fits if there are no observations in that filter
@@ -116,9 +124,9 @@ class PeriodicStarMetric(BaseMetric):
                     fits[:,self.filter2index[key]] = -np.inf
 
         # Find the fraction of fits that meet the "well-fit" criteria
-        periodFracErr = (fits[:,0]-trueParams[0])/trueParams[0]
-        ampFracErr = (fits[:,2]-trueParams[2])/trueParams[2]
-        magErr = fits[:,3:]-trueParams[3:]
+        periodFracErr = np.abs((fits[:,0]-trueParams[0])/trueParams[0])
+        ampFracErr = np.abs((fits[:,2]-trueParams[2])/trueParams[2])
+        magErr = np.abs(fits[:,3:]-trueParams[3:])
         nBands = np.zeros(magErr.shape,dtype=int)
         nBands[np.where(magErr <= self.magTol)] = 1
         nBands = np.sum(nBands, axis=1)
@@ -126,4 +134,6 @@ class PeriodicStarMetric(BaseMetric):
                                        (ampFracErr <= self.ampTol) &
                                        (nBands >= self.nBands) )[0])
         fracRecovered = float(nRecovered)/self.nMonte
+
+
         return fracRecovered
