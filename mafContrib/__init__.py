@@ -28,3 +28,4 @@ from .GW170817DetMetric import *
 from .plasticcMetrics import *
 from .microlensingMetric import *
 from .TDEsPopMetric import *
+from .kneMetrics import *
