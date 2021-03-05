@@ -6,7 +6,7 @@ import os
 import pickle
 import gzip
 import itertools
-from lsst.sims.photUtils import Sed
+from lsst.sims.photUtils import Dust_values
 from scipy.optimize import curve_fit
 
 __all__ = ["Plasticc_metric", "plasticc_slicer", "load_plasticc_lc"]
@@ -182,18 +182,8 @@ class Plasticc_metric(BaseMetric):
         super(Plasticc_metric, self).__init__(col=[self.mjdCol, self.m5Col, self.filterCol],
                                               metricName=metricName, maps=maps, units=units, **kwargs)
 
-        # Let's set up the dust stuff
-        waveMins = {'u': 330., 'g': 403., 'r': 552., 'i': 691., 'z': 818., 'y': 950.}
-        waveMaxes = {'u': 403., 'g': 552., 'r': 691., 'i': 818., 'z': 922., 'y': 1070.}
-
-        self.a_extinc = {}
-        self.b_extinc = {}
-        for filtername in waveMins:
-            testsed = Sed()
-            testsed.setFlatSED(wavelen_min=waveMins[filtername],
-                               wavelen_max=waveMaxes[filtername], wavelen_step=1)
-            self.a_extinc[filtername], self.b_extinc[filtername] = testsed.setupCCM_ab()
-        self.R_v = 3.1
+        dust_properties = Dust_values()
+        self.Ax1 = dust_properties.Ax1
 
     def run(self, dataSlice, slicePoint=None):
         mags = plasticc2mags(slicePoint['plc'], dataSlice[self.mjdCol], dataSlice[self.filterCol],
@@ -201,8 +191,7 @@ class Plasticc_metric(BaseMetric):
         if self.apply_dust:
             for filtername in np.unique(dataSlice[self.filterCol]):
                 in_filt = np.where(dataSlice[self.filterCol] == filtername)
-                A_x = (self.a_extinc[filtername][0]+self.b_extinc[filtername][0]/self.R_v)*(self.R_v*slicePoint['ebv'])
-                mags[in_filt] = mags[in_filt] + A_x
+                mags[in_filt] = mags[in_filt] + self.Ax1[filtername]*slicePoint['ebv']
 
         detected_points = np.where(mags < dataSlice[self.m5Col])[0]
 
