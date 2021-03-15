@@ -8,7 +8,7 @@ import lsst.sims.maf.slicers as slicers
 
 
 # Via Natasha Abrams nsabrams@college.harvard.edu
-def microlensing_amplification(t, impact_parameter=1, crossing_time=1825., peak_time=100):
+def microlensing_amplification(t, impact_parameter=1, crossing_time=1825., peak_time=100, blending_factor = 1):
     """The microlensing amplification
 
     Parameters
@@ -21,10 +21,12 @@ def microlensing_amplification(t, impact_parameter=1, crossing_time=1825., peak_
         Einstein crossing time (days)
     peak_time : float (100)
         The peak time (days)
+    blending_factor: float (1)
+        The blending factor where 1 is unblended
     """
 
     lightcurve_u = np.sqrt(impact_parameter**2 + ((t-peak_time)**2/crossing_time**2))
-    amplification = (lightcurve_u**2 + 2)/(lightcurve_u*np.sqrt(lightcurve_u**2 + 4))
+    amplification = (lightcurve_u**2 + 2)/(lightcurve_u*np.sqrt(lightcurve_u**2 + 4))*blending_factor + (1 - blending_factor)
 
     return amplification
 
@@ -54,6 +56,7 @@ class MicrolensingMetric(metrics.BaseMetric):
         peak_time : float (days)
         crossing_time : float (days)
         impact_parameter : float (positive)
+        blending_factors : float (between 0 and 1 - optional)
 
     """
     def __init__(self, metricName='MicrolensingMetric', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
@@ -87,7 +90,14 @@ class MicrolensingMetric(metrics.BaseMetric):
         t = dataSlice[self.mjdCol] - np.min(dataSlice[self.nightCol])
         t = t - t.min()
 
-        amplitudes = microlensing_amplification(t, impact_parameter=slicePoint['impact_parameter'],
+        # Try for if a blending factor slice was added if not default to no blending factor
+        try:
+            amplitudes = microlensing_amplification(t, impact_parameter=slicePoint['impact_parameter'],
+                                                crossing_time=slicePoint['crossing_time'],
+                                                peak_time=slicePoint['peak_time'], blending_factor=slicePoint['blending_factor'])
+        
+        except:
+            amplitudes = microlensing_amplification(t, impact_parameter=slicePoint['impact_parameter'],
                                                 crossing_time=slicePoint['crossing_time'],
                                                 peak_time=slicePoint['peak_time'])
 
