@@ -20,3 +20,4 @@ from .plasticcMetrics import *
 from .microlensingMetric import *
 from .TDEsPopMetric import *
 from .StaticProbesFoMSummaryMetric import *
+from .kneMetrics import *
