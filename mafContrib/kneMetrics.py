@@ -1,13 +1,13 @@
 import numpy as np
-from lsst.sims.maf.utils import m52snr
 import lsst.sims.maf.metrics as metrics
 import os
 from lsst.sims.utils import uniformSphere
 import lsst.sims.maf.slicers as slicers
 import glob
-from lsst.sims.photUtils import Sed
+from lsst.sims.photUtils import Dust_values
 
-__all__ = ['KN_lc', 'KNPopMetric', 'generateKNPopSlicer']
+
+__all__ = ['KN_lc', 'KNePopMetric', 'generateKNPopSlicer']
 
 
 class KN_lc(object):
@@ -26,18 +26,17 @@ class KN_lc(object):
             sims_maf_contrib_dir = os.getenv("SIMS_MAF_CONTRIB_DIR")
             file_list = glob.glob(os.path.join(sims_maf_contrib_dir, 'data/bns/*.dat'))
 
-        lcs = []
-        filts = ["u","g","r","i","z","y"]
-        magidxs = [1,2,3,4,5,6]
+        filts = ["u", "g", "r", "i", "z", "y"]
+        magidxs = [1, 2, 3, 4, 5, 6]
 
         # Let's organize the data in to a list of dicts for easy lookup
-        self.data = []        
+        self.data = []
         for filename in file_list:
             mag_ds = np.loadtxt(filename)
-            t = mag_ds[:,0]
+            t = mag_ds[:, 0]
             new_dict = {}
             for ii, (filt, magidx) in enumerate(zip(filts, magidxs)):
-                new_dict[filt] = {'ph': t, 'mag': mag_ds[:,magidx]}
+                new_dict[filt] = {'ph': t, 'mag': mag_ds[:, magidx]}
             self.data.append(new_dict)
 
     def interp(self, t, filtername, lc_indx=0):
@@ -70,20 +69,8 @@ class KNePopMetric(metrics.BaseMetric):
         self.lightcurves = KN_lc(file_list=file_list)
         self.mjd0 = mjd0
 
-
-        # XXX--should replace with a MAF utility that return a,b for all the filters.
-        waveMins = {'u': 330., 'g': 403., 'r': 552., 'i': 691., 'z': 818., 'y': 950.}
-        waveMaxes = {'u': 403., 'g': 552., 'r': 691., 'i': 818., 'z': 922., 'y': 1070.}
-
-        self.a = {}
-        self.b = {}
-        for filtername in waveMins.keys():
-            testsed = Sed()
-            testsed.setFlatSED(wavelen_min=waveMins[filtername],
-                               wavelen_max=waveMaxes[filtername],
-                               wavelen_step=1)
-            self.a[filtername], self.b[filtername] = testsed.setupCCM_ab()
-        self.R_v = 3.1
+        dust_properties = Dust_values()
+        self.Ax1 = dust_properties.Ax1
 
         cols = [self.mjdCol, self.m5Col, self.filterCol, self.nightCol]
         super(KNePopMetric, self).__init__(col=cols, units='Detected, 0 or 1',
@@ -100,7 +87,7 @@ class KNePopMetric(metrics.BaseMetric):
         filters = dataSlice[self.filterCol][around_peak]
         if np.size(filters) < 2:
             return 0
-        
+
         return result
 
     def _multi_color_detect(self, dataSlice, slicePoint, mags, t):
@@ -125,12 +112,12 @@ class KNePopMetric(metrics.BaseMetric):
             infilt = np.where(dataSlice[self.filterCol] == filtername)
             mags[infilt] = self.lightcurves.interp(t[infilt], filtername, lc_indx=slicePoint['file_indx'])
             # Apply dust extinction on the light curve
-            A_x = (self.a[filtername][0]+self.b[filtername][0]/self.R_v)*(self.R_v*slicePoint['ebv'])
+            A_x = self.Ax1[filtername] * slicePoint['ebv']
             mags[infilt] -= A_x
-            
+
             distmod = 5*np.log10(slicePoint['distance']*1e6) - 5.0
             mags[infilt] += distmod
-            
+
         result['multi_detect'] = self._multi_detect(dataSlice, slicePoint, mags, t)
         result['multi_color_detect'] = self._multi_color_detect(dataSlice, slicePoint, mags, t)
 
@@ -165,18 +152,17 @@ def generateKNPopSlicer(t_start=1, t_end=3652, n_events=10000, seed=42, n_files=
         r = np.random.random(size=size)
         ag, bg = a**g, b**g
         return (ag + (bg - ag)*r)**(1./g)
-    
+
     ra, dec = uniformSphere(n_events, seed=seed)
     peak_times = np.random.uniform(low=t_start, high=t_end, size=n_events)
     file_indx = np.floor(np.random.uniform(low=0, high=n_files, size=n_events)).astype(int)
     distance = rndm(10, 300, 4, size=n_events)
-    
+
     # Set up the slicer to evaluate the catalog we just made
     slicer = slicers.UserPointsSlicer(ra, dec, latLonDeg=True, badval=0)
     # Add any additional information about each object to the slicer
     slicer.slicePoints['peak_time'] = peak_times
     slicer.slicePoints['file_indx'] = file_indx
     slicer.slicePoints['distance'] = distance
-    
-    return slicer
 
+    return slicer
