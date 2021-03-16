@@ -12,7 +12,7 @@ __all__ = ['KN_lc', 'KNPopMetric', 'generateKNPopSlicer']
 
 class KN_lc(object):
     """
-    Read in some TDE lightcurves
+    Read in some KNe lightcurves
 
     Parameters
     ----------
@@ -92,7 +92,7 @@ class KNePopMetric(metrics.BaseMetric):
 
     def _multi_detect(self, dataSlice, slicePoint, mags, t):
         """
-        Simple detection criteria
+        Simple detection criteria: detect at least twice
         """
         result = 1
         # detected in at least two bands
@@ -104,6 +104,9 @@ class KNePopMetric(metrics.BaseMetric):
         return result
 
     def _multi_color_detect(self, dataSlice, slicePoint, mags, t):
+        """
+        Color-based simple detection criteria: detect at least twice, with at least two color
+        """
         result = 1
         # detected in at least two bands
         around_peak = np.where((t > 0) & (t < 30) & (mags < dataSlice[self.m5Col]))[0]
