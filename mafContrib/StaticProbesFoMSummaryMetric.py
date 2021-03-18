@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from lsst.sims.maf.metrics.baseMetric import BaseMetric
 
 
-__all__ = ['StaticProbesFoMEmulatorMetricSimple']
+__all__ = ['StaticProbesFoMEmulatorMetric']
 
 
 class StaticProbesFoMEmulatorMetric(BaseMetric):

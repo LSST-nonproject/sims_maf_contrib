@@ -69,7 +69,7 @@ class GalaxyCountsMetric_extended(BaseMetric):
         # Specific band (e.g. r-band) will be provided by the sql constraint.
         if self.includeDustExtinction:
             # include dust extinction when calculating the co-added depth
-            self.coaddmetric = ExgalM5(m5Col=self.m5Col, lsstFilter=self.filterBand)
+            self.coaddmetric = ExgalM5(m5Col=self.m5Col)
         else:
             self.coaddmetric = Coaddm5Metric(m5Col=self.m5Col)
 
