@@ -50,7 +50,7 @@ class GalaxyCountsMetric_extended(BaseMetric):
                                               counts from mock catalogs. Default: True
 
     """
-    def __init__(self, m5Col='fiveSigmaDepth', nside=128,
+    def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter', nside=128,
                  metricName='GalaxyCountsMetric_extended',
                  units='Galaxy Counts',
                  upperMagLimit=32.0,
@@ -59,6 +59,7 @@ class GalaxyCountsMetric_extended(BaseMetric):
                  CFHTLSCounts=False,
                  normalizedMockCatalogCounts=True, **kwargs):
         self.m5Col = m5Col
+        self.filterCol = filterCol
         self.upperMagLimit = upperMagLimit
         self.includeDustExtinction = includeDustExtinction
         self.redshiftBin = redshiftBin
@@ -82,7 +83,7 @@ class GalaxyCountsMetric_extended(BaseMetric):
         self.powerLawConst_a = powerLawConst_a
         self.powerLawConst_b = powerLawConst_b
 
-        super().__init__(col=self.m5Col, metricName=metricName, maps=self.coaddmetric.maps,
+        super().__init__(col=[self.m5Col, self.filterCol], metricName=metricName, maps=self.coaddmetric.maps,
                          units=units, **kwargs)
 
     # ------------------------------------------------------------------------
@@ -134,7 +135,8 @@ class GalaxyCountsMetric_extended(BaseMetric):
     # ------------------------------------------------------------------------
     def run(self, dataSlice, slicePoint=None):
         # Calculate the coadded depth.
-        coaddm5 = self.coaddmetric.run(dataSlice, slicePoint)
+        infilt = np.where(dataSlice[self.filterCol] == self.filterBand)[0]
+        coaddm5 = self.coaddmetric.run(dataSlice[infilt], slicePoint)
 
         # some coaddm5 values are really small (i.e. min=10**-314). Zero them out.
         if (coaddm5 < 1):
