@@ -95,7 +95,7 @@ class TdePopMetric(metrics.BaseMetric):
     def _some_color_detect(self, dataSlice, slicePoint, mags, t):
         result = 1
         # 1 detection pre peak
-        pre_peak_detected = np.where((t < 0) & (mags < dataSlice[self.m5Col]))[0]
+        pre_peak_detected = np.where((t < -10) & (mags < dataSlice[self.m5Col]))[0]
         if np.size(pre_peak_detected) < 1:
             return 0
 
@@ -114,7 +114,7 @@ class TdePopMetric(metrics.BaseMetric):
     def _some_color_pu_detect(self, dataSlice, slicePoint, mags, t):
         result = 1
         # 1 detection pre peak
-        pre_peak_detected = np.where((t < 0) & (mags < dataSlice[self.m5Col]))[0]
+        pre_peak_detected = np.where((t < -10) & (mags < dataSlice[self.m5Col]))[0]
         if np.size(pre_peak_detected) < 1:
             return 0
 
