@@ -144,7 +144,7 @@ class TdePopMetric(metrics.BaseMetric):
             infilt = np.where(dataSlice[self.filterCol] == filtername)
             mags[infilt] = self.lightcurves.interp(t[infilt], filtername, lc_indx=slicePoint['file_indx'])
             # Apply dust extinction on the light curve
-            mags[infilt] -= self.Ax1[filtername]*slicePoint['ebv']
+            mags[infilt] += self.Ax1[filtername]*slicePoint['ebv']
 
         result['pre_peak'] = self._pre_peak_detect(dataSlice, slicePoint, mags, t)
         result['some_color'] = self._some_color_detect(dataSlice, slicePoint, mags, t)
