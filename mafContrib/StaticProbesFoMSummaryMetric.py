@@ -27,10 +27,6 @@ class StaticProbesFoMEmulatorMetric(BaseMetric):
     The Emulator is uses a Gaussian Process to effectively interpolate between 
     a grid of FoM values. 
     """
-    import george
-    from george import kernels
-    from george.metrics import Metric
-    
     def __init__(self, nside=128,
                  shear_m=0.003, sigma_z=0.05, sig_delta_z=0.001, sig_sigma_z=0.003,
                  col=None, **kwargs):
@@ -40,6 +36,10 @@ class StaticProbesFoMEmulatorMetric(BaseMetric):
             nside (int): healpix resolution
             col (str): column name of metric data.
         """
+        import george
+        from george import kernels
+        from george.metrics import Metric
+
         self.nside = nside
         super().__init__(col=col, **kwargs)
         if col is None:
