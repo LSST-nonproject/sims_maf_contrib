@@ -16,6 +16,9 @@ from astropy.coordinates import get_sun
 from astropy.coordinates import get_moon
 import copy
 
+__all__ = ['calculate_lsst_field_visibility', 'plot_visibility']
+
+
 def calculate_lsst_field_visibility(fieldRA,fieldDec,start_date,end_date,
                                     min_alt=30.0,dt_days=1.0,
                                     diagnostics=False,verbose=False):
