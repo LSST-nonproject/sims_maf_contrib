@@ -1,10 +1,8 @@
 import numpy as np
 import healpy as hp
 from scipy import interpolate
-import george
-from george import kernels
 from scipy.optimize import minimize
-from george.metrics import Metric
+
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from lsst.sims.maf.metrics.baseMetric import BaseMetric
@@ -29,6 +27,10 @@ class StaticProbesFoMEmulatorMetric(BaseMetric):
     The Emulator is uses a Gaussian Process to effectively interpolate between 
     a grid of FoM values. 
     """
+    import george
+    from george import kernels
+    from george.metrics import Metric
+    
     def __init__(self, nside=128,
                  shear_m=0.003, sigma_z=0.05, sig_delta_z=0.001, sig_sigma_z=0.003,
                  col=None, **kwargs):
