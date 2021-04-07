@@ -6,7 +6,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as metricBundles
 from lsst.sims.maf.metrics import BaseMetric
-import calc_expected_visits
+from .calc_expected_visits import calc_expected_visits
 import numpy as np
 # from astropy.visualization import astropy_mpl_style
 # plt.style.use(astropy_mpl_style)

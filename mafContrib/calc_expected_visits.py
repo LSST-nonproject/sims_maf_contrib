@@ -11,7 +11,7 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as metricBundles
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
-import calculate_lsst_field_visibility_astropy
+from .calculate_lsst_field_visibility_astropy import calculate_lsst_field_visibility_astropy
 
 class CalcExpectedVisitsMetric(BaseMetric):
     """Function to calculate the maximum possible number of visits to a
