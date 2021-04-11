@@ -1,13 +1,10 @@
+import glob
+import os
 import numpy as np
 import lsst.sims.maf.metrics as metrics
-import os
 from lsst.sims.utils import uniformSphere
 import lsst.sims.maf.slicers as slicers
-import glob
-
-# FIXME replace dust_values with lsst.sims.photUtils
-#from lsst.sims.photUtils import Dust_values
-from dust_values import Dust_values
+from lsst.sims.photUtils import Dust_values
 
 
 __all__ = ['KN_lc', 'KNePopMetric', 'generateKNPopSlicer']
@@ -26,9 +23,7 @@ class KN_lc(object):
         if file_list is None:
             sims_maf_contrib_dir = os.getenv("SIMS_MAF_CONTRIB_DIR")
             # Get files, model grid developed by M. Bulla
-            # FIXME change path to data
-            ##file_list = glob.glob(os.path.join(sims_maf_contrib_dir, 'data/bns/*.dat'))
-            file_list = glob.glob('data/bns/*.dat')
+            file_list = glob.glob(os.path.join(sims_maf_contrib_dir, 'data/bns/*.dat'))
 
         filts = ["u", "g", "r", "i", "z", "y"]
         magidxs = [1, 2, 3, 4, 5, 6]
@@ -62,7 +57,7 @@ class KN_lc(object):
 class KNePopMetric(metrics.BaseMetric):
     def __init__(self, metricName='KNePopMetric', mjdCol='observationStartMJD',
                  m5Col='fiveSigmaDepth', filterCol='filter', nightCol='night',
-                 ptsNeeded=2, file_list=None, mjd0=59853.5, getLc=False,
+                 ptsNeeded=2, file_list=None, mjd0=59853.5, outputLc=False,
                  **kwargs):
         maps = ['DustMap']
         self.mjdCol = mjdCol
@@ -71,7 +66,7 @@ class KNePopMetric(metrics.BaseMetric):
         self.nightCol = nightCol
         self.ptsNeeded = ptsNeeded
         # Boolean variable, if True the light curve will be exported
-        self.getLc = getLc
+        self.outputLc = outputLc
 
         self.lightcurves = KN_lc(file_list=file_list)
         self.mjd0 = mjd0
@@ -84,19 +79,18 @@ class KNePopMetric(metrics.BaseMetric):
                                            metricName=metricName, maps=maps,
                                            **kwargs)
 
-    def _multi_detect(self, dataSlice, mags, t):
+    def _multi_detect(self, around_peak):
         """
         Simple detection criteria: detect at least a certain number of times
         """
         result = 1
-        # detected
-        around_peak = np.where((t > 0) & (mags < dataSlice[self.m5Col]))[0]
+        # Detected data points
         if np.size(around_peak) < self.ptsNeeded:
             return 0
 
         return result
 
-    def _ztfrest_simple(self, dataSlice, mags, t, min_dt=0.125,
+    def _ztfrest_simple(self, around_peak, mags, t, filters, min_dt=0.125,
                         min_fade=0.3, max_rise=-1., selectRed=False):
         """
         Selection criteria based on rise or decay rate; simplified version of
@@ -105,10 +99,14 @@ class KNePopMetric(metrics.BaseMetric):
 
         Parameters
         ----------
+        around_peak : array
+            indexes corresponding to 5sigma detections
         mags : array
             magnitudes obtained interpolating models on the dataSlice
         t : array
             relative times
+        filters : array
+            filters in which detections happened
         min_dt : float
             minimum time gap between first and last detection in a given band
         min_fade : float
@@ -127,8 +125,6 @@ class KNePopMetric(metrics.BaseMetric):
             fading by 0.2 mag/day will not pass a threshold min_fade=0.3
         """
         result = 1
-        # detected
-        around_peak = np.where((t > 0) & (t < 30) & (mags < dataSlice[self.m5Col]))[0]
 
         # Quick check on the number of detected points
         if np.size(around_peak) < self.ptsNeeded:
@@ -137,7 +133,6 @@ class KNePopMetric(metrics.BaseMetric):
         elif np.max(t[around_peak]) - np.min(t[around_peak]) < min_dt:
             return 0
         else:
-            filters = dataSlice[self.filterCol][around_peak]
             evol_rate = []
             fil = []
             # Check time gaps and rise or fade rate for each band
@@ -162,38 +157,30 @@ class KNePopMetric(metrics.BaseMetric):
 
         return result
 
-    def _multi_color_detect(self, dataSlice, mags, t):
+    def _multi_color_detect(self, filters):
         """
         Color-based simple detection criteria: detect at least twice,
         with at least two filters
         """
         result = 1
         # detected in at least two filters
-        around_peak = np.where((t > 0) & (t < 30) & (mags < dataSlice[self.m5Col]))[0]
-        filters = np.unique(dataSlice[self.filterCol][around_peak])
-        if np.size(filters) < 2:
+        if np.size(np.unique(filters)) < 2:
             return 0
 
         return result
 
-    def _red_color_detect(self, dataSlice, mags, t, min_det=4):
+    def _red_color_detect(self, filters, min_det=4):
         """
-        Detected at least 4 times in either izy colors
+        Detected at least min_det times in either izy colors
 
         Parameters
         ----------
-        mags : array
-            magnitudes obtained interpolating models on the dataSlice
-        t : array
-            relative times
+        filters : array
+            filters in which detections happened
         min_det : float or int
             minimum number of detections required in izy bands
         """
         result = 1
-        # Detected
-        around_peak = np.where((t > 0) & (t < 30) & (mags < dataSlice[self.m5Col]))[0]
-        # Filters of detected points
-        filters = dataSlice[self.filterCol][around_peak]
         # Number of detected points in izy bands
         n_red_det = np.size(np.where(filters == 'i')[0]) + np.size(np.where(filters == 'z')[0]) + np.size(np.where(filters == 'y')[0])
         # Condition
@@ -202,24 +189,18 @@ class KNePopMetric(metrics.BaseMetric):
 
         return result
 
-    def _blue_color_detect(self, dataSlice, mags, t, min_det=4):
+    def _blue_color_detect(self, filters, min_det=4):
         """
-        Detected at least 4 times in either ugr colors
+        Detected at least min_det times in either ugr colors
 
         Parameters
         ----------
-        mags : array
-            magnitudes obtained interpolating models on the dataSlice
-        t : array
-            relative times
+        filters : array
+            filters in which detections happened
         min_det : float or int
             minimum number of detections required in ugr bands
         """
         result = 1
-        # Detected
-        around_peak = np.where((t > 0) & (t < 30) & (mags < dataSlice[self.m5Col]))[0]
-        # Filters of detected points
-        filters = dataSlice[self.filterCol][around_peak]
         # Number of detected points in ugr bands
         n_blue_det = np.size(np.where(filters == 'u')[0]) + np.size(np.where(filters == 'g')[0]) + np.size(np.where(filters == 'r')[0])
         # Condition
@@ -244,19 +225,24 @@ class KNePopMetric(metrics.BaseMetric):
             distmod = 5*np.log10(slicePoint['distance']*1e6) - 5.0
             mags[infilt] += distmod
 
-        result['multi_detect'] = self._multi_detect(dataSlice, mags, t)
-        result['ztfrest_simple'] = self._ztfrest_simple(dataSlice, mags, t)
-        result['ztfrest_simple_red'] = self._ztfrest_simple(dataSlice, mags,
-                                                            t, selectRed=True)
-        result['multi_color_detect'] = self._multi_color_detect(dataSlice,
-                                                                mags, t)
-        result['red_color_detect'] = self._red_color_detect(dataSlice,
-                                                            mags, t)
-        result['blue_color_detect'] = self._blue_color_detect(dataSlice,
-                                                              mags, t)
+        # Find the detected points
+        around_peak = np.where((t > 0) & (t < 30) & (mags < dataSlice[self.m5Col]))[0]        
+        # Filters in which the detections happened
+        filters = dataSlice[self.filterCol][around_peak]
+
+        result['multi_detect'] = self._multi_detect(around_peak)
+        result['ztfrest_simple'] = self._ztfrest_simple(around_peak, mags, t,
+                                                        filters,
+                                                        selectRed=False)
+        result['ztfrest_simple_red'] = self._ztfrest_simple(around_peak, mags,
+                                                            t, filters,
+                                                            selectRed=True)
+        result['multi_color_detect'] = self._multi_color_detect(filters)
+        result['red_color_detect'] = self._red_color_detect(filters)
+        result['blue_color_detect'] = self._blue_color_detect(filters)
 
         # Export the light curve
-        if self.getLc is True:
+        if self.outputLc is True:
             mags[np.where(mags > 50)[0]] = 99.
             result['lc'] = [dataSlice[self.mjdCol], mags,
                             dataSlice[self.m5Col], dataSlice[self.filterCol]]
