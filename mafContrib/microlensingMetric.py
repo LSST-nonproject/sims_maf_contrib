@@ -30,19 +30,43 @@ def microlensing_amplification(t, impact_parameter=1, crossing_time=1825., peak_
 
     return amplification
 
+def info_peak_before_t0(impact_parameter=1, crossing_time=100.):
+    """Time of Maximum Information before peak
+    via Markus Hundertmark markus.hundertmark@uni-heidelberg.de
+    
+    Parameters
+    ----------
+    impact_parameter : float (1)
+        The impact paramter (0 means big amplification)
+    crossing_time : float (1825)
+        Einstein crossing time (days)
+    """
+    
+    optimal_time = crossing_time*np.sqrt(-impact_parameter**2 + np.sqrt(9*impact_parameter**4 + 36*impact_parameter**2 + 4) - 2)/2
+    return np.array(optimal_time)
+
 
 class MicrolensingMetric(metrics.BaseMetric):
     """
     Quantifies detectability of Microlensing events.
+    Can also return the number of datapoints within two crossing times of the peak of event.
 
     Parameters
     ----------
+    metricCalc: str
+        Type of metric. If metricCalc == 'detect', returns the number of microlensing events
+        detected within certain parameters. If metricCalc == 'Npts', returns the number of points
+        within two crossing times of the peak of the vent.
+        Default is 'detect'
+        
     ptsNeeded : int
         Number of an object's lightcurve points required to be above the 5-sigma limiting depth
         before it is considered detected.
         
-    time_before_peak: int
+    time_before_peak: int or str
         Number of days before lightcurve peak to qualify event as triggered.
+        If time_before_peak == 'optimal', the number of days before the lightcurve peak
+        is the time of maximal information.
         Default is 0.
     
     detect: bool
@@ -59,8 +83,15 @@ class MicrolensingMetric(metrics.BaseMetric):
         blending_factors : float (between 0 and 1 - optional)
 
     """
-    def __init__(self, metricName='MicrolensingMetric', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
+    def __init__(self, metricName='MicrolensingMetric', metricCalc = 'detect', mjdCol='observationStartMJD', m5Col='fiveSigmaDepth',
                  filterCol='filter', nightCol='night', ptsNeeded=2, rmag=20, detect_sigma=3., time_before_peak=0, detect = False, **kwargs):
+        self.metricCalc = metricCalc
+        if metricCalc == 'detect':
+            self.units = 'Detected, 0 or 1'
+        elif metricCalc == 'Npts':
+            self.units = 'Npts within 2tE'
+        else:
+            raise Exception('metricCalc must be "detect" or "Npts")
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
@@ -78,7 +109,7 @@ class MicrolensingMetric(metrics.BaseMetric):
 
         cols = [self.mjdCol, self.m5Col, self.filterCol, self.nightCol]
         super(MicrolensingMetric, self).__init__(col=cols,
-                                                 units='Detected, 0 or 1',
+                                                 units=self.units,
                                                  metricName=metricName,
                                                  **kwargs)
 
@@ -116,40 +147,60 @@ class MicrolensingMetric(metrics.BaseMetric):
         n_pre = []
         n_post = []
         for filtername in filters:
-            # observations pre-peak and in the given filter
-            infilt = np.where((dataSlice[self.filterCol] == filtername) & (t < (slicePoint['peak_time'] - self.time_before_peak)))[0]
-            # observations post-peak and in the given filter
-            outfilt = np.where((dataSlice[self.filterCol] == filtername) & (t > slicePoint['peak_time']))[0]
-            # Broadcast to calc the mag_i - mag_j
-            diffs = amplified_mags[infilt] - amplified_mags[infilt][:, np.newaxis]
-            diffs_uncert = np.sqrt(mag_uncert[infilt]**2 + mag_uncert[infilt][:, np.newaxis]**2)
-            diffs_post = amplified_mags[outfilt] - amplified_mags[outfilt][:, np.newaxis]
-            diffs_post_uncert = np.sqrt(mag_uncert[outfilt]**2 + mag_uncert[outfilt][:, np.newaxis]**2)
+            if self.metricCalc == 'detect':
+                if self.time_before_peak == 'optimal':
+                    time_before_peak_optimal = info_peak_before_t0(slicePoint['impact_parameter'], slicePoint['crossing_time'])
+                    # observations pre-peak and in the given filter
+                    infilt = np.where((dataSlice[self.filterCol] == filtername) & (t < (slicePoint['peak_time'] - time_before_peak_optimal)))[0]
+                
+                else:
+                    # observations pre-peak and in the given filter
+                    infilt = np.where((dataSlice[self.filterCol] == filtername) & (t < (slicePoint['peak_time'] - self.time_before_peak)))[0]
+                            
+                # observations post-peak and in the given filter
+                outfilt = np.where((dataSlice[self.filterCol] == filtername) & (t > slicePoint['peak_time']))[0]
+                # Broadcast to calc the mag_i - mag_j
+                diffs = amplified_mags[infilt] - amplified_mags[infilt][:, np.newaxis]
+                diffs_uncert = np.sqrt(mag_uncert[infilt]**2 + mag_uncert[infilt][:, np.newaxis]**2)
+                diffs_post = amplified_mags[outfilt] - amplified_mags[outfilt][:, np.newaxis]
+                diffs_post_uncert = np.sqrt(mag_uncert[outfilt]**2 + mag_uncert[outfilt][:, np.newaxis]**2)
 
-            # Calculating this as a catalog-level detection. In theory,
-            # we could have a high SNR template image, so there would be
-            # little to no additional uncertianty from the subtraction.
+                # Calculating this as a catalog-level detection. In theory,
+                # we could have a high SNR template image, so there would be
+                # little to no additional uncertianty from the subtraction.
 
-            sigma_above = np.abs(diffs)/diffs_uncert
-            sigma_above_post = np.abs(diffs_post)/diffs_post_uncert
-            # divide by 2 because array has i,j and j,i
-            n_above = np.size(np.where(sigma_above > self.detect_sigma)[0])/2
-            n_pre.append(n_above)
-            n_above_post = np.size(np.where(sigma_above_post > self.detect_sigma)[0])/2
-            n_post.append(n_above_post)
+                sigma_above = np.abs(diffs)/diffs_uncert
+                sigma_above_post = np.abs(diffs_post)/diffs_post_uncert
+                # divide by 2 because array has i,j and j,i
+                n_above = np.size(np.where(sigma_above > self.detect_sigma)[0])/2
+                n_pre.append(n_above)
+                n_above_post = np.size(np.where(sigma_above_post > self.detect_sigma)[0])/2
+                n_post.append(n_above_post)
+                            
+            elif self.metricCalc == 'Npts':
+                # observations pre-peak and in the given filter within 2tE
+                infilt = np.where((dataSlice[self.filterCol] == filtername) & (t < (slicePoint['peak_time'])) & (t > (slicePoint['peak_time'] - slicePoint['crossing_time'])))[0]
+                # observations post-peak and in the given filter within 2tE
+                outfilt = np.where((dataSlice[self.filterCol] == filtername) & (t > (slicePoint['peak_time'])) & (t < (slicePoint['peak_time'] + slicePoint['crossing_time'])))[0]
+                            
+                n_pre.append(len(infilt))
+                n_post.append(len(outfilt))
 
         npts = np.sum(n_pre)
         npts_post = np.sum(n_post)
-        if self.detect == True:
-            if npts >= self.ptsNeeded and npts_post >=self.ptsNeeded:
-                return 1
+        if self.metricCalc == 'detect':
+            if self.detect == True:
+                if npts >= self.ptsNeeded and npts_post >=self.ptsNeeded:
+                    return 1
+                else:
+                    return 0
             else:
-                return 0
-        else:
-            if npts >= self.ptsNeeded:
-                return 1
-            else:
-                return 0
+                if npts >= self.ptsNeeded:
+                    return 1
+                else:
+                    return 0
+        elif self.metricCalc == 'Npts':
+            return npts + npts_post
 
 
 def generateMicrolensingSlicer(min_crossing_time=1, max_crossing_time=10, t_start=1,
