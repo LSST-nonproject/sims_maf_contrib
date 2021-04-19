@@ -91,7 +91,7 @@ class MicrolensingMetric(metrics.BaseMetric):
         elif metricCalc == 'Npts':
             self.units = 'Npts within 2tE'
         else:
-            raise Exception('metricCalc must be "detect" or "Npts")
+            raise Exception('metricCalc must be "detect" or "Npts"')
         self.mjdCol = mjdCol
         self.m5Col = m5Col
         self.filterCol = filterCol
