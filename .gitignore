@@ -6,4 +6,8 @@ tmp.sqlite
 *.png
 *.pdf
 .ipynb_checkpoints
+data/plasticc/*
+data/SNe_data
 baseline2018a.db
+data/plasticc
+tutorials/lc*dat

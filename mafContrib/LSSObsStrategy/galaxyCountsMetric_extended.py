@@ -1,4 +1,3 @@
-from __future__ import print_function
 #####################################################################################################
 # An extension to the GalaxyCountsMetric from Lynne Jones: sims_maf_contrib/mafContrib/lssMetrics.py
 #
@@ -15,11 +14,10 @@ from __future__ import print_function
 # Humna Awan: humna.awan@rutgers.edu
 #####################################################################################################
 import numpy as np
-import healpy as hp
 import scipy
 from lsst.sims.maf.metrics import BaseMetric, Coaddm5Metric, ExgalM5
-import lsst.sims.maf.maps as maps
-from mafContrib.LSSObsStrategy.constantsForPipeline import powerLawConst_a, powerLawConst_b, normalizationConstant
+from mafContrib.LSSObsStrategy.constantsForPipeline import powerLawConst_a, powerLawConst_b,\
+    normalizationConstant
 
 __all__ = ['GalaxyCountsMetric_extended']
 
@@ -52,50 +50,47 @@ class GalaxyCountsMetric_extended(BaseMetric):
                                               counts from mock catalogs. Default: True
 
     """
-    def __init__(self, m5Col='fiveSigmaDepth', nside=128,
+    def __init__(self, m5Col='fiveSigmaDepth', filterCol='filter', nside=128,
                  metricName='GalaxyCountsMetric_extended',
+                 units='Galaxy Counts',
                  upperMagLimit=32.0,
                  includeDustExtinction=True,
                  filterBand='i', redshiftBin='all',
                  CFHTLSCounts=False,
-                 normalizedMockCatalogCounts=True,
-                 maps=['DustMap'], **kwargs):
+                 normalizedMockCatalogCounts=True, **kwargs):
         self.m5Col = m5Col
+        self.filterCol = filterCol
         self.upperMagLimit = upperMagLimit
         self.includeDustExtinction = includeDustExtinction
         self.redshiftBin = redshiftBin
         self.filterBand = filterBand
         self.CFHTLSCounts = CFHTLSCounts
         self.normalizedMockCatalogCounts = normalizedMockCatalogCounts
-        # insatiate the BaseMetric
-        super(GalaxyCountsMetric_extended, self).__init__(col=self.m5Col, metricName=metricName, maps=maps,
-                                                          **kwargs)
         # Use the coadded depth metric to calculate the coadded depth at each point.
         # Specific band (e.g. r-band) will be provided by the sql constraint.
         if self.includeDustExtinction:
             # include dust extinction when calculating the co-added depth
-            self.coaddmetric = ExgalM5(m5Col=self.m5Col, lsstFilter=self.filterBand)
+            self.coaddmetric = ExgalM5(m5Col=self.m5Col)
         else:
             self.coaddmetric = Coaddm5Metric(m5Col=self.m5Col)
 
-        # Need to scale down to indivdual HEALpix pixels. Galaxy count from the coadded depth is per 1 square degree. 
+        # Need to scale down to indivdual HEALpix pixels.
+        # Galaxy count from the coadded depth is per 1 square degree.
         # Number of galaxies ~= 41253 sq. degrees in the full sky divided by number of HEALpix pixels.
         self.scale = 41253.0/(int(12)*nside**2)
-        
-        # Reset units (otherwise uses magnitudes).
-        self.units = 'Galaxy Counts'
-
         # Consider power laws from various redshift bins: importing the constant
         # General power law form: 10**(a*m+b).  
         self.powerLawConst_a = powerLawConst_a
         self.powerLawConst_b = powerLawConst_b
 
+        super().__init__(col=[self.m5Col, self.filterCol], metricName=metricName, maps=self.coaddmetric.maps,
+                         units=units, **kwargs)
+
     # ------------------------------------------------------------------------
-    # set up the integrand to calcaulte galaxy counts
+    # set up the integrand to calculate galaxy counts
     def _galCount(self, apparent_mag, coaddm5):
         # calculate the change in the power law constant based on the band
         # colors assumed here: (u-g)=(g-r)=(r-i)=(i-z)= (z-y)=0.4
-        bandCorrection = -100
         if (self.filterBand=='u'):   # dimmer than i: u-g= 0.4 => g= u-0.4 => i= u-0.4*3
             bandCorrection = -0.4*3.
         elif (self.filterBand=='g'):   # dimmer than i: g-r= 0.4 => r= g-0.4 => i= g-0.4*2
@@ -140,24 +135,22 @@ class GalaxyCountsMetric_extended(BaseMetric):
     # ------------------------------------------------------------------------
     def run(self, dataSlice, slicePoint=None):
         # Calculate the coadded depth.
-        if self.includeDustExtinction:
-            coaddm5 = self.coaddmetric.run(dataSlice, slicePoint={'ebv':slicePoint['ebv']})
-        else:
-            coaddm5 = self.coaddmetric.run(dataSlice)
-            
+        infilt = np.where(dataSlice[self.filterCol] == self.filterBand)[0]
+        coaddm5 = self.coaddmetric.run(dataSlice[infilt], slicePoint)
+
         # some coaddm5 values are really small (i.e. min=10**-314). Zero them out.
-        if (coaddm5 < 1): coaddm5 = 0
-        
-        numGal, intErr = scipy.integrate.quad(self._galCount, -np.inf,
+        if (coaddm5 < 1):
+            coaddm5 = 0
+            numGal = 0
+
+        else:
+            numGal, intErr = scipy.integrate.quad(self._galCount, -np.inf,
                                               self.upperMagLimit, args=coaddm5)
-        # Normalize the galaxy counts
-        if (self.normalizedMockCatalogCounts and not self.CFHTLSCounts):
-            numGal = normalizationConstant*numGal
-        
-        # coaddm5=0 implies no observation. Set no observation to zero numGal.
-        if (coaddm5 < 1.): numGal = 0.
-        if (numGal < 1.): numGal = 0.
-            
-        # scale down to individual HEALpix pixel
-        numGal *= self.scale
+            # Normalize the galaxy counts (per sq deg)
+            if (self.normalizedMockCatalogCounts and not self.CFHTLSCounts):
+                numGal = normalizationConstant*numGal
+            if (numGal < 1.):
+                numGal = 0.
+            # scale down to individual HEALpix pixel instead of per sq deg
+            numGal *= self.scale
         return numGal

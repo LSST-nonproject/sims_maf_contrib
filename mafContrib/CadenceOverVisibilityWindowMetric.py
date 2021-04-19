@@ -6,7 +6,7 @@ import lsst.sims.maf.metrics as metrics
 import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as metricBundles
 from lsst.sims.maf.metrics import BaseMetric
-import calc_expected_visits
+from .calc_expected_visits import CalcExpectedVisitsMetric
 import numpy as np
 # from astropy.visualization import astropy_mpl_style
 # plt.style.use(astropy_mpl_style)
@@ -93,7 +93,7 @@ class CadenceOverVisibilityWindowMetric(BaseMetric):
             # Returns a list of the number of visits per night for each pointing
             pointing = [(dataSlice[self.ra_col][0],dataSlice[self.dec_col][0])]
 
-            visit = calc_expected_visits.CalcExpectedVisitsMetric(pointing,
+            visit = CalcExpectedVisitsMetric(pointing,
                                                                   self.cadence[i],
                                                                   self.start_date,
                                                                   self.end_date,

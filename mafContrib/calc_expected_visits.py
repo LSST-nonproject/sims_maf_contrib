@@ -11,7 +11,10 @@ import lsst.sims.maf.slicers as slicers
 import lsst.sims.maf.metricBundles as metricBundles
 from lsst.sims.maf.metrics import BaseMetric
 import numpy as np
-import calculate_lsst_field_visibility_astropy
+from .calculate_lsst_field_visibility_astropy import calculate_lsst_field_visibility
+
+__all__ = ['CalcExpectedVisitsMetric']
+
 
 class CalcExpectedVisitsMetric(BaseMetric):
     """Function to calculate the maximum possible number of visits to a
@@ -80,7 +83,7 @@ class CalcExpectedVisitsMetric(BaseMetric):
             if self.verbose:
                 print(' -> RA '+str(ra)+', Dec '+str(dec))
 
-            (total_time_visible, hrs_visible_per_night) = calculate_lsst_field_visibility_astropy.calculate_lsst_field_visibility(ra,dec,self.start_date,self.end_date,verbose=False)
+            (total_time_visible, hrs_visible_per_night) = calculate_lsst_field_visibility(ra,dec,self.start_date,self.end_date,verbose=False)
 
             n_visits.append( (np.array(hrs_visible_per_night) / self.cadence).astype(int) )
             hrs_visibility.append( np.array(hrs_visible_per_night) )
