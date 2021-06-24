@@ -21,3 +21,5 @@ from .microlensingMetric import *
 from .TDEsPopMetric import *
 from .StaticProbesFoMSummaryMetric import *
 from .kneMetrics import *
+from .AGNStructureFunctionMetrics import *
+from .AGN_Periodicity_TimeLags import *
