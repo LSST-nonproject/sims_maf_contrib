@@ -23,3 +23,4 @@ from .StaticProbesFoMSummaryMetric import *
 from .kneMetrics import *
 from .AGNStructureFunctionMetrics import *
 from .AGN_Periodicity_TimeLags import *
+from .AGN_TimeLagMetric import *
