@@ -1,124 +1,85 @@
+import rubin_sim.maf as maf
 import os
 import numpy as np
-import pandas as pd
-import healpy as hp
-import math 
-import time
-from matplotlib import cm
+import math
 
-# lsst libraries
-import lsst.sims.maf.metrics as metrics
-import lsst.sims.maf.db as db
-import lsst.sims.maf.slicers as slicers
-import lsst.sims.maf.metricBundles as mb
-
-
-class AGN_TimeLagMetric:
-    bundle = None
-    lag = None
-    z = None
-    opsim = None
-    cmap = None
-    caden = 'mean'
+class AGN_TimeLagMetric(maf.BaseMetric):
+    lag = 100
+    z = 0
+    name = 'AGN_TimeLag_Metric'
+    
+    # Different way of calculating nquist. Default value is 'mean', therefore meaon value of sampling time is used.
+    calcType = 'mean'
+    
+    # If Log scale is used. Default value is False
     log = False
-    
-    def __getOpsimData(self, opsim, band, name, nside = 32, outDir = 'TmpDir'):
-        
-        opsdb = db.OpsimDatabase(opsim)
-        resultsDb = db.ResultsDb(outDir=outDir)
-        metric=metrics.PassMetric(cols=['observationStartMJD', 'filter'])
-        slicer = slicers.HealpixSlicer(nside)
-        sqlconstraint = 'filter = \'' + band + '\''
-        bundle = mb.MetricBundle(metric, slicer, sqlconstraint, runName=name)
-        bgroup = mb.MetricBundleGroup({0: bundle}, opsdb, outDir=outDir, resultsDb=resultsDb)
-        bgroup.runAll()
-        return bundle
-    
-    
+
+    # Calculate NQUIST value for time-lag and sampling time (redshift is included in formula if desired)
     def __getNquistValue(self, caden, lag, z):
-        return (lag/((1+z)*caden))*10
-    
-    
-    
-    def __init__(self, opsim, name, band, lag, z = 1, nside = 32):
-        self.lag = lag
-        self.opsim = opsim
-        self.z = z
-        self.name = name
-        self.bundle = self.__getOpsimData(opsim, band, name, nside)
-   
-    def runAll(self):
-        nquist = self.__getData(self.bundle, self.lag, self.z)
-        self.__getPlots(nquist, self.name)
-    
-    def setName (self, name):
-        self.name = name
-        
-    def setCaden(self, caden = 'mean'):
-        self.caden = caden
+        return (lag/((1+z)*caden))
     
     def setLag(self, lag):
         self.lag = lag
     
-    def __getData(self, bundle, lag, z = 0):
-        result = { 'nquist': [] }
-        n = len(bundle.metricValues)
-        data = bundle.metricValues.filled(0)
-        for i in range(n):
-            if data[i] == 0:
-                result['nquist'].append(np.nan)
-                continue
-            mv = bundle.metricValues[i]['observationStartMJD']
-            mv = np.sort(mv)
-            val = np.diff(mv)
-            
-            if self.caden == 'mean':
-                val = (np.mean(val)) #np.mean
-            elif self.caden == 'min':
-                if len(val)  == 0:
-                    val = np.nan
-                else:
-                    val = (np.min(val))
-            elif self.caden == 'max':
-                if len(val) == 0:
-                    val = np.nan
-                else:
-                    val = np.max(val)
-            else:
-                #gcd 
-                val = np.rint(val)
-                val = val.astype(int)
-                val = np.gcd.reduce(val)
-                
-            
-
-            if  math.isnan(val) :
-                result['nquist'].append(np.nan)
-            else:
-                if self.log == True:
-                    result['nquist'].append(np.log(self.__getNquistValue(val, lag, z)))
-                else:
-                    result['nquist'].append(self.__getNquistValue(val, lag, z) )
-
-        return result
+    def setRedshift(self, z):
+        self.z = z
     
-    def setCmap(self, cmap):
-        self.cmap = cmap
-                                           
-    def setLogscale(self, value) :
-        self.log = value
-                                            
-    def __getPlots(self,data, opsim, threshold = True):
+    def setName(self, name):
+        self.name = name
     
-        nquist = (np.array(data['nquist']))
+    
+    def __init__(self, lag, name = 'AGN_TimeLag_Metric', z=1, log = False):
+       
+        cols = ['observationStartMJD', 'filter' ] 
         
-        if threshold:
-            if self.log == True:
-                nquist[nquist<np.log(22)] = np.nan
+        self.lag = lag
+        self.z = z
+        self.log = log
+        self.name = name
+        super().__init__(col=cols, metricName=name,  metricDtype='float')
+        
+    
+    def run(self, dataSlice, slicePoint=None):
+        
+        mv = np.sort(dataSlice["observationStartMJD"])
+        val = np.diff(mv)
+        
+        
+        if self.calcType == 'mean':
+            val = (np.mean(val))
+        elif self.calcType == 'min':
+            if len(val)  == 0:
+                val = np.nan
             else:
-                nquist[nquist<22] = np.nan
-                
-        hp.mollview(
-            nquist,
-            title=  opsim,
-            unit='Threshold', cmap=self.cmap)
+                val = (np.min(val))
+        elif self.calcType == 'max':
+            if len(val) == 0:
+                val = np.nan
+            else:
+                val = np.max(val)
+        else:
+            #gcd 
+            val = np.rint(val)
+            val = val.astype(int)
+            val = np.gcd.reduce(val)
+          
+        if  math.isnan(val) :
+                nquist = np.nan
+        else:
+            if self.log == True:
+                nquist = np.log(self.__getNquistValue(val, self.lag, self.z))
+            else:
+                nquist = self.__getNquistValue(val, self.lag, self.z) 
+
+        result = nquist
+        
+        # Threshold nquist value is 2.2, hence we are aiming to show values higher than threshold (2.2) value
+        if self.log == True:
+            if nquist < np.log(2.2):
+                result = np.nan
+        else:
+            if nquist<2.2:
+                result = np.nan
+        
+        
+        return result
